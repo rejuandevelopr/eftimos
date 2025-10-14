@@ -1,13 +1,22 @@
 const canvas = document.getElementById('canvas');
-        const gridSpacing = 580;
+        const gridSpacing = 650;
         const imageSize = 180;
         const blurRadius = 300;
         const maxBlur = 8;
-        
+
+        // Fixed 4 columns per row
+        const gridColumns = 4;
+
+        // Random position offset range (in pixels)
+        const randomOffsetRange = 150; // Images can shift ±150px from grid position
+
+        // Buffer space (30% of screen size on each side)
+        const bufferPercent = 0.1;
+
         // Smooth scrolling parameters
-        const smoothness = 0.08; // Lower = smoother (0.05-0.15)
-        const friction = 0.94; // Momentum decay (0.85-0.95)
-        const minVelocity = 0.1; // Stop threshold
+        const smoothness = 0.08;
+        const friction = 0.94;
+        const minVelocity = 0.1;
 
         // Load base images from HTML
         const imageTemplates = document.querySelectorAll('#image-templates .image-template');
@@ -19,33 +28,61 @@ const canvas = document.getElementById('canvas');
             };
         });
 
-        let offsetX = 0;
-        let offsetY = 0;
-        let targetOffsetX = 0;
-        let targetOffsetY = 0;
+        
+        const totalImages = baseImages.length;
+        const gridRows = Math.ceil(totalImages / gridColumns);
+
+        console.log(`Grid: ${gridColumns} columns × ${gridRows} rows for ${totalImages} images`);
+
+        
+        const bufferX = window.innerWidth * bufferPercent;
+        const bufferY = window.innerHeight * bufferPercent;
+
+        const contentWidth = (gridColumns - 1) * gridSpacing;
+        const contentHeight = (gridRows - 1) * gridSpacing;
+
+        const minOffsetX = -contentWidth - bufferX;
+        const maxOffsetX = bufferX;
+        const minOffsetY = -contentHeight - bufferY;
+        const maxOffsetY = bufferY;
+
+        
+        let offsetX = -contentWidth / 2;
+        let offsetY = -contentHeight / 2;
+        let targetOffsetX = offsetX;
+        let targetOffsetY = offsetY;
         let velocityX = 0;
         let velocityY = 0;
         let isDragging = false;
-        let startX, startY;
         let lastX, lastY;
         let images = [];
-        let imagePool = [];
-        let lastUpdateGrid = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
 
-        function createImageElement(gridX, gridY) {
+        
+        const randomOffsets = new Map();
+        function getRandomOffset(gridX, gridY) {
+            const key = `${gridX},${gridY}`;
+            if (!randomOffsets.has(key)) {
+                randomOffsets.set(key, {
+                    x: (Math.random() - 0.5) * randomOffsetRange,
+                    y: (Math.random() - 0.5) * randomOffsetRange
+                });
+            }
+            return randomOffsets.get(key);
+        }
+
+        function createImageElement(imageIndex, gridX, gridY) {
             const container = document.createElement('div');
             container.className = 'image-container';
-            
-            const imageIndex = Math.abs((gridX * 7 + gridY * 13) % baseImages.length);
+
             const imageData = baseImages[imageIndex];
-            
+
             const img = document.createElement('img');
             img.src = imageData.src;
             img.alt = imageData.alt;
-            
+
             container.appendChild(img);
             canvas.appendChild(container);
-            
+
             return {
                 element: container,
                 gridX: gridX,
@@ -53,40 +90,31 @@ const canvas = document.getElementById('canvas');
             };
         }
 
-        function updateVisibleImages() {
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
+        function createAllImages() {
+            
+            let imageIndex = 0;
 
-            const buffer = 2;
-            const minGridX = Math.floor((-offsetX - centerX) / gridSpacing) - buffer;
-            const maxGridX = Math.ceil((-offsetX + window.innerWidth + centerX) / gridSpacing) + buffer;
-            const minGridY = Math.floor((-offsetY - centerY) / gridSpacing) - buffer;
-            const maxGridY = Math.ceil((-offsetY + window.innerHeight + centerY) / gridSpacing) + buffer;
+            for (let y = 0; y < gridRows; y++) {
+                const imagesInThisRow = Math.min(gridColumns, totalImages - (y * gridColumns));
+                const isLastRow = (y === gridRows - 1);
 
-            if (minGridX === lastUpdateGrid.minX && maxGridX === lastUpdateGrid.maxX &&
-                minGridY === lastUpdateGrid.minY && maxGridY === lastUpdateGrid.maxY) {
-                return;
-            }
+                // Calculate offset for centering incomplete rows
+                const rowOffset = (isLastRow && imagesInThisRow < gridColumns)
+                    ? (gridColumns - imagesInThisRow) / 2
+                    : 0;
 
-            lastUpdateGrid = { minX: minGridX, maxX: maxGridX, minY: minGridY, maxY: maxGridY };
-
-            images = images.filter(img => {
-                if (img.gridX < minGridX || img.gridX > maxGridX ||
-                    img.gridY < minGridY || img.gridY > maxGridY) {
-                    img.element.remove();
-                    return false;
-                }
-                return true;
-            });
-
-            for (let x = minGridX; x <= maxGridX; x++) {
-                for (let y = minGridY; y <= maxGridY; y++) {
-                    const exists = images.some(img => img.gridX === x && img.gridY === y);
-                    if (!exists) {
-                        images.push(createImageElement(x, y));
+                for (let x = 0; x < imagesInThisRow; x++) {
+                    if (imageIndex < baseImages.length) {
+                        images.push(createImageElement(imageIndex, x + rowOffset, y));
+                        imageIndex++;
                     }
                 }
             }
+        }
+
+        function clampOffset() {
+            targetOffsetX = Math.max(minOffsetX, Math.min(maxOffsetX, targetOffsetX));
+            targetOffsetY = Math.max(minOffsetY, Math.min(maxOffsetY, targetOffsetY));
         }
 
         function updateImagePositions() {
@@ -94,9 +122,11 @@ const canvas = document.getElementById('canvas');
             const centerY = window.innerHeight / 2;
 
             images.forEach(img => {
-                const x = img.gridX * gridSpacing + offsetX + centerX;
-                const y = img.gridY * gridSpacing + offsetY + centerY;
-                
+                const randomOffset = getRandomOffset(img.gridX, img.gridY);
+
+                const x = img.gridX * gridSpacing + offsetX + centerX + randomOffset.x;
+                const y = img.gridY * gridSpacing + offsetY + centerY + randomOffset.y;
+
                 img.element.style.left = (x - imageSize / 2) + 'px';
                 img.element.style.top = (y - imageSize / 2) + 'px';
 
@@ -121,6 +151,7 @@ const canvas = document.getElementById('canvas');
                 if (Math.abs(velocityX) > minVelocity || Math.abs(velocityY) > minVelocity) {
                     targetOffsetX += velocityX;
                     targetOffsetY += velocityY;
+                    clampOffset();
                     velocityX *= friction;
                     velocityY *= friction;
                 } else {
@@ -129,15 +160,13 @@ const canvas = document.getElementById('canvas');
                 }
             }
 
-            updateVisibleImages();
             updateImagePositions();
             requestAnimationFrame(animate);
         }
 
+        
         canvas.addEventListener('mousedown', (e) => {
             isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
             lastX = e.clientX;
             lastY = e.clientY;
             velocityX = 0;
@@ -147,18 +176,19 @@ const canvas = document.getElementById('canvas');
 
         canvas.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-            
+
             const deltaX = e.clientX - lastX;
             const deltaY = e.clientY - lastY;
-            
+
             targetOffsetX += deltaX;
             targetOffsetY += deltaY;
+            clampOffset();
             offsetX = targetOffsetX;
             offsetY = targetOffsetY;
-            
+
             velocityX = deltaX * 0.8;
             velocityY = deltaY * 0.8;
-            
+
             lastX = e.clientX;
             lastY = e.clientY;
         });
@@ -175,11 +205,10 @@ const canvas = document.getElementById('canvas');
             }
         });
 
+        
         canvas.addEventListener('touchstart', (e) => {
             isDragging = true;
             const touch = e.touches[0];
-            startX = touch.clientX;
-            startY = touch.clientY;
             lastX = touch.clientX;
             lastY = touch.clientY;
             velocityX = 0;
@@ -190,19 +219,20 @@ const canvas = document.getElementById('canvas');
 
         canvas.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
-            
+
             const touch = e.touches[0];
             const deltaX = touch.clientX - lastX;
             const deltaY = touch.clientY - lastY;
-            
+
             targetOffsetX += deltaX;
             targetOffsetY += deltaY;
+            clampOffset();
             offsetX = targetOffsetX;
             offsetY = targetOffsetY;
-            
+
             velocityX = deltaX * 0.8;
             velocityY = deltaY * 0.8;
-            
+
             lastX = touch.clientX;
             lastY = touch.clientY;
             e.preventDefault();
@@ -213,5 +243,6 @@ const canvas = document.getElementById('canvas');
             canvas.classList.remove('dragging');
         });
 
-        updateVisibleImages();
+       
+        createAllImages();
         animate();
