@@ -1,5 +1,5 @@
 const canvas = document.getElementById('canvas');
-const gridSpacing = 650;
+const gridSpacing = 620;
 const imageSize = 220; // Updated to match CSS
 const blurRadius = 300;
 const maxBlur = 8;
@@ -17,6 +17,14 @@ const bufferPercent = 0.1;
 const smoothness = 0.08;
 const friction = 0.94;
 const minVelocity = 0.1;
+
+// Zoom parameters
+let scale = 1;
+let targetScale = 1;
+const minScale = 1;   // No zoom out - initial is minimum
+const maxScale = 2;   // Can zoom in to 200% (2x from initial)
+const zoomSpeed = 0.1;
+const zoomSmoothness = 0.15;
 
 // Load base images from HTML
 const imageTemplates = document.querySelectorAll('#image-templates .image-template');
@@ -191,19 +199,26 @@ function updateImagePositions() {
     images.forEach(img => {
         const randomOffset = getRandomOffset(img.gridX, img.gridY);
 
-        const x = img.gridX * gridSpacing + offsetX + centerX + randomOffset.x;
-        const y = img.gridY * gridSpacing + offsetY + centerY + randomOffset.y;
+        // Apply scale to grid positions relative to offset
+        const baseX = img.gridX * gridSpacing + randomOffset.x;
+        const baseY = img.gridY * gridSpacing + randomOffset.y;
+        
+        const x = baseX * scale + offsetX * scale + centerX;
+        const y = baseY * scale + offsetY * scale + centerY;
 
-        img.element.style.left = (x - imageSize / 2) + 'px';
-        img.element.style.top = (y - imageSize / 2) + 'px';
+        img.element.style.left = (x - (imageSize * scale) / 2) + 'px';
+        img.element.style.top = (y - (imageSize * scale) / 2) + 'px';
+        
+        // Apply scale transform
+        img.element.style.transform = `scale(${scale})`;
 
         const dx = x - centerX;
         const dy = y - centerY;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         let blur = 0;
-        if (distance > blurRadius) {
-            blur = Math.min(maxBlur, (distance - blurRadius) / 100 * maxBlur);
+        if (distance > blurRadius * scale) {
+            blur = Math.min(maxBlur, (distance - blurRadius * scale) / 100 * maxBlur);
         }
 
         img.element.style.filter = `blur(${blur}px)`;
@@ -227,6 +242,9 @@ function animate() {
         }
     }
 
+    // Smooth zoom animation
+    scale += (targetScale - scale) * zoomSmoothness;
+
     updateImagePositions();
     requestAnimationFrame(animate);
 }
@@ -247,14 +265,15 @@ canvas.addEventListener('mousemove', (e) => {
     const deltaX = e.clientX - lastX;
     const deltaY = e.clientY - lastY;
 
-    targetOffsetX += deltaX;
-    targetOffsetY += deltaY;
+    // Normalize drag speed by scale to maintain consistent feel
+    targetOffsetX += deltaX / scale;
+    targetOffsetY += deltaY / scale;
     clampOffset();
     offsetX = targetOffsetX;
     offsetY = targetOffsetY;
 
-    velocityX = deltaX * 0.8;
-    velocityY = deltaY * 0.8;
+    velocityX = (deltaX / scale) * 0.8;
+    velocityY = (deltaY / scale) * 0.8;
 
     lastX = e.clientX;
     lastY = e.clientY;
@@ -291,14 +310,15 @@ canvas.addEventListener('touchmove', (e) => {
     const deltaX = touch.clientX - lastX;
     const deltaY = touch.clientY - lastY;
 
-    targetOffsetX += deltaX;
-    targetOffsetY += deltaY;
+    // Normalize drag speed by scale to maintain consistent feel
+    targetOffsetX += deltaX / scale;
+    targetOffsetY += deltaY / scale;
     clampOffset();
     offsetX = targetOffsetX;
     offsetY = targetOffsetY;
 
-    velocityX = deltaX * 0.8;
-    velocityY = deltaY * 0.8;
+    velocityX = (deltaX / scale) * 0.8;
+    velocityY = (deltaY / scale) * 0.8;
 
     lastX = touch.clientX;
     lastY = touch.clientY;
@@ -309,6 +329,39 @@ canvas.addEventListener('touchend', () => {
     isDragging = false;
     canvas.classList.remove('dragging');
 });
+
+// Wheel event for zoom
+canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    
+    const delta = e.deltaY;
+    const zoomFactor = delta > 0 ? (1 - zoomSpeed) : (1 + zoomSpeed);
+    
+    // Store old scale before zoom
+    const oldScale = targetScale;
+    
+    // Calculate new scale
+    targetScale = Math.max(minScale, Math.min(maxScale, targetScale * zoomFactor));
+    
+    // If scale didn't change (hit min/max), don't adjust offsets
+    if (oldScale === targetScale) return;
+    
+    // Get mouse position relative to canvas center
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const mouseX = e.clientX - centerX;
+    const mouseY = e.clientY - centerY;
+    
+    // Calculate the world position under the mouse before zoom
+    const worldX = (mouseX - offsetX * oldScale) / oldScale;
+    const worldY = (mouseY - offsetY * oldScale) / oldScale;
+    
+    // Adjust offsets so the world position under mouse stays the same
+    targetOffsetX = (mouseX - worldX * targetScale) / targetScale;
+    targetOffsetY = (mouseY - worldY * targetScale) / targetScale;
+    
+    clampOffset();
+}, { passive: false });
 
 // Initialize
 createAllImages();

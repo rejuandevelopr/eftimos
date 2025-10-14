@@ -32,8 +32,8 @@ nav img {
 
 .image-container {
     position: absolute;
-    width: 220px;
-    height: 220px;
+    width: 170px;
+    height: auto;
     transition: filter 0.15s ease;
     pointer-events: none;
 }
