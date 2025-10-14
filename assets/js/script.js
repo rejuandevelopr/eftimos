@@ -1,6 +1,6 @@
 const canvas = document.getElementById('canvas');
 const gridSpacing = 620;
-const imageSize = 220; // Updated to match CSS
+const imageSize = 170; // Updated to match CSS
 const blurRadius = 300;
 const maxBlur = 8;
 
@@ -21,8 +21,8 @@ const minVelocity = 0.1;
 // Zoom parameters
 let scale = 1;
 let targetScale = 1;
-const minScale = 1;   // No zoom out - initial is minimum
-const maxScale = 2;   // Can zoom in to 200% (2x from initial)
+const minScale = 0.8;   // No zoom out - initial is minimum
+const maxScale = 2.5;   // Can zoom in to 200% (2x from initial)
 const zoomSpeed = 0.1;
 const zoomSmoothness = 0.15;
 
