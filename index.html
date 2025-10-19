@@ -8,6 +8,30 @@
 </head>
 <body>
 
+    
+    <canvas id="cursorCanvas"></canvas>
+
+    <!-- Background Video -->
+    <div id="video-background">
+        <video autoplay muted loop playsinline>
+            <!-- <source src="assets/vid/home-vid.mp4" type="video/mp4"> -->
+            <!-- <source src="assets/videos/background.webm" type="video/webm"> -->
+        </video>
+    </div>
+
+    
+    <nav>
+        <div class="nav-container">
+            <div class="logo">
+                <img src="assets/images/logo.png" alt="Logo">
+            </div>
+            
+            <div class="nav-links">
+                <!-- <a href="#">Home</a> -->
+            </div>
+        </div>
+    </nav>
+
     <div id="canvas">
         <div class="center-marker"></div>
     </div>
@@ -28,7 +52,7 @@
         <div class="image-template">
             <img src="assets/images/g-5.webp" alt="Valley">
         </div>
-        <div class="image-template">
+        <div class="image-template initial-center">
             <img src="assets/images/g-6.webp" alt="Road">
         </div>
         <div class="image-template">
@@ -52,5 +76,6 @@
     </div>
     
     <script src="assets/js/script.js"></script>
+    <script src="assets/js/cursor-effect.js"></script>
 </body>
 </html>

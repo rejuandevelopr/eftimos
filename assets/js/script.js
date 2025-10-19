@@ -140,14 +140,28 @@ function getInitialCenterPosition() {
         return { x: 0, y: 0 };
     }
     
-    // Find the middle row
-    const middleRow = Math.floor(gridRows / 2);
+    // Find the image that should be centered initially
+    let targetImage = null;
     
-    // Get images in the middle row
-    const imagesInMiddleRow = images.filter(img => img.gridY === middleRow);
+    // First, check if any base template has the 'initial-center' class
+    imageTemplates.forEach((template, index) => {
+        if (template.classList.contains('initial-center')) {
+            targetImage = images.find(img => img.imageIndex === index);
+        }
+    });
     
-    if (imagesInMiddleRow.length === 0) {
-        console.error('No images found in middle row!');
+    // Fallback: if no image has the class, use the 2nd image of middle row (original behavior)
+    if (!targetImage) {
+        console.log('No initial-center class found, using default (2nd image of middle row)');
+        const middleRow = Math.floor(gridRows / 2);
+        const imagesInMiddleRow = images.filter(img => img.gridY === middleRow);
+        imagesInMiddleRow.sort((a, b) => a.gridX - b.gridX);
+        const targetIndex = Math.min(1, imagesInMiddleRow.length - 1);
+        targetImage = imagesInMiddleRow[targetIndex];
+    }
+    
+    if (!targetImage) {
+        console.error('Could not find target image!');
         const fallbackImage = images[0];
         const randomOffset = getRandomOffset(fallbackImage.gridX, fallbackImage.gridY);
         return {
@@ -156,34 +170,15 @@ function getInitialCenterPosition() {
         };
     }
     
-    // Sort by gridX to get images left to right
-    imagesInMiddleRow.sort((a, b) => a.gridX - b.gridX);
+    console.log(`Centering on image index: ${targetImage.imageIndex} at grid position (${targetImage.gridX}, ${targetImage.gridY})`);
     
-    // Always get the 2nd image (index 1) if it exists, otherwise get the first image
-    const targetIndex = Math.min(1, imagesInMiddleRow.length - 1);
-    const middleImage = imagesInMiddleRow[targetIndex];
+    const randomOffset = getRandomOffset(targetImage.gridX, targetImage.gridY);
+    const targetImageX = targetImage.gridX * gridSpacing + randomOffset.x;
+    const targetImageY = targetImage.gridY * gridSpacing + randomOffset.y;
     
-    console.log(`Total images: ${totalImages}`);
-    console.log(`Grid: ${gridRows} rows × ${gridColumns} columns`);
-    console.log(`Middle row: ${middleRow}`);
-    console.log(`Images in middle row: ${imagesInMiddleRow.length}`);
-    console.log(`Targeting 2nd image (index 1) of middle row`);
-    console.log(`Centering on image index: ${middleImage.imageIndex} at grid position (${middleImage.gridX}, ${middleImage.gridY})`);
-    
-    // Get the random offset for this specific image
-    const randomOffset = getRandomOffset(middleImage.gridX, middleImage.gridY);
-    
-    // Calculate the position of the middle image in the grid
-    const middleImageX = middleImage.gridX * gridSpacing + randomOffset.x;
-    const middleImageY = middleImage.gridY * gridSpacing + randomOffset.y;
-    
-    console.log(`Middle image world position: (${middleImageX}, ${middleImageY})`);
-    console.log(`Random offset applied: (${randomOffset.x}, ${randomOffset.y})`);
-    
-    // Calculate offset needed to center this image
     return {
-        x: -middleImageX,
-        y: -middleImageY
+        x: -targetImageX,
+        y: -targetImageY
     };
 }
 
