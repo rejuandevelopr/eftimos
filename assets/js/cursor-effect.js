@@ -7,10 +7,12 @@ cursorCanvas.width = cursorWidth;
 cursorCanvas.height = cursorHeight;
 
 const particles = [];
-const particleCount = 60;
+const particleCount = 40;
 
-let mouse = { x: cursorWidth / 2, y: cursorHeight / 2 };
-let smoothPos = { x: mouse.x, y: mouse.y };
+// Will be set to actual mouse position immediately
+let mouse = { x: 0, y: 0 };
+let smoothPos = { x: 0, y: 0 };
+let cursorInitialized = false;
 
 let clickBurst = false;
 let burstTimer = 0;
@@ -31,12 +33,12 @@ class Particle {
     this.morphAngle = Math.random() * Math.PI * 2;
     this.nebulaSpeed = 0.01 + Math.random() * 0.02;
 
-    this.x = smoothPos.x;
-    this.y = smoothPos.y;
-    this.targetX = smoothPos.x;
-    this.targetY = smoothPos.y;
-    this.shapeTargetX = smoothPos.x;
-    this.shapeTargetY = smoothPos.y;
+    this.x = mouse.x;
+    this.y = mouse.y;
+    this.targetX = mouse.x;
+    this.targetY = mouse.y;
+    this.shapeTargetX = mouse.x;
+    this.shapeTargetY = mouse.y;
   }
 
   update() {
@@ -79,11 +81,6 @@ class Particle {
   }
 }
 
-// Initialize particles
-for (let i = 0; i < particleCount; i++) {
-  particles.push(new Particle(i));
-}
-
 function animateCursor() {
   cursorCtx.clearRect(0, 0, cursorWidth, cursorHeight);
 
@@ -113,7 +110,25 @@ function animateCursor() {
   requestAnimationFrame(animateCursor);
 }
 
-animateCursor();
+// Capture mouse position IMMEDIATELY when the script loads
+document.addEventListener("mousemove", function initMousePosition(e) {
+  if (!cursorInitialized) {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    smoothPos.x = e.clientX;
+    smoothPos.y = e.clientY;
+    
+    // Initialize particles at current mouse position
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle(i));
+    }
+    
+    cursorInitialized = true;
+    
+    // Start animation after initialization
+    animateCursor();
+  }
+}, { once: false });
 
 // Track mouse movement
 window.addEventListener("mousemove", e => {
