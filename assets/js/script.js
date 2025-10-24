@@ -15,7 +15,7 @@ const bufferPercent = 0.1;
 
 // Smooth scrolling parameters
 const smoothness = 0.08;
-const friction = 0.94;
+const friction = 0; // 0.94
 const minVelocity = 0.1;
 
 // Zoom parameters
@@ -39,7 +39,7 @@ const baseImages = Array.from(imageTemplates).map(template => {
 const totalImages = baseImages.length;
 const gridRows = Math.ceil(totalImages / gridColumns);
 
-console.log(`Grid: ${gridColumns} columns × ${gridRows} rows for ${totalImages} images`);
+// console.log(`Grid: ${gridColumns} columns × ${gridRows} rows for ${totalImages} images`);
 
 const bufferX = window.innerWidth * bufferPercent;
 const bufferY = window.innerHeight * bufferPercent;
@@ -90,13 +90,12 @@ function createImageElement(imageIndex, gridX, gridY) {
     const container = document.createElement('div');
     container.className = 'image-container';
 
-    const imageData = baseImages[imageIndex];
+    const template = imageTemplates[imageIndex];
+    
+    // Clone the entire content including the anchor tag
+    const clonedContent = template.cloneNode(true);
+    container.appendChild(clonedContent.firstElementChild);
 
-    const img = document.createElement('img');
-    img.src = imageData.src;
-    img.alt = imageData.alt;
-
-    container.appendChild(img);
     canvas.appendChild(container);
 
     return {
@@ -124,19 +123,15 @@ function createAllImages() {
             if (imageIndex < baseImages.length) {
                 const gridX = x + rowOffset;
                 images.push(createImageElement(imageIndex, gridX, y));
-                console.log(`Created image ${imageIndex} at grid position (${gridX}, ${y})`);
                 imageIndex++;
             }
         }
     }
-    
-    console.log(`Total images created: ${images.length}`);
 }
 
 // Calculate initial position to center on middle image
 function getInitialCenterPosition() {
     if (images.length === 0) {
-        console.error('No images found!');
         return { x: 0, y: 0 };
     }
     
@@ -152,7 +147,6 @@ function getInitialCenterPosition() {
     
     // Fallback: if no image has the class, use the 2nd image of middle row (original behavior)
     if (!targetImage) {
-        console.log('No initial-center class found, using default (2nd image of middle row)');
         const middleRow = Math.floor(gridRows / 2);
         const imagesInMiddleRow = images.filter(img => img.gridY === middleRow);
         imagesInMiddleRow.sort((a, b) => a.gridX - b.gridX);
@@ -161,7 +155,6 @@ function getInitialCenterPosition() {
     }
     
     if (!targetImage) {
-        console.error('Could not find target image!');
         const fallbackImage = images[0];
         const randomOffset = getRandomOffset(fallbackImage.gridX, fallbackImage.gridY);
         return {
@@ -169,8 +162,6 @@ function getInitialCenterPosition() {
             y: -(fallbackImage.gridY * gridSpacing + randomOffset.y)
         };
     }
-    
-    console.log(`Centering on image index: ${targetImage.imageIndex} at grid position (${targetImage.gridX}, ${targetImage.gridY})`);
     
     const randomOffset = getRandomOffset(targetImage.gridX, targetImage.gridY);
     const targetImageX = targetImage.gridX * gridSpacing + randomOffset.x;
@@ -245,10 +236,19 @@ function animate() {
 }
 
 // Mouse events
+// Mouse events
+// Mouse events
+let dragStartX, dragStartY;
+let hasMoved = false;
+
+// Mouse events
 canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
     lastX = e.clientX;
     lastY = e.clientY;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    hasMoved = false;
     velocityX = 0;
     velocityY = 0;
     canvas.classList.add('dragging');
@@ -259,6 +259,13 @@ canvas.addEventListener('mousemove', (e) => {
 
     const deltaX = e.clientX - lastX;
     const deltaY = e.clientY - lastY;
+
+    // Check if user has moved enough to be considered a drag
+    const totalMoveX = Math.abs(e.clientX - dragStartX);
+    const totalMoveY = Math.abs(e.clientY - dragStartY);
+    if (totalMoveX > 5 || totalMoveY > 5) {
+        hasMoved = true;
+    }
 
     // Normalize drag speed by scale to maintain consistent feel
     targetOffsetX += deltaX / scale;
@@ -285,6 +292,33 @@ canvas.addEventListener('mouseleave', () => {
         canvas.classList.remove('dragging');
     }
 });
+
+// Only prevent link clicks if user actually dragged
+// Only prevent link clicks if user actually dragged
+// Only prevent link clicks if user actually dragged
+// Only prevent link clicks if user actually dragged
+canvas.addEventListener('click', (e) => {
+    // Search for link both up (closest) and down (querySelector)
+    let link = e.target.closest('.image-link');
+    if (!link && e.target.classList.contains('image-container')) {
+        link = e.target.querySelector('.image-link');
+    }
+    
+    if (link && hasMoved) {
+        // User dragged - prevent the link
+        e.preventDefault();
+        e.stopPropagation();
+    } else if (link && !hasMoved) {
+        // User clicked - navigate
+        window.location.href = link.href;
+    }
+    
+    // Reset hasMoved after handling the click
+    hasMoved = false;
+});
+
+
+
 
 // Touch events
 canvas.addEventListener('touchstart', (e) => {
