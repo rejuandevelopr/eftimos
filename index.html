@@ -1,14 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Eftimos</title>
+    <meta name="description" content="Eftimos">
+    <meta name="keywords" content="Eftimos">
+
+    <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="assets/fonts/Helvetica-Bold.ttf" as="font" type="font/ttf" crossorigin>
+
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
+
 <body>
 
-    
+
     <canvas id="cursorCanvas"></canvas>
 
     <!-- Background Video -->
@@ -19,13 +28,13 @@
         </video>
     </div>
 
-    
+
     <nav>
         <div class="nav-container">
             <div class="logo">
                 <img src="assets/images/logo.png" alt="Logo">
             </div>
-            
+
             <!-- <div class="nav-links">
                 <a href="index.html">Home</a>
             </div> -->
@@ -35,83 +44,84 @@
     <div id="canvas">
         <div class="center-marker"></div>
     </div>
-    
+
     <div id="image-templates" style="display: none;">
-    <div class="image-template">
-        <a href="page1.html" class="image-link">
-            <img src="assets/images/g-1.webp" alt="Mountain">
-            <span class="tooltip">Mountain</span>
-        </a>
+        <div class="image-template">
+            <a href="page1.html" class="image-link">
+                <img src="assets/images/g-1.webp" alt="Mountain">
+                <span class="tooltip">Fashion image 1</span>
+            </a>
+        </div>
+        <div class="image-template">
+            <a href="page2.html" class="image-link">
+                <img src="assets/images/g-2.webp" alt="Nature">
+                <span class="tooltip">Fashion image 2</span>
+            </a>
+        </div>
+        <div class="image-template">
+            <a href="page3.html" class="image-link">
+                <img src="assets/images/g-3.webp" alt="Forest">
+                <span class="tooltip">Fashion image 3</span>
+            </a>
+        </div>
+        <div class="image-template">
+            <a href="page4.html" class="image-link">
+                <img src="assets/images/g-4.webp" alt="Sunset">
+                <span class="tooltip">Fashion image 4</span>
+            </a>
+        </div>
+        <div class="image-template">
+            <a href="page5.html" class="image-link">
+                <img src="assets/images/g-5.webp" alt="Valley">
+                <span class="tooltip">Fashion image 5</span>
+            </a>
+        </div>
+        <div class="image-template initial-center">
+            <a href="page-1.html" class="image-link">
+                <img src="assets/images/g-6.webp" alt="Road">
+                <span class="tooltip">Fashion image</span>
+            </a>
+        </div>
+        <div class="image-template">
+            <a href="page7.html" class="image-link">
+                <img src="assets/images/g-7.webp" alt="Lake">
+                <span class="tooltip">Fashion image 6</span>
+            </a>
+        </div>
+        <div class="image-template">
+            <a href="page8.html" class="image-link">
+                <img src="assets/images/g-11.webp" alt="Winter">
+                <span class="tooltip">Fashion image 7</span>
+            </a>
+        </div>
+        <div class="image-template">
+            <a href="page9.html" class="image-link">
+                <img src="assets/images/g-10.webp" alt="Winter">
+                <span class="tooltip">Fashion image 8</span>
+            </a>
+        </div>
+        <div class="image-template">
+            <a href="page10.html" class="image-link">
+                <img src="assets/images/g-12.webp" alt="Winter">
+                <span class="tooltip">Fashion image 9</span>
+            </a>
+        </div>
+        <div class="image-template">
+            <a href="page11.html" class="image-link">
+                <img src="assets/images/g-8.webp" alt="Winter">
+                <span class="tooltip">Fashion image 10</span>
+            </a>
+        </div>
+        <div class="image-template">
+            <a href="page12.html" class="image-link">
+                <img src="assets/images/g-13.webp" alt="Winter">
+                <span class="tooltip">Fashion image 11</span>
+            </a>
+        </div>
     </div>
-    <div class="image-template">
-        <a href="page2.html" class="image-link">
-            <img src="assets/images/g-2.webp" alt="Nature">
-            <span class="tooltip">Nature</span>
-        </a>
-    </div>
-    <div class="image-template">
-        <a href="page3.html" class="image-link">
-            <img src="assets/images/g-3.webp" alt="Forest">
-            <span class="tooltip">Forest</span>
-        </a>
-    </div>
-    <div class="image-template">
-        <a href="page4.html" class="image-link">
-            <img src="assets/images/g-4.webp" alt="Sunset">
-            <span class="tooltip">Sunset</span>
-        </a>
-    </div>
-    <div class="image-template">
-        <a href="page5.html" class="image-link">
-            <img src="assets/images/g-5.webp" alt="Valley">
-            <span class="tooltip">Valley</span>
-        </a>
-    </div>
-    <div class="image-template initial-center">
-        <a href="page-1.html" class="image-link">
-            <img src="assets/images/g-6.webp" alt="Road">
-            <span class="tooltip">Road</span>
-        </a>
-    </div>
-    <div class="image-template">
-        <a href="page7.html" class="image-link">
-            <img src="assets/images/g-7.webp" alt="Lake">
-            <span class="tooltip">Lake</span>
-        </a>
-    </div>
-    <div class="image-template">
-        <a href="page8.html" class="image-link">
-            <img src="assets/images/g-11.webp" alt="Winter">
-            <span class="tooltip">Winter</span>
-        </a>
-    </div>
-    <div class="image-template">
-        <a href="page9.html" class="image-link">
-            <img src="assets/images/g-10.webp" alt="Winter">
-            <span class="tooltip">Winter Scene</span>
-        </a>
-    </div>
-    <div class="image-template">
-        <a href="page10.html" class="image-link">
-            <img src="assets/images/g-12.webp" alt="Winter">
-            <span class="tooltip">Winter Landscape</span>
-        </a>
-    </div>
-    <div class="image-template">
-        <a href="page11.html" class="image-link">
-            <img src="assets/images/g-8.webp" alt="Winter">
-            <span class="tooltip">Snowy Winter</span>
-        </a>
-    </div>
-    <div class="image-template">
-        <a href="page12.html" class="image-link">
-            <img src="assets/images/g-13.webp" alt="Winter">
-            <span class="tooltip">Winter Beauty</span>
-        </a>
-    </div>
-</div>
-    
+
     <script src="assets/js/script.js"></script>
     <script src="assets/js/cursor-effect.js"></script>
 </body>
+
 </html>

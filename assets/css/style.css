@@ -1,3 +1,18 @@
+@font-face {
+    font-family: 'Helvetica';
+    src: url('../fonts/Helvetica.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Helvetica';
+    src: url('../fonts/Helvetica-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+
 * {
     margin: 0;
     padding: 0;
@@ -10,6 +25,7 @@ body {
     font-family: Arial, sans-serif;
     background: #F0F0F0;
     position: relative;
+    font-family: 'Helvetica', sans-serif;
 }
 
 /* Cursor Canvas for Particle Effect */
@@ -145,15 +161,15 @@ nav {
     .nav-container {
         padding: 0 20px;
     }
-    
+
     .logo img {
         max-width: 100px;
     }
-    
+
     .nav-links {
         gap: 15px;
     }
-    
+
     .nav-links a {
         font-size: 14px;
     }
@@ -173,7 +189,9 @@ nav {
     width: 100%;
     height: 100%;
     text-decoration: none;
-    pointer-events: auto; /* Keep as auto */
+    pointer-events: auto;
+    /* Keep as auto */
+    transition: 0.2s ease-in-out;
 }
 
 .image-link img {
@@ -181,7 +199,9 @@ nav {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    pointer-events: none; /* Prevent img from blocking events */
+    pointer-events: none;
+    /* Prevent img from blocking events */
+
 }
 
 /* Tooltip Styles */
@@ -206,13 +226,21 @@ nav {
     opacity: 1;
 }
 
+.image-link:hover {
+    transform: scale(1.05);
+}
+
+
 /* Make sure image container allows pointer events */
 .image-container {
     position: absolute;
     width: 170px;
     height: auto;
-    transition: filter 0.15s ease;
     pointer-events: auto;
+    /* GPU acceleration to prevent blur flicker */
+    will-change: filter;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 /* Disable link during drag to allow smooth dragging */
@@ -221,7 +249,10 @@ nav {
 }
 
 
-.image-link, .image-link img {
+
+.image-link,
+.image-link img {
     -webkit-user-drag: none;
     user-drag: none;
+    border-radius: 8px;
 }
