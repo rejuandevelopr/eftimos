@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eftimos | Only for those who belong</title>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description"
+        content="Eftimos is a lifestyle and fashion brand built for those who embrace individuality, confidence, and authenticity. Discover exclusive collections designed for people who truly belong.">
+    <meta name="keywords"
+        content="Eftimos, fashion brand, lifestyle brand, exclusive clothing, premium apparel, streetwear, minimal design, modern fashion, unisex fashion, luxury clothing, belonging, individuality">
+    <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="assets/fonts/Helvetica-Bold.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body class="landing">
+
+    <!-- Transition Overlay -->
+    <div id="transitionOverlay"></div>
+
+    <canvas id="cursorCanvas"></canvas>
+
+    <!-- Grain Canvas -->
+    <canvas id="grainCanvas"></canvas>
+
+    <!-- Background Video -->
+    <div id="video-background">
+        <video autoplay muted loop playsinline>
+            <source src="assets/vid/welcome.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <main>
+        <div class="coming-soon-container">
+            <div class="content">
+                <img src="assets/images/logo.png" alt="">
+                <p class="tagline">Only for those who belong</p>
+
+                <div class="email-form-wrapper">
+                    <form class="email-form" id="emailForm">
+                        <input type="email" class="email-input" placeholder="Enter your email" required
+                            aria-label="Email address">
+                        <button type="submit" class="submit-btn">Notify Me</button>
+                    </form>
+                    <p class="success-message" id="successMessage">Thank you! We'll notify you soon.</p>
+                </div>
+
+                <p class="sub-text">Be the first to know when we launch</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="assets/js/cursor-effect.js"></script>
+    <script src="assets/js/grain-effect.js"></script>
+</body>
+
+</html>

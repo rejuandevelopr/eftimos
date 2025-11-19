@@ -21,10 +21,16 @@
 
 body {
     overflow: hidden;
-    font-family: Arial, sans-serif;
     background: #F0F0F0;
     position: relative;
     font-family: 'Helvetica', sans-serif;
+}
+
+h1 {
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: 0%;
 }
 
 /* Cursor Canvas for Particle Effect */
@@ -260,8 +266,13 @@ body.unloading {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* Grain Canvas */
@@ -283,8 +294,13 @@ body.unloading #grainCanvas {
 }
 
 @keyframes fadeInGrain {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 0.8;
+    }
 }
 
 /* Transition overlay */
@@ -312,4 +328,158 @@ body.unloading #transitionOverlay {
 
 body.unloading #video-background video {
     filter: brightness(0) blur(10px);
+}
+
+/* Landing Page */
+.coming-soon-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+}
+
+.coming-soon-container img {
+    max-width: 300px;
+    max-height: 200px;
+}
+
+@media screen and (max-width:992px) {
+    .coming-soon-container img {
+    max-width: 200px;
+}
+}
+
+.content {
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+.tagline {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    margin-bottom: 3rem;
+    color: #000;
+}
+
+.email-form-wrapper {
+    margin-bottom: 1.5rem;
+}
+
+.email-form {
+    display: flex;
+    gap: 0;
+    max-width: 500px;
+    margin: 0 auto;
+    border: 1px solid #fff;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.email-form:focus-within {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.email-input {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.4); /* translucent black */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px); /* Safari support */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  letter-spacing: 0.02em;
+  transition: all 0.3s ease;
+}
+
+.email-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Optional: glow or highlight when focused */
+.email-input:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+}
+
+.submit-btn {
+    padding: 1rem 2rem;
+    background: #fff;
+    color: #000;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.submit-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateX(-2px);
+}
+
+.submit-btn:active {
+    transform: translateX(-2px) scale(0.98);
+}
+
+.success-message {
+    display: none;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    margin-top: 1rem;
+    letter-spacing: 0.05em;
+    animation: fadeIn 0.5s ease;
+}
+
+.success-message.show {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sub-text {
+    font-size: 0.875rem;
+    color: #000;
+    letter-spacing: 0.1em;
+    font-weight: 300;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .email-form {
+        flex-direction: column;
+    }
+
+    .email-input {
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .submit-btn {
+        padding: 1rem;
+    }
+
+    .brand-name {
+        letter-spacing: 0.2em;
+    }
 }
