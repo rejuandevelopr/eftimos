@@ -490,3 +490,14 @@ body.unloading #video-background video {
         letter-spacing: 0.2em;
     }
 }
+
+/* Makes everything use GPU */
+#cursorCanvas,
+#grainCanvas,
+#canvas,
+.image-container {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
