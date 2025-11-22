@@ -1,11 +1,32 @@
 const canvas = document.getElementById('canvas');
-const gridSpacing = 620;
-const imageSize = 170; // Updated to match CSS
-const blurRadius = 300;
-const maxBlur = 8;
 
-// Fixed 4 columns per row
-const gridColumns = 4;
+// Responsive settings function
+function getResponsiveSettings() {
+    const width = window.innerWidth;
+    
+    if (width >= 1200) {
+        return { gridSpacing: 620, imageSize: 170, blurRadius: 300, gridColumns: 4 };
+    }
+    if (width >= 992) {
+        return { gridSpacing: 500, imageSize: 150, blurRadius: 250, gridColumns: 4 };
+    }
+    if (width >= 768) {
+        return { gridSpacing: 400, imageSize: 140, blurRadius: 200, gridColumns: 4 };
+    }
+    if (width >= 576) {
+        return { gridSpacing: 200, imageSize: 140, blurRadius: 150, gridColumns: 4 };
+    }
+    return { gridSpacing: 450, imageSize: 90, blurRadius: 120, gridColumns: 4 };
+}
+
+// Initialize responsive settings
+let settings = getResponsiveSettings();
+let gridSpacing = settings.gridSpacing;
+let imageSize = settings.imageSize;
+let blurRadius = settings.blurRadius;
+let gridColumns = settings.gridColumns;
+
+const maxBlur = 8;
 
 // Random position offset range (in pixels)
 const randomOffsetRange = 150;
@@ -37,20 +58,24 @@ const baseImages = Array.from(imageTemplates).map(template => {
 });
 
 const totalImages = baseImages.length;
-const gridRows = Math.ceil(totalImages / gridColumns);
+let gridRows = Math.ceil(totalImages / gridColumns);
 
-// console.log(`Grid: ${gridColumns} columns × ${gridRows} rows for ${totalImages} images`);
+// Cache window dimensions
+let windowWidth = window.innerWidth;
+let windowHeight = window.innerHeight;
+let centerX = windowWidth / 2;
+let centerY = windowHeight / 2;
 
-const bufferX = window.innerWidth * bufferPercent;
-const bufferY = window.innerHeight * bufferPercent;
+let bufferX = windowWidth * bufferPercent;
+let bufferY = windowHeight * bufferPercent;
 
-const contentWidth = (gridColumns - 1) * gridSpacing;
-const contentHeight = (gridRows - 1) * gridSpacing;
+let contentWidth = (gridColumns - 1) * gridSpacing;
+let contentHeight = (gridRows - 1) * gridSpacing;
 
-const minOffsetX = -contentWidth - bufferX;
-const maxOffsetX = bufferX;
-const minOffsetY = -contentHeight - bufferY;
-const maxOffsetY = bufferY;
+let minOffsetX = -contentWidth - bufferX;
+let maxOffsetX = bufferX;
+let minOffsetY = -contentHeight - bufferY;
+let maxOffsetY = bufferY;
 
 // Initialize offsets
 let offsetX = 0;
@@ -62,6 +87,9 @@ let velocityY = 0;
 let isDragging = false;
 let lastX, lastY;
 let images = [];
+
+// Pre-calculate blur radius scaled value to avoid repeated multiplication
+let blurRadiusScaled = blurRadius * scale;
 
 // Seeded random number generator for consistent random offsets
 function seededRandom(seed) {
@@ -107,7 +135,14 @@ function createImageElement(imageIndex, gridX, gridY) {
 }
 
 function createAllImages() {
-    images = []; // Clear existing images
+    // Clear existing images
+    images.forEach(img => {
+        if (img.element && img.element.parentNode) {
+            img.element.parentNode.removeChild(img.element);
+        }
+    });
+    images = [];
+    
     let imageIndex = 0;
 
     for (let y = 0; y < gridRows; y++) {
@@ -179,44 +214,61 @@ function clampOffset() {
 }
 
 function updateImagePositions() {
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-
-    images.forEach(img => {
+    // Pre-calculate values used in loop
+    const offsetXScaled = offsetX * scale;
+    const offsetYScaled = offsetY * scale;
+    const imageSizeScaled = imageSize * scale;
+    const imageSizeScaledHalf = imageSizeScaled / 2;
+    const blurThreshold = blurRadiusScaled;
+    
+    // Use for loop instead of forEach for better performance
+    const len = images.length;
+    for (let i = 0; i < len; i++) {
+        const img = images[i];
         const randomOffset = getRandomOffset(img.gridX, img.gridY);
 
         // Apply scale to grid positions relative to offset
         const baseX = img.gridX * gridSpacing + randomOffset.x;
         const baseY = img.gridY * gridSpacing + randomOffset.y;
         
-        const x = baseX * scale + offsetX * scale + centerX;
-        const y = baseY * scale + offsetY * scale + centerY;
+        const x = baseX * scale + offsetXScaled + centerX;
+        const y = baseY * scale + offsetYScaled + centerY;
 
-        img.element.style.left = (x - (imageSize * scale) / 2) + 'px';
-        img.element.style.top = (y - (imageSize * scale) / 2) + 'px';
+        // Batch style updates
+        const element = img.element;
+        const style = element.style;
         
-        // Apply scale transform
-        img.element.style.transform = `scale(${scale})`;
+        style.left = (x - imageSizeScaledHalf) + 'px';
+        style.top = (y - imageSizeScaledHalf) + 'px';
+        style.transform = `scale(${scale})`;
 
+        // Calculate blur distance from center (works on all devices including mobile)
         const dx = x - centerX;
         const dy = y - centerY;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         let blur = 0;
-        if (distance > blurRadius * scale) {
-            blur = Math.min(maxBlur, (distance - blurRadius * scale) / 100 * maxBlur);
+        if (distance > blurThreshold) {
+            blur = Math.min(maxBlur, (distance - blurThreshold) / 100 * maxBlur);
         }
 
-        img.element.style.filter = `blur(${blur}px)`;
-    });
+        style.filter = `blur(${blur}px)`;
+    }
 }
 
 function animate() {
     if (!isDragging) {
-        offsetX += (targetOffsetX - offsetX) * smoothness;
-        offsetY += (targetOffsetY - offsetY) * smoothness;
+        // Cache calculations
+        const diffX = targetOffsetX - offsetX;
+        const diffY = targetOffsetY - offsetY;
+        
+        offsetX += diffX * smoothness;
+        offsetY += diffY * smoothness;
 
-        if (Math.abs(velocityX) > minVelocity || Math.abs(velocityY) > minVelocity) {
+        const absVelocityX = Math.abs(velocityX);
+        const absVelocityY = Math.abs(velocityY);
+        
+        if (absVelocityX > minVelocity || absVelocityY > minVelocity) {
             targetOffsetX += velocityX;
             targetOffsetY += velocityY;
             clampOffset();
@@ -229,14 +281,18 @@ function animate() {
     }
 
     // Smooth zoom animation
-    scale += (targetScale - scale) * zoomSmoothness;
+    const scaleDiff = targetScale - scale;
+    scale += scaleDiff * zoomSmoothness;
+    
+    // Update blur radius scaled value when scale changes
+    if (scaleDiff !== 0) {
+        blurRadiusScaled = blurRadius * scale;
+    }
 
     updateImagePositions();
     requestAnimationFrame(animate);
 }
 
-// Mouse events
-// Mouse events
 // Mouse events
 let dragStartX, dragStartY;
 let hasMoved = false;
@@ -268,14 +324,15 @@ canvas.addEventListener('mousemove', (e) => {
     }
 
     // Normalize drag speed by scale to maintain consistent feel
-    targetOffsetX += deltaX / scale;
-    targetOffsetY += deltaY / scale;
+    const scaleInv = 1 / scale; // Cache division
+    targetOffsetX += deltaX * scaleInv;
+    targetOffsetY += deltaY * scaleInv;
     clampOffset();
     offsetX = targetOffsetX;
     offsetY = targetOffsetY;
 
-    velocityX = (deltaX / scale) * 0.8;
-    velocityY = (deltaY / scale) * 0.8;
+    velocityX = deltaX * scaleInv * 0.8;
+    velocityY = deltaY * scaleInv * 0.8;
 
     lastX = e.clientX;
     lastY = e.clientY;
@@ -293,9 +350,6 @@ canvas.addEventListener('mouseleave', () => {
     }
 });
 
-// Only prevent link clicks if user actually dragged
-// Only prevent link clicks if user actually dragged
-// Only prevent link clicks if user actually dragged
 // Only prevent link clicks if user actually dragged
 canvas.addEventListener('click', (e) => {
     // Search for link both up (closest) and down (querySelector)
@@ -317,20 +371,20 @@ canvas.addEventListener('click', (e) => {
     hasMoved = false;
 });
 
-
-
-
 // Touch events
 canvas.addEventListener('touchstart', (e) => {
     isDragging = true;
     const touch = e.touches[0];
     lastX = touch.clientX;
     lastY = touch.clientY;
+    dragStartX = touch.clientX;
+    dragStartY = touch.clientY;
+    hasMoved = false;
     velocityX = 0;
     velocityY = 0;
     canvas.classList.add('dragging');
     e.preventDefault();
-});
+}, { passive: false });
 
 canvas.addEventListener('touchmove', (e) => {
     if (!isDragging) return;
@@ -339,24 +393,34 @@ canvas.addEventListener('touchmove', (e) => {
     const deltaX = touch.clientX - lastX;
     const deltaY = touch.clientY - lastY;
 
+    // Check if user has moved enough to be considered a drag
+    const totalMoveX = Math.abs(touch.clientX - dragStartX);
+    const totalMoveY = Math.abs(touch.clientY - dragStartY);
+    if (totalMoveX > 5 || totalMoveY > 5) {
+        hasMoved = true;
+    }
+
     // Normalize drag speed by scale to maintain consistent feel
-    targetOffsetX += deltaX / scale;
-    targetOffsetY += deltaY / scale;
+    const scaleInv = 1 / scale; // Cache division
+    targetOffsetX += deltaX * scaleInv;
+    targetOffsetY += deltaY * scaleInv;
     clampOffset();
     offsetX = targetOffsetX;
     offsetY = targetOffsetY;
 
-    velocityX = (deltaX / scale) * 0.8;
-    velocityY = (deltaY / scale) * 0.8;
+    velocityX = deltaX * scaleInv * 0.8;
+    velocityY = deltaY * scaleInv * 0.8;
 
     lastX = touch.clientX;
     lastY = touch.clientY;
     e.preventDefault();
-});
+}, { passive: false });
 
 canvas.addEventListener('touchend', () => {
     isDragging = false;
     canvas.classList.remove('dragging');
+    // Reset hasMoved after touch ends
+    setTimeout(() => { hasMoved = false; }, 10);
 });
 
 // Wheel event for zoom
@@ -376,21 +440,74 @@ canvas.addEventListener('wheel', (e) => {
     if (oldScale === targetScale) return;
     
     // Get mouse position relative to canvas center
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
     const mouseX = e.clientX - centerX;
     const mouseY = e.clientY - centerY;
     
     // Calculate the world position under the mouse before zoom
-    const worldX = (mouseX - offsetX * oldScale) / oldScale;
-    const worldY = (mouseY - offsetY * oldScale) / oldScale;
+    const oldScaleInv = 1 / oldScale;
+    const worldX = (mouseX - offsetX * oldScale) * oldScaleInv;
+    const worldY = (mouseY - offsetY * oldScale) * oldScaleInv;
     
     // Adjust offsets so the world position under mouse stays the same
-    targetOffsetX = (mouseX - worldX * targetScale) / targetScale;
-    targetOffsetY = (mouseY - worldY * targetScale) / targetScale;
+    const targetScaleInv = 1 / targetScale;
+    targetOffsetX = (mouseX - worldX * targetScale) * targetScaleInv;
+    targetOffsetY = (mouseY - worldY * targetScale) * targetScaleInv;
     
     clampOffset();
 }, { passive: false });
+
+// Optimized resize handler with debounce and responsive updates
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        // Update responsive settings
+        const oldSettings = { ...settings };
+        settings = getResponsiveSettings();
+        gridSpacing = settings.gridSpacing;
+        imageSize = settings.imageSize;
+        blurRadius = settings.blurRadius;
+        const oldColumns = gridColumns;
+        gridColumns = settings.gridColumns;
+        
+        // Update window dimensions
+        windowWidth = window.innerWidth;
+        windowHeight = window.innerHeight;
+        centerX = windowWidth / 2;
+        centerY = windowHeight / 2;
+        
+        // Recalculate buffer and bounds
+        bufferX = windowWidth * bufferPercent;
+        bufferY = windowHeight * bufferPercent;
+        
+        gridRows = Math.ceil(totalImages / gridColumns);
+        contentWidth = (gridColumns - 1) * gridSpacing;
+        contentHeight = (gridRows - 1) * gridSpacing;
+        
+        minOffsetX = -contentWidth - bufferX;
+        maxOffsetX = bufferX;
+        minOffsetY = -contentHeight - bufferY;
+        maxOffsetY = bufferY;
+        
+        // Recalculate blur radius scaled
+        blurRadiusScaled = blurRadius * scale;
+        
+        // If columns changed, recreate the grid
+        if (oldColumns !== gridColumns) {
+            createAllImages();
+            const initialPosition = getInitialCenterPosition();
+            offsetX = initialPosition.x;
+            offsetY = initialPosition.y;
+            targetOffsetX = initialPosition.x;
+            targetOffsetY = initialPosition.y;
+        }
+        
+        // Clamp offsets to new bounds
+        clampOffset();
+        offsetX = targetOffsetX;
+        offsetY = targetOffsetY;
+    }, 150);
+});
 
 // Initialize
 createAllImages();

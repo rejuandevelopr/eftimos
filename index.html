@@ -9,10 +9,30 @@
     <meta name="description" content="Eftimos">
     <meta name="keywords" content="Eftimos">
 
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="assets/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon_io/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon_io/android-chrome-512x512.png">
+
+    <meta name="description"
+        content="An inner house where silence, craft, and the avant-garde meet. Join to receive your access key and early access to releases and updates.">
+    <meta name="keywords"
+        content="Eftimos, fashion brand, lifestyle brand, exclusive clothing, premium apparel, streetwear, minimal design, modern fashion, unisex fashion, luxury clothing, belonging, individuality">
+
+    <!-- Preload critical fonts -->
     <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="assets/fonts/Helvetica-Bold.ttf" as="font" type="font/ttf" crossorigin>
 
+    <!-- Preload critical CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- Preload initial center image for faster perceived load -->
+    <link rel="preload" href="assets/images/g-6.webp" as="image">
+
+    <!-- DNS prefetch for faster resource loading -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
 </head>
 
 <body>
@@ -21,192 +41,211 @@
 
     <canvas id="cursorCanvas"></canvas>
 
-     <!-- Grain Canvas -->
+    <!-- Grain Canvas -->
     <canvas id="grainCanvas"></canvas>
 
     <!-- Background Video -->
     <div id="video-background">
-        <video autoplay muted loop playsinline>
+        <video autoplay muted loop playsinline preload="auto">
             <source src="assets/vid/home-vid.mp4" type="video/mp4">
-            <!-- <source src="assets/videos/background.webm" type="video/webm"> -->
         </video>
     </div>
 
     <nav>
         <div class="nav-container">
             <div class="logo">
-                <img src="assets/images/logo.png" alt="Logo">
+                <img src="assets/images/logo.png" alt="Eftimos Logo" width="150" height="auto">
             </div>
-            <!-- <div class="nav-links">
-                <a href="index.html">Home</a>
-            </div> -->
         </div>
     </nav>
 
-    <div id="canvas">
-        <div class="center-marker"></div>
-    </div>
+    <div id="canvas"></div>
 
     <div id="image-templates" style="display: none;">
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-20.webp" alt="Winter">
+                <img src="assets/images/g-20.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-21.webp" alt="Winter">
+                <img src="assets/images/g-21.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-22.webp" alt="Winter">
+                <img src="assets/images/g-22.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-23.webp" alt="Winter">
+                <img src="assets/images/g-23.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-24.webp" alt="Winter">
+                <img src="assets/images/g-24.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-25.webp" alt="Winter">
+                <img src="assets/images/g-25.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-26.webp" alt="Winter">
+                <img src="assets/images/g-26.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-27.webp" alt="Winter">
+                <img src="assets/images/g-27.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page1.html" class="image-link">
-                <img src="assets/images/g-1.webp" alt="Mountain">
+                <img src="assets/images/g-1.webp" alt="Fashion Mountain Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 1</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page2.html" class="image-link">
-                <img src="assets/images/g-2.webp" alt="Nature">
+                <img src="assets/images/g-2.webp" alt="Fashion Nature Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 2</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page3.html" class="image-link">
-                <img src="assets/images/g-3.webp" alt="Forest">
+                <img src="assets/images/g-3.webp" alt="Fashion Forest Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 3</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page4.html" class="image-link">
-                <img src="assets/images/g-4.webp" alt="Sunset">
+                <img src="assets/images/g-4.webp" alt="Fashion Sunset Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 4</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page5.html" class="image-link">
-                <img src="assets/images/g-5.webp" alt="Valley">
+                <img src="assets/images/g-5.webp" alt="Fashion Valley Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 5</span>
             </a>
         </div>
         <div class="image-template initial-center">
             <a href="page-6.html" class="image-link">
-                <img src="assets/images/g-6.webp" alt="Road">
+                <!-- Don't lazy load the center image - it's visible immediately -->
+                <img src="assets/images/g-6.webp" alt="Featured Fashion Collection" width="170" height="170">
                 <span class="tooltip">Fashion image</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page7.html" class="image-link">
-                <img src="assets/images/g-7.webp" alt="Lake">
+                <img src="assets/images/g-7.webp" alt="Fashion Lake Collection" loading="lazy" width="170" height="170">
                 <span class="tooltip">Fashion image 6</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page8.html" class="image-link">
-                <img src="assets/images/g-11.webp" alt="Winter">
+                <img src="assets/images/g-11.webp" alt="Fashion Winter Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 7</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page9.html" class="image-link">
-                <img src="assets/images/g-10.webp" alt="Winter">
+                <img src="assets/images/g-10.webp" alt="Fashion Winter Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 8</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page10.html" class="image-link">
-                <img src="assets/images/g-12.webp" alt="Winter">
+                <img src="assets/images/g-12.webp" alt="Fashion Winter Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 9</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page11.html" class="image-link">
-                <img src="assets/images/g-8.webp" alt="Winter">
+                <img src="assets/images/g-8.webp" alt="Fashion Winter Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 10</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-13.webp" alt="Winter">
+                <img src="assets/images/g-13.webp" alt="Fashion Winter Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-14.avif" alt="Winter">
+                <img src="assets/images/g-14.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-15.webp" alt="Winter">
+                <img src="assets/images/g-15.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-16.webp" alt="Winter">
+                <img src="assets/images/g-16.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-17.webp" alt="Winter">
+                <img src="assets/images/g-17.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-18.webp" alt="Winter">
+                <img src="assets/images/g-18.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page12.html" class="image-link">
-                <img src="assets/images/g-19.webp" alt="Winter">
+                <img src="assets/images/g-19.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
-        
     </div>
 
+    <!-- Load scripts at the end for better performance -->
     <script src="assets/js/script.js"></script>
     <script src="assets/js/cursor-effect.js"></script>
     <script src="assets/js/grain-effect.js"></script>

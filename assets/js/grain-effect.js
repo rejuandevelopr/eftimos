@@ -125,28 +125,3 @@ window.addEventListener('pagehide', () => {
 // ========================================
 animateGrain();
 
-// ========================================
-// SMOOTH PAGE LOAD
-// ========================================
-window.addEventListener('load', () => {
-    document.body.classList.remove('unloading');
-});
-
-// Remove unloading class on page show (for back button)
-window.addEventListener('pageshow', (event) => {
-    if (event.persisted) {
-        document.body.classList.remove('unloading');
-        isAnimating = true;
-        animateGrain();
-    }
-});
-
-// Ensure video plays
-const bgVideo = document.getElementById('bgVideo');
-if (bgVideo) {
-    bgVideo.play().catch(err => console.log('Autoplay prevented:', err));
-    
-    bgVideo.addEventListener('loadeddata', () => {
-        bgVideo.play().catch(err => console.log('Video play error:', err));
-    });
-}

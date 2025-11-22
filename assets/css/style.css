@@ -69,6 +69,8 @@ nav img {
     height: auto;
     transition: filter 0.15s ease;
     pointer-events: none;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .image-container img {
@@ -77,22 +79,38 @@ nav img {
     object-fit: cover;
 }
 
-.center-marker {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 10;
+@media screen and (max-width: 1199px) {
+    .image-container {
+        width: 150px !important;
+    }
+
+    .center-marker {
+        width: 80px;
+        height: 80px;
+    }
 }
 
+@media screen and (max-width: 991px) {
+    .image-container {
+        width: 150px;
+    }
 
+    .center-marker {
+        width: 60px;
+        height: 60px;
+    }
+}
 
+@media screen and (max-width: 767px) {
+    .image-container {
+        width: 140px ;
+    }
 
-
+    .center-marker {
+        width: 30px;
+        height: 30px;
+    }
+}
 
 /* Background Video */
 #video-background {
@@ -230,19 +248,6 @@ nav {
     transform: scale(1.05);
 }
 
-
-/* Make sure image container allows pointer events */
-.image-container {
-    position: absolute;
-    width: 170px;
-    height: auto;
-    pointer-events: auto;
-    /* GPU acceleration to prevent blur flicker */
-    will-change: filter;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-}
-
 /* Disable link during drag to allow smooth dragging */
 .dragging .image-link {
     pointer-events: none;
@@ -347,8 +352,8 @@ body.unloading #video-background video {
 
 @media screen and (max-width:992px) {
     .coming-soon-container img {
-    max-width: 200px;
-}
+        max-width: 200px;
+    }
 }
 
 .content {
@@ -387,27 +392,29 @@ body.unloading #video-background video {
 }
 
 .email-input {
-  flex: 1;
-  padding: 1rem 1.5rem;
-  background: rgba(0, 0, 0, 0.4); /* translucent black */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px); /* Safari support */
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
-  font-size: 1rem;
-  outline: none;
-  letter-spacing: 0.02em;
-  transition: all 0.3s ease;
+    flex: 1;
+    padding: 1rem 1.5rem;
+    background: rgba(0, 0, 0, 0.4);
+    /* translucent black */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    /* Safari support */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 1rem;
+    outline: none;
+    letter-spacing: 0.02em;
+    transition: all 0.3s ease;
 }
 
 .email-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 /* Optional: glow or highlight when focused */
 .email-input:focus {
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
 }
 
 .submit-btn {
