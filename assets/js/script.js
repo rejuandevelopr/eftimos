@@ -270,6 +270,26 @@ function animate() {
 let dragStartX, dragStartY;
 let hasMoved = false;
 
+// Pinch-to-zoom variables for mobile
+let initialPinchDistance = 0;
+let initialPinchScale = 1;
+let isPinching = false;
+
+// Helper function to get distance between two touch points
+function getTouchDistance(touch1, touch2) {
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+// Helper function to get midpoint between two touch points
+function getTouchMidpoint(touch1, touch2) {
+    return {
+        x: (touch1.clientX + touch2.clientX) / 2,
+        y: (touch1.clientY + touch2.clientY) / 2
+    };
+}
+
 canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
     lastX = e.clientX;
@@ -337,51 +357,105 @@ canvas.addEventListener('click', (e) => {
 });
 
 canvas.addEventListener('touchstart', (e) => {
-    isDragging = true;
-    const touch = e.touches[0];
-    lastX = touch.clientX;
-    lastY = touch.clientY;
-    dragStartX = touch.clientX;
-    dragStartY = touch.clientY;
-    hasMoved = false;
-    velocityX = 0;
-    velocityY = 0;
-    canvas.classList.add('dragging');
-    e.preventDefault();
+    if (e.touches.length === 2) {
+        // Two fingers - start pinch zoom
+        isPinching = true;
+        isDragging = false;
+        
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        
+        initialPinchDistance = getTouchDistance(touch1, touch2);
+        initialPinchScale = scale;
+        
+        canvas.classList.remove('dragging');
+        e.preventDefault();
+    } else if (e.touches.length === 1 && !isPinching) {
+        // One finger - start drag
+        isDragging = true;
+        const touch = e.touches[0];
+        lastX = touch.clientX;
+        lastY = touch.clientY;
+        dragStartX = touch.clientX;
+        dragStartY = touch.clientY;
+        hasMoved = false;
+        velocityX = 0;
+        velocityY = 0;
+        canvas.classList.add('dragging');
+        e.preventDefault();
+    }
 }, { passive: false });
 
 canvas.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
+    if (isPinching && e.touches.length === 2) {
+        // Handle pinch zoom
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        
+        const currentDistance = getTouchDistance(touch1, touch2);
+        const midpoint = getTouchMidpoint(touch1, touch2);
+        
+        // Calculate new scale
+        const scaleChange = currentDistance / initialPinchDistance;
+        const oldScale = targetScale;
+        targetScale = Math.max(minScale, Math.min(maxScale, initialPinchScale * scaleChange));
+        
+        if (oldScale !== targetScale) {
+            // Adjust offset to zoom towards pinch center
+            const mouseX = midpoint.x - centerX;
+            const mouseY = midpoint.y - centerY;
+            
+            const oldScaleInv = 1 / oldScale;
+            const worldX = (mouseX - offsetX * oldScale) * oldScaleInv;
+            const worldY = (mouseY - offsetY * oldScale) * oldScaleInv;
+            
+            const targetScaleInv = 1 / targetScale;
+            targetOffsetX = (mouseX - worldX * targetScale) * targetScaleInv;
+            targetOffsetY = (mouseY - worldY * targetScale) * targetScaleInv;
+            
+            clampOffset();
+        }
+        
+        e.preventDefault();
+    } else if (isDragging && e.touches.length === 1 && !isPinching) {
+        // Handle drag with one finger
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - lastX;
+        const deltaY = touch.clientY - lastY;
 
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - lastX;
-    const deltaY = touch.clientY - lastY;
+        const totalMoveX = Math.abs(touch.clientX - dragStartX);
+        const totalMoveY = Math.abs(touch.clientY - dragStartY);
+        if (totalMoveX > 5 || totalMoveY > 5) {
+            hasMoved = true;
+        }
 
-    const totalMoveX = Math.abs(touch.clientX - dragStartX);
-    const totalMoveY = Math.abs(touch.clientY - dragStartY);
-    if (totalMoveX > 5 || totalMoveY > 5) {
-        hasMoved = true;
+        const scaleInv = 1 / scale;
+        targetOffsetX += deltaX * scaleInv;
+        targetOffsetY += deltaY * scaleInv;
+        clampOffset();
+        offsetX = targetOffsetX;
+        offsetY = targetOffsetY;
+
+        velocityX = deltaX * scaleInv * 0.8;
+        velocityY = deltaY * scaleInv * 0.8;
+
+        lastX = touch.clientX;
+        lastY = touch.clientY;
+        e.preventDefault();
     }
-
-    const scaleInv = 1 / scale;
-    targetOffsetX += deltaX * scaleInv;
-    targetOffsetY += deltaY * scaleInv;
-    clampOffset();
-    offsetX = targetOffsetX;
-    offsetY = targetOffsetY;
-
-    velocityX = deltaX * scaleInv * 0.8;
-    velocityY = deltaY * scaleInv * 0.8;
-
-    lastX = touch.clientX;
-    lastY = touch.clientY;
-    e.preventDefault();
 }, { passive: false });
 
-canvas.addEventListener('touchend', () => {
-    isDragging = false;
-    canvas.classList.remove('dragging');
-    setTimeout(() => { hasMoved = false; }, 10);
+canvas.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) {
+        isPinching = false;
+        initialPinchDistance = 0;
+    }
+    
+    if (e.touches.length === 0) {
+        isDragging = false;
+        canvas.classList.remove('dragging');
+        setTimeout(() => { hasMoved = false; }, 10);
+    }
 });
 
 canvas.addEventListener('wheel', (e) => {
