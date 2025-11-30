@@ -671,4 +671,23 @@ if (transitionData) {
     }
 }
 
+// Handle browser back button - restore position from cache
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        // Page was loaded from cache (back button used)
+        const savedData = sessionStorage.getItem('morphTransition');
+        if (savedData) {
+            const data = JSON.parse(savedData);
+            if (data.canvasOffsetX !== undefined) {
+                offsetX = data.canvasOffsetX;
+                offsetY = data.canvasOffsetY;
+                targetOffsetX = data.canvasOffsetX;
+                targetOffsetY = data.canvasOffsetY;
+                scale = data.canvasScale;
+                targetScale = data.canvasScale;
+            }
+        }
+    }
+});
+
 animate();
