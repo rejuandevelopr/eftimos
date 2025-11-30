@@ -16,7 +16,13 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    cursor: none !important;
+}
+
+/* Hide default cursor only on desktop */
+@media (min-width: 1025px) and (hover: hover) and (pointer: fine) {
+    * {
+        cursor: none !important;
+    }
 }
 
 body {

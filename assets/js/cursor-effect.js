@@ -1,12 +1,26 @@
-// Cursor container
-const cursorContainer = document.createElement('div');
-cursorContainer.id = 'customCursor';
-document.body.appendChild(cursorContainer);
+// Detect if device is mobile/tablet
+function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+    || window.innerWidth <= 1024 
+    || ('ontouchstart' in window);
+}
 
-// Create center dot
-const centerDot = document.createElement('div');
-centerDot.className = 'cursor-center-dot';
-cursorContainer.appendChild(centerDot);
+// Exit early if mobile device - don't create cursor
+if (isMobileDevice()) {
+  console.log('Mobile device detected - custom cursor disabled');
+  // Do nothing on mobile
+} else {
+  // Desktop only - create custom cursor
+  
+  // Cursor container
+  const cursorContainer = document.createElement('div');
+  cursorContainer.id = 'customCursor';
+  document.body.appendChild(cursorContainer);
+
+  // Create center dot
+  const centerDot = document.createElement('div');
+  centerDot.className = 'cursor-center-dot';
+  cursorContainer.appendChild(centerDot);
 
 const particles = [];
 const particleCount = 40;
@@ -141,5 +155,6 @@ window.addEventListener("mouseup", () => {
   hasDragged = false;
 });
 
-// Start animation
-animateCursor();
+  // Start animation
+  animateCursor();
+} // End of desktop-only code
