@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,7 +16,7 @@
         content="An inner house where silence, craft, and the avant-garde meet. Join to receive your access key and early access to releases and updates.">
     <meta name="keywords"
         content="Eftimos, fashion brand, lifestyle brand, exclusive clothing, premium apparel, streetwear, minimal design, modern fashion, unisex fashion, luxury clothing, belonging, individuality">
-    
+
     <!-- Preload critical fonts -->
     <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="assets/fonts/Helvetica-Bold.ttf" as="font" type="font/ttf" crossorigin>
@@ -28,11 +29,11 @@
 
     <script>
         // Set hero background before page renders (only on forward navigation)
-        (function() {
+        (function () {
             // Check if this is a back/forward navigation
             const perfEntries = performance.getEntriesByType('navigation');
             const isBackNavigation = perfEntries.length > 0 && perfEntries[0].type === 'back_forward';
-            
+
             // Only set background on fresh navigation, NOT on back button
             if (!isBackNavigation) {
                 const transitionData = sessionStorage.getItem('morphTransition');
@@ -47,13 +48,14 @@
         })();
     </script>
 </head>
+
 <body>
 
-    
+
 
     <!-- Grain Canvas -->
     <canvas id="grainCanvas"></canvas>
-    
+
     <nav>
         <div class="nav-container">
             <a href=""></a>
@@ -76,15 +78,15 @@
         <section class="grid-view">
             <div class="container-fluid">
                 <div class="grid-view-content">
-                  <div class="item">
-                    <img src="assets/images/g-11.webp" alt="">
-                  </div>
-                  <div class="item">
-                    <img src="assets/images/g-12.webp" alt="">
-                  </div>
-                  <div class="item">
-                    <img src="assets/images/g-16.avif" alt="">
-                  </div>
+                    <div class="item">
+                        <img src="assets/images/g-11.webp" alt="">
+                    </div>
+                    <div class="item">
+                        <img src="assets/images/g-12.webp" alt="">
+                    </div>
+                    <div class="item">
+                        <img src="assets/images/g-16.avif" alt="">
+                    </div>
                 </div>
             </div>
         </section>
@@ -94,7 +96,12 @@
     <script src="assets/js/script.js"></script>
     <script src="assets/js/cursor-effect.js"></script>
     <script src="assets/js/grain-effect.js"></script>
-    
-    
+
+    <script>
+        window.addEventListener('popstate', function () {
+            window.location.href = 'index.html';
+        });
+    </script>
 </body>
+
 </html>
