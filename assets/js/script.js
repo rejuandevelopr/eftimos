@@ -671,12 +671,14 @@ if (transitionData) {
     }
 }
 
-// Handle browser back button - restore position from cache
+animate();
+
+// Handle browser back button - CRITICAL for Vercel/production
 window.addEventListener('pageshow', function(event) {
-    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-        // Page was loaded from cache (back button used)
+    // Check if page was loaded from cache (back/forward button)
+    if (event.persisted) {
         const savedData = sessionStorage.getItem('morphTransition');
-        if (savedData) {
+        if (savedData && canvas) {
             const data = JSON.parse(savedData);
             if (data.canvasOffsetX !== undefined) {
                 offsetX = data.canvasOffsetX;
@@ -685,9 +687,26 @@ window.addEventListener('pageshow', function(event) {
                 targetOffsetY = data.canvasOffsetY;
                 scale = data.canvasScale;
                 targetScale = data.canvasScale;
+                // Force immediate update
+                updateImagePositions();
             }
         }
     }
 });
 
-animate();
+// Also handle popstate for additional browser back button support
+window.addEventListener('popstate', function() {
+    const savedData = sessionStorage.getItem('morphTransition');
+    if (savedData && canvas) {
+        const data = JSON.parse(savedData);
+        if (data.canvasOffsetX !== undefined) {
+            offsetX = data.canvasOffsetX;
+            offsetY = data.canvasOffsetY;
+            targetOffsetX = data.canvasOffsetX;
+            targetOffsetY = data.canvasOffsetY;
+            scale = data.canvasScale;
+            targetScale = data.canvasScale;
+            updateImagePositions();
+        }
+    }
+});
