@@ -374,7 +374,11 @@ function createMorphTransition(originalImg, targetUrl) {
         startY: rect.top,
         startWidth: rect.width,
         startHeight: rect.height,
-        targetUrl: targetUrl
+        targetUrl: targetUrl,
+        // Store canvas position to restore later
+        canvasOffsetX: offsetX,
+        canvasOffsetY: offsetY,
+        canvasScale: scale
     };
     
     sessionStorage.setItem('morphTransition', JSON.stringify(transitionData));
@@ -419,7 +423,7 @@ function initializeMorphEntry() {
     
     if (transitionData) {
         const data = JSON.parse(transitionData);
-        // Don't remove transition data - keep it for reverse morph
+        sessionStorage.removeItem('morphTransition');
         
         const heroSection = document.querySelector('.hero');
         if (heroSection) {
@@ -468,75 +472,6 @@ function animateHeroEntry(heroSection, data) {
 if (document.querySelector('.hero')) {
     document.addEventListener('DOMContentLoaded', initializeMorphEntry);
 }
-
-// ========================================
-// 🔙 REVERSE MORPH EFFECT (Back Button)
-// ========================================
-function setupBackButtonMorph() {
-    // Get all back navigation links (logo and any back buttons)
-    const backLinks = document.querySelectorAll('a[href="index.html"], .logo');
-    
-    backLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            const transitionData = sessionStorage.getItem('morphTransition');
-            
-            // Only apply reverse morph if we have transition data
-            if (transitionData) {
-                e.preventDefault();
-                
-                const data = JSON.parse(transitionData);
-                const heroSection = document.querySelector('.hero');
-                
-                if (heroSection) {
-                    createReverseMorph(heroSection, data);
-                } else {
-                    // If no hero section, just navigate normally
-                    window.location.href = link.getAttribute('href');
-                }
-            }
-        });
-    });
-}
-
-function createReverseMorph(heroSection, data) {
-    // Create fullscreen overlay from hero image
-    const overlay = document.createElement('div');
-    overlay.style.position = 'fixed';
-    overlay.style.left = '0px';
-    overlay.style.top = '0px';
-    overlay.style.width = '100vw';
-    overlay.style.height = '100vh';
-    overlay.style.backgroundImage = `url(${data.imageSrc})`;
-    overlay.style.backgroundSize = 'contain';
-    overlay.style.backgroundPosition = 'center';
-    overlay.style.zIndex = '99999';
-    overlay.style.transition = 'none';
-    
-    document.body.appendChild(overlay);
-    
-    // Hide all content except overlay
-    document.body.classList.add('morphing');
-    
-    // Animate back to original position
-    requestAnimationFrame(() => {
-        overlay.style.transition = 'all 0.8s cubic-bezier(0.76, 0, 0.24, 1)';
-        overlay.style.left = data.startX + 'px';
-        overlay.style.top = data.startY + 'px';
-        overlay.style.width = data.startWidth + 'px';
-        overlay.style.height = data.startHeight + 'px';
-    });
-    
-    // Navigate back after animation
-    setTimeout(() => {
-        window.location.href = 'index.html';
-    }, 800);
-}
-
-// Initialize reverse morph if on clothes-view page
-if (document.querySelector('.hero')) {
-    setupBackButtonMorph();
-}
-
 // ========================================
 // END OF MORPH TRANSITION CODE
 // ========================================
@@ -721,5 +656,19 @@ offsetX = initialPosition.x;
 offsetY = initialPosition.y;
 targetOffsetX = initialPosition.x;
 targetOffsetY = initialPosition.y;
+
+// Restore canvas position if returning from clothes-view page
+const transitionData = sessionStorage.getItem('morphTransition');
+if (transitionData) {
+    const data = JSON.parse(transitionData);
+    if (data.canvasOffsetX !== undefined) {
+        offsetX = data.canvasOffsetX;
+        offsetY = data.canvasOffsetY;
+        targetOffsetX = data.canvasOffsetX;
+        targetOffsetY = data.canvasOffsetY;
+        scale = data.canvasScale;
+        targetScale = data.canvasScale;
+    }
+}
 
 animate();
