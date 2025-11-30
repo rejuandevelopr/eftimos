@@ -572,6 +572,27 @@ canvas.addEventListener('touchend', (e) => {
     }
     
     if (e.touches.length === 0) {
+        // Check if this was a tap (not a drag) on mobile
+        if (!hasMoved && e.changedTouches && e.changedTouches.length > 0) {
+            const touch = e.changedTouches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            if (element) {
+                const link = element.closest('.image-link');
+                
+                if (link) {
+                    // This was a tap on an image link - trigger navigation
+                    e.preventDefault();
+                    const img = link.querySelector('img');
+                    const targetUrl = link.getAttribute('href');
+                    
+                    if (img && targetUrl) {
+                        createMorphTransition(img, targetUrl);
+                    }
+                }
+            }
+        }
+        
         isDragging = false;
         canvas.classList.remove('dragging');
         setTimeout(() => { hasMoved = false; }, 10);

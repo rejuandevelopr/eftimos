@@ -32,6 +32,10 @@ body {
     font-family: 'Helvetica', sans-serif;
 }
 
+.canvas-body {
+    overflow: hidden;
+}
+
 .container {
     max-width: 1440px;
     padding-left: 24px;
