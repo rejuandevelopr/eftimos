@@ -1,18 +1,18 @@
-const cursorCanvas = document.getElementById("cursorCanvas");
-const cursorCtx = cursorCanvas.getContext("2d");
+// Cursor container
+const cursorContainer = document.createElement('div');
+cursorContainer.id = 'customCursor';
+document.body.appendChild(cursorContainer);
 
-let cursorWidth = window.innerWidth;
-let cursorHeight = window.innerHeight;
-cursorCanvas.width = cursorWidth;
-cursorCanvas.height = cursorHeight;
+// Create center dot
+const centerDot = document.createElement('div');
+centerDot.className = 'cursor-center-dot';
+cursorContainer.appendChild(centerDot);
 
 const particles = [];
 const particleCount = 40;
 
-// Will be set to actual mouse position immediately
-let mouse = { x: 0, y: 0 };
-let smoothPos = { x: 0, y: 0 };
-let cursorInitialized = false;
+let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+let smoothPos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
 let clickBurst = false;
 let burstTimer = 0;
@@ -22,7 +22,10 @@ let hasDragged = false;
 class Particle {
   constructor(index) {
     this.index = index;
-    this.size = 1;
+    this.element = document.createElement('div');
+    this.element.className = 'cursor-particle';
+    cursorContainer.appendChild(this.element);
+
     this.speedX = 0;
     this.speedY = 0;
     this.burstSpeed = Math.random() * 4 + 1;
@@ -37,8 +40,6 @@ class Particle {
     this.y = mouse.y;
     this.targetX = mouse.x;
     this.targetY = mouse.y;
-    this.shapeTargetX = mouse.x;
-    this.shapeTargetY = mouse.y;
   }
 
   update() {
@@ -47,6 +48,7 @@ class Particle {
       this.x += Math.cos(this.morphAngle) * this.burstSpeed;
       this.y += Math.sin(this.morphAngle) * this.burstSpeed;
       this.burstSpeed *= 0.9;
+      this.draw();
       return;
     }
 
@@ -69,37 +71,33 @@ class Particle {
     this.speedY *= 0.7;
     this.x += this.speedX;
     this.y += this.speedY;
+
+    this.draw();
   }
 
   draw() {
-    cursorCtx.globalCompositeOperation = 'difference';
-    cursorCtx.fillStyle = "#0a0a0a";
-    cursorCtx.beginPath();
-    cursorCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    cursorCtx.fill();
-    cursorCtx.globalCompositeOperation = 'source-over';
+    this.element.style.left = this.x + 'px';
+    this.element.style.top = this.y + 'px';
   }
 }
 
-function animateCursor() {
-  cursorCtx.clearRect(0, 0, cursorWidth, cursorHeight);
+// Initialize particles
+for (let i = 0; i < particleCount; i++) {
+  particles.push(new Particle(i));
+}
 
+function animateCursor() {
   const delayFactor = 0.1;
   smoothPos.x += (mouse.x - smoothPos.x) * delayFactor;
   smoothPos.y += (mouse.y - smoothPos.y) * delayFactor;
 
+  // Update center dot position
+  centerDot.style.left = smoothPos.x + 'px';
+  centerDot.style.top = smoothPos.y + 'px';
+
   particles.forEach(p => {
     p.update();
-    p.draw();
   });
-
-  // Draw center dot
-  cursorCtx.globalCompositeOperation = 'difference';
-  cursorCtx.fillStyle = "#0a0a0a";
-  cursorCtx.beginPath();
-  cursorCtx.arc(smoothPos.x, smoothPos.y, 6, 0, Math.PI * 2);
-  cursorCtx.fill();
-  cursorCtx.globalCompositeOperation = 'source-over';
 
   // Handle burst timer
   if (clickBurst && burstTimer > 0) {
@@ -110,30 +108,10 @@ function animateCursor() {
   requestAnimationFrame(animateCursor);
 }
 
-// Capture mouse position IMMEDIATELY when the script loads
-document.addEventListener("mousemove", function initMousePosition(e) {
-  if (!cursorInitialized) {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-    smoothPos.x = e.clientX;
-    smoothPos.y = e.clientY;
-    
-    // Initialize particles at current mouse position
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle(i));
-    }
-    
-    cursorInitialized = true;
-    
-    // Start animation after initialization
-    animateCursor();
-  }
-}, { once: false });
-
 // Track mouse movement
 window.addEventListener("mousemove", e => {
-  mouse.x = e.clientX;
-  mouse.y = e.clientY;
+  mouse.x = e.pageX;  // Use pageX instead of clientX to account for scroll
+  mouse.y = e.pageY;  // Use pageY instead of clientY to account for scroll
   
   // If mouse is down and moving, it's a drag
   if (isMouseDown) {
@@ -163,10 +141,5 @@ window.addEventListener("mouseup", () => {
   hasDragged = false;
 });
 
-// Resize handler
-window.addEventListener("resize", () => {
-  cursorWidth = window.innerWidth;
-  cursorHeight = window.innerHeight;
-  cursorCanvas.width = cursorWidth;
-  cursorCanvas.height = cursorHeight;
-});
+// Start animation
+animateCursor();

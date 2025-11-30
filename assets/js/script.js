@@ -250,39 +250,33 @@ function animate() {
             clampOffset();
             velocityX *= friction;
             velocityY *= friction;
-        } else {
-            velocityX = 0;
-            velocityY = 0;
         }
     }
 
-    const scaleDiff = targetScale - scale;
-    scale += scaleDiff * zoomSmoothness;
-    
-    if (scaleDiff !== 0) {
-        blurRadiusScaled = blurRadius * scale;
-    }
+    const diffScale = targetScale - scale;
+    scale += diffScale * zoomSmoothness;
+
+    blurRadiusScaled = blurRadius * scale;
 
     updateImagePositions();
+
     requestAnimationFrame(animate);
 }
 
-let dragStartX, dragStartY;
+let dragStartX = 0;
+let dragStartY = 0;
 let hasMoved = false;
 
-// Pinch-to-zoom variables for mobile
+let isPinching = false;
 let initialPinchDistance = 0;
 let initialPinchScale = 1;
-let isPinching = false;
 
-// Helper function to get distance between two touch points
 function getTouchDistance(touch1, touch2) {
     const dx = touch2.clientX - touch1.clientX;
     const dy = touch2.clientY - touch1.clientY;
     return Math.sqrt(dx * dx + dy * dy);
 }
 
-// Helper function to get midpoint between two touch points
 function getTouchMidpoint(touch1, touch2) {
     return {
         x: (touch1.clientX + touch2.clientX) / 2,
@@ -340,6 +334,9 @@ canvas.addEventListener('mouseleave', () => {
     }
 });
 
+// ========================================
+// 🎬 MORPH TRANSITION EFFECT - NEW CODE
+// ========================================
 canvas.addEventListener('click', (e) => {
     let link = e.target.closest('.image-link');
     if (!link && e.target.classList.contains('image-container')) {
@@ -350,11 +347,130 @@ canvas.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
     } else if (link && !hasMoved) {
-        window.location.href = link.href;
+        // Prevent default navigation
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Trigger morph transition
+        const img = link.querySelector('img');
+        const targetUrl = link.getAttribute('href');
+        
+        if (img && targetUrl) {
+            createMorphTransition(img, targetUrl);
+        }
     }
     
     hasMoved = false;
 });
+
+function createMorphTransition(originalImg, targetUrl) {
+    // Get the image's current position on screen
+    const rect = originalImg.getBoundingClientRect();
+    
+    // Store transition data for the next page
+    const transitionData = {
+        imageSrc: originalImg.src,
+        startX: rect.left,
+        startY: rect.top,
+        startWidth: rect.width,
+        startHeight: rect.height,
+        targetUrl: targetUrl
+    };
+    
+    sessionStorage.setItem('morphTransition', JSON.stringify(transitionData));
+    
+    // Create a clone that will morph
+    const clone = originalImg.cloneNode(true);
+    clone.style.position = 'fixed';
+    clone.style.left = rect.left + 'px';
+    clone.style.top = rect.top + 'px';
+    clone.style.width = rect.width + 'px';
+    clone.style.height = rect.height + 'px';
+    clone.style.zIndex = '99999';
+    clone.style.objectFit = 'contain';
+    clone.style.pointerEvents = 'none';
+    clone.style.transition = 'none';
+    
+    document.body.appendChild(clone);
+    
+    // Fade out other content
+    document.body.classList.add('morphing');
+    
+    // Trigger the morph animation
+    requestAnimationFrame(() => {
+        clone.style.transition = 'all 0.8s cubic-bezier(0.76, 0, 0.24, 1)';
+        clone.style.left = '0px';
+        clone.style.top = '0px';
+        clone.style.width = '100vw';
+        clone.style.height = '100vh';
+    });
+    
+    // Navigate to the target page after animation
+    setTimeout(() => {
+        window.location.href = targetUrl;
+    }, 800);
+}
+
+// ========================================
+// 🎬 MORPH ENTRY ANIMATION (for clothes-view page)
+// ========================================
+function initializeMorphEntry() {
+    const transitionData = sessionStorage.getItem('morphTransition');
+    
+    if (transitionData) {
+        const data = JSON.parse(transitionData);
+        sessionStorage.removeItem('morphTransition');
+        
+        const heroSection = document.querySelector('.hero');
+        if (heroSection) {
+            animateHeroEntry(heroSection, data);
+        }
+    }
+}
+
+function animateHeroEntry(heroSection, data) {
+    // Create overlay that starts from the original position
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.left = data.startX + 'px';
+    overlay.style.top = data.startY + 'px';
+    overlay.style.width = data.startWidth + 'px';
+    overlay.style.height = data.startHeight + 'px';
+    overlay.style.backgroundImage = `url(${data.imageSrc})`;
+    overlay.style.backgroundSize = 'contain';
+    overlay.style.backgroundPosition = 'center';
+    overlay.style.zIndex = '99999';
+    overlay.style.transition = 'none';
+    
+    document.body.appendChild(overlay);
+    
+    // Hide hero initially
+    heroSection.style.opacity = '0';
+    
+    // Animate overlay to full screen
+    requestAnimationFrame(() => {
+        overlay.style.transition = 'all 0.8s cubic-bezier(0.76, 0, 0.24, 1)';
+        overlay.style.left = '0px';
+        overlay.style.top = '0px';
+        overlay.style.width = '100vw';
+        overlay.style.height = '100vh';
+    });
+    
+    // Remove overlay and reveal hero
+    setTimeout(() => {
+        heroSection.style.transition = 'opacity 0.3s ease';
+        heroSection.style.opacity = '1';
+        overlay.remove();
+    }, 800);
+}
+
+// Initialize morph entry if on clothes-view page
+if (document.querySelector('.hero')) {
+    document.addEventListener('DOMContentLoaded', initializeMorphEntry);
+}
+// ========================================
+// END OF MORPH TRANSITION CODE
+// ========================================
 
 canvas.addEventListener('touchstart', (e) => {
     if (e.touches.length === 2) {

@@ -20,10 +20,21 @@
 }
 
 body {
-    overflow: hidden;
+   overflow-x: hidden;
     background: #F0F0F0;
     position: relative;
     font-family: 'Helvetica', sans-serif;
+}
+
+.container {
+    max-width: 1440px;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.container-fluid {
+    padding-left: 24px;
+    padding-right: 24px;
 }
 
 h1 {
@@ -34,14 +45,39 @@ h1 {
 }
 
 /* Cursor Canvas for Particle Effect */
-#cursorCanvas {
-    position: fixed;
+/* Custom Cursor Container */
+#customCursor {
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
     z-index: 9999;
+}
+
+/* Cursor Particles */
+.cursor-particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background-color: #0a0a0a;
+    border-radius: 50%;
+    mix-blend-mode: difference;
+    will-change: left, top;
+    transform: translate(-50%, -50%);
+}
+
+/* Center Dot */
+.cursor-center-dot {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: #0a0a0a;
+    border-radius: 50%;
+    mix-blend-mode: difference;
+    transform: translate(-50%, -50%);
+    will-change: left, top;
 }
 
 nav {
@@ -68,7 +104,7 @@ nav img {
     width: 170px;
     height: auto;
     transition: filter 0.15s ease;
-    pointer-events: none;
+    pointer-events: auto;
     transform: translateZ(0);
     backface-visibility: hidden;
 }
@@ -153,7 +189,7 @@ nav {
     margin: 0 auto;
     padding: 0 40px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
 }
 
@@ -181,6 +217,10 @@ nav {
     opacity: 0.7;
 }
 
+.shop-btn img {
+    height: 24px;
+    width: 24px;
+}
 /* Responsive */
 @media (max-width: 768px) {
     .nav-container {
@@ -333,6 +373,14 @@ body.unloading #transitionOverlay {
 
 body.unloading #video-background video {
     filter: brightness(0) blur(10px);
+}
+
+/* Morph Transition Styles */
+body.morphing #canvas,
+body.morphing nav,
+body.morphing #grainCanvas {
+    opacity: 0;
+    transition: opacity 0.5s ease;
 }
 
 /* Landing Page */
@@ -500,4 +548,74 @@ body.unloading #video-background video {
     transform: translateZ(0);
     backface-visibility: hidden;
     perspective: 1000px;
+}
+
+
+
+/* Grid  */
+.hero {
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    min-height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero h1 {
+    font-size: 12rem;
+    position: relative;
+    z-index: 2;
+    text-shadow: 2px 2px 20px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 6rem;
+    }
+}
+
+.grid-view-content {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 34px;
+    margin-top: 34px;
+}
+
+.item {
+    height: 750px; /* you can change this */
+    overflow: hidden;
+}
+
+.item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* makes image fill box while keeping look nice */
+}
+
+/* 768px */
+@media (max-width: 768px) {
+    .grid-view-content {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .item {
+        height: 500px;
+    }
+}
+
+/* 576px */
+@media (max-width: 576px) {
+    .grid-view-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .item {
+        height: 400px;
+    }
 }

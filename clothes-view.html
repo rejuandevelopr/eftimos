@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eftimos</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="assets/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon_io/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon_io/android-chrome-512x512.png">
+
+    <meta name="description"
+        content="An inner house where silence, craft, and the avant-garde meet. Join to receive your access key and early access to releases and updates.">
+    <meta name="keywords"
+        content="Eftimos, fashion brand, lifestyle brand, exclusive clothing, premium apparel, streetwear, minimal design, modern fashion, unisex fashion, luxury clothing, belonging, individuality">
+    
+    <!-- Preload critical fonts -->
+    <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="assets/fonts/Helvetica-Bold.ttf" as="font" type="font/ttf" crossorigin>
+
+    <!-- Preload critical CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- DNS prefetch for faster resource loading -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+
+    <script>
+        // Set hero background before page renders
+        (function() {
+            const transitionData = sessionStorage.getItem('morphTransition');
+            if (transitionData) {
+                const data = JSON.parse(transitionData);
+                // Add inline style to set background immediately
+                const style = document.createElement('style');
+                style.textContent = `.hero { background-image: url('${data.imageSrc}') !important; }`;
+                document.head.appendChild(style);
+            }
+        })();
+    </script>
+</head>
+<body>
+
+    <!-- Transition Overlay -->
+    <div id="transitionOverlay"></div>
+
+    <!-- Grain Canvas -->
+    <canvas id="grainCanvas"></canvas>
+    
+    <nav>
+        <div class="nav-container">
+            <a href=""></a>
+            <a href="index.html" class="logo">
+                <img src="assets/images/logo.png" alt="Eftimos Logo" width="150" height="auto">
+            </a>
+            <a href="#" class="shop-btn">
+                <img src="assets/images/shopping-bag.png" alt="">
+            </a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero" id="heroSection" style="background-image: url(assets/images/g-11.webp);">
+            <div class="container">
+                <h1>AW20</h1>
+            </div>
+        </section>
+
+        <section class="grid-view">
+            <div class="container-fluid">
+                <div class="grid-view-content">
+                  <div class="item">
+                    <img src="assets/images/g-11.webp" alt="">
+                  </div>
+                  <div class="item">
+                    <img src="assets/images/g-12.webp" alt="">
+                  </div>
+                  <div class="item">
+                    <img src="assets/images/g-16.avif" alt="">
+                  </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Load scripts at the end for better performance -->
+    <script src="assets/js/script.js"></script>
+    <script src="assets/js/cursor-effect.js"></script>
+    <script src="assets/js/grain-effect.js"></script>
+</body>
+</html>
