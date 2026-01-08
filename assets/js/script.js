@@ -41,12 +41,20 @@ const zoomSpeed = 0.1;
 const zoomSmoothness = 0.15;
 
 const imageTemplates = document.querySelectorAll('#image-templates .image-template');
+// Build baseImages defensively: support image and video templates
 const baseImages = Array.from(imageTemplates).map(template => {
     const img = template.querySelector('img');
-    return {
-        src: img.src,
-        alt: img.alt
-    };
+    if (img) {
+        return { type: 'image', src: img.src || '', alt: img.alt || '' };
+    }
+    const vid = template.querySelector('video');
+    if (vid) {
+        // try to get source from <source> or from video.src
+        const sourceEl = vid.querySelector('source');
+        const src = (sourceEl && sourceEl.src) ? sourceEl.src : (vid.currentSrc || vid.src || '');
+        return { type: 'video', src: src, alt: '' };
+    }
+    return { type: 'unknown', src: '', alt: '' };
 });
 
 const totalImages = baseImages.length;
@@ -79,6 +87,33 @@ let lastX, lastY;
 let images = [];
 
 let blurRadiusScaled = blurRadius * scale;
+
+// Radial blur effect around focused element
+let focusedElementPos = null;
+let focusedElementRadius = 200; // Radius around element where blur is reduced
+
+window.addEventListener('elementFocused', (e) => {
+    focusedElementPos = e.detail;
+});
+
+window.addEventListener('elementUnfocused', () => {
+    focusedElementPos = null;
+
+// Background video opacity on focus
+const videosBackground = document.getElementById('videos-background');
+
+window.addEventListener('elementFocused', () => {
+    if (videosBackground) {
+        videosBackground.classList.add('focused-active');
+    }
+});
+
+window.addEventListener('elementUnfocused', () => {
+    if (videosBackground) {
+        videosBackground.classList.remove('focused-active');
+    }
+});
+});
 
 function seededRandom(seed) {
     const x = Math.sin(seed) * 10000;
@@ -228,6 +263,21 @@ function updateImagePositions() {
         if (distance > blurThreshold) {
             blur = Math.min(maxBlur, (distance - blurThreshold) / 100 * maxBlur);
         }
+        
+        // Apply radial blur reduction around focused element
+        if (focusedElementPos) {
+            const distToFocused = Math.sqrt(
+                Math.pow(x - focusedElementPos.x, 2) + 
+                Math.pow(y - focusedElementPos.y, 2)
+            );
+            
+            // If within focused radius, reduce blur based on proximity
+            if (distToFocused < focusedElementRadius) {
+                // Calculate reduction factor (1 = no blur, 0 = full blur)
+                const reductionFactor = 1 - (distToFocused / focusedElementRadius);
+                blur = blur * 0// (1 - reductionFactor * 0.8); // Reduce up to 80% of blur
+            }
+        }
 
         style.filter = `blur(${blur}px)`;
     }
@@ -335,14 +385,31 @@ canvas.addEventListener('mouseleave', () => {
 });
 
 // ========================================
-// 🎬 MORPH TRANSITION EFFECT - NEW CODE
+// 🎬 MORPH TRANSITION + CINEMA MODE
 // ========================================
 canvas.addEventListener('click', (e) => {
+    // Detect image links (navigate) and inline video links (open cinema mode)
     let link = e.target.closest('.image-link');
     if (!link && e.target.classList.contains('image-container')) {
         link = e.target.querySelector('.image-link');
     }
-    
+
+    let videoLink = e.target.closest('.video-link');
+    if (!videoLink && e.target.classList.contains('image-container')) {
+        videoLink = e.target.querySelector('.video-link');
+    }
+
+    // If clicked a video tile (and it wasn't a drag), open Cinema Mode
+    if (videoLink && !hasMoved) {
+        e.preventDefault();
+        e.stopPropagation();
+        const vid = videoLink.querySelector('video');
+        if (vid) createCinemaMode(vid);
+        hasMoved = false;
+        return;
+    }
+
+    // Existing image link click -> morph transition
     if (link && hasMoved) {
         e.preventDefault();
         e.stopPropagation();
@@ -350,16 +417,16 @@ canvas.addEventListener('click', (e) => {
         // Prevent default navigation
         e.preventDefault();
         e.stopPropagation();
-        
+
         // Trigger morph transition
         const img = link.querySelector('img');
         const targetUrl = link.getAttribute('href');
-        
+
         if (img && targetUrl) {
             createMorphTransition(img, targetUrl);
         }
     }
-    
+
     hasMoved = false;
 });
 
@@ -400,7 +467,27 @@ function createMorphTransition(originalImg, targetUrl) {
     // Fade out other content
     document.body.classList.add('morphing');
     
-    // Trigger the morph animation
+    // Create and fade in a dark dim overlay immediately so background darkens
+    let dim = document.getElementById('dimOverlay');
+    if (!dim) {
+        dim = document.createElement('div');
+        dim.id = 'dimOverlay';
+        document.body.appendChild(dim);
+    }
+    dim.style.position = 'fixed';
+    dim.style.inset = '0';
+    dim.style.background = 'rgba(0,0,0,1)';
+    dim.style.opacity = '0';
+    dim.style.pointerEvents = 'none';
+    dim.style.transition = 'opacity 0.28s ease';
+    dim.style.zIndex = '99998';
+
+    // Fade dim overlay in to darken everything except the cloned image
+    requestAnimationFrame(() => {
+        dim.style.opacity = '0.65';
+    });
+
+    // Trigger the morph animation of the clone
     requestAnimationFrame(() => {
         clone.style.transition = 'all 0.8s cubic-bezier(0.76, 0, 0.24, 1)';
         clone.style.left = '0px';
@@ -408,11 +495,191 @@ function createMorphTransition(originalImg, targetUrl) {
         clone.style.width = '100vw';
         clone.style.height = '100vh';
     });
-    
-    // Navigate to the target page after animation
+
+    // Prepare white overlay but DO NOT start fade until clone transition finishes
+    let overlay = document.getElementById('transitionOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'transitionOverlay';
+        document.body.appendChild(overlay);
+    }
+    overlay.style.zIndex = '100000';
+    overlay.style.pointerEvents = 'none';
+    overlay.style.transition = 'opacity 0.45s ease';
+    overlay.style.opacity = '0';
+
+    const overlayFadeDuration = 450; // ms, should match CSS
+
+    let cloneDone = false;
+    let soundDone = false;
+    let overlayStarted = false;
+
+    function startOverlayFade() {
+        if (overlayStarted) return;
+        overlayStarted = true;
+        requestAnimationFrame(() => {
+            overlay.style.opacity = '1';
+        });
+    }
+
+    // When both clone animation and sound have completed, navigate after overlay fade completes
+    function tryNavigateAfterReady() {
+        if (!overlayStarted) return; // wait until overlay becomes visible
+        // wait for overlay fade to finish then navigate
+        setTimeout(() => {
+            window.location.href = targetUrl;
+        }, overlayFadeDuration);
+    }
+
+    // Listen for clone transition end to start overlay fade
+    const onCloneTransitionEnd = () => {
+        cloneDone = true;
+        startOverlayFade();
+        // If sound already finished, navigate after overlay completes
+        if (soundDone) tryNavigateAfterReady();
+    };
+    clone.addEventListener('transitionend', onCloneTransitionEnd, { once: true });
+
+    // Safety: if transitionend doesn't fire within expected time, force overlay start
     setTimeout(() => {
-        window.location.href = targetUrl;
-    }, 800);
+        if (!cloneDone) {
+            cloneDone = true;
+            startOverlayFade();
+        }
+    }, 1200);
+
+    // Play locked-in sound (if available) and wait for it to finish before final navigation
+    const locked = document.getElementById('lockedInSound');
+    if (locked) {
+        const playPromise = (function() {
+            try {
+                locked.currentTime = 0;
+                return locked.play();
+            } catch (e) {
+                return Promise.reject(e);
+            }
+        })();
+
+        playPromise.then(() => {
+            const onEnded = () => {
+                soundDone = true;
+                // Only navigate after overlay has started and finished
+                if (overlayStarted) {
+                    tryNavigateAfterReady();
+                } else if (cloneDone) {
+                    // If clone already done but overlay not started for some reason, start it
+                    startOverlayFade();
+                    tryNavigateAfterReady();
+                } else {
+                    // Wait for clone to finish; overlay will start then and navigation will follow
+                }
+            };
+            locked.addEventListener('ended', onEnded, { once: true });
+
+            // Safety: max wait for ended
+            setTimeout(() => {
+                if (!soundDone) {
+                    soundDone = true;
+                    if (cloneDone) {
+                        startOverlayFade();
+                        tryNavigateAfterReady();
+                    }
+                }
+            }, Math.max(15000, (locked.duration || 0) * 1000 + 2000));
+        }).catch(() => {
+            // Playback failed; treat as soundDone and proceed when clone done
+            soundDone = true;
+            if (cloneDone) {
+                startOverlayFade();
+                tryNavigateAfterReady();
+            }
+        });
+    } else {
+        // No sound -> navigate after clone completes and overlay fades
+        // onCloneTransitionEnd will start overlay and call tryNavigateAfterReady
+    }
+}
+
+// Create Cinema Mode for inline video tiles
+function createCinemaMode(originalVideo) {
+    if (!originalVideo) return;
+    // Prevent multiple cinema instances
+    if (document.getElementById('cinemaClone')) return;
+
+    const rect = originalVideo.getBoundingClientRect();
+
+    // Create dim background for cinema
+    let cinemaDim = document.getElementById('cinemaDim');
+    if (!cinemaDim) {
+        cinemaDim = document.createElement('div');
+        cinemaDim.id = 'cinemaDim';
+        document.body.appendChild(cinemaDim);
+    }
+    cinemaDim.style.zIndex = '99999';
+    cinemaDim.style.pointerEvents = 'auto';
+    cinemaDim.style.opacity = '0';
+
+    // Create cloned video element
+    const clone = originalVideo.cloneNode(true);
+    clone.id = 'cinemaClone';
+    clone.muted = true;
+    clone.loop = true;
+    clone.playsInline = true;
+    clone.autoplay = true;
+    clone.style.position = 'fixed';
+    clone.style.left = rect.left + 'px';
+    clone.style.top = rect.top + 'px';
+    clone.style.width = rect.width + 'px';
+    clone.style.height = rect.height + 'px';
+    clone.style.zIndex = '100001';
+    clone.style.objectFit = 'contain';
+    clone.style.pointerEvents = 'auto';
+    clone.style.transition = 'all 0.8s cubic-bezier(0.76, 0, 0.24, 1)';
+
+    document.body.appendChild(clone);
+
+    // Add close button
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'cinema-close';
+    closeBtn.id = 'cinemaClose';
+    closeBtn.innerHTML = '&#x2715;';
+    document.body.appendChild(closeBtn);
+
+    // Fade in dim immediately, then expand video to full screen
+    requestAnimationFrame(() => {
+        cinemaDim.style.opacity = '0.78';
+        try { clone.play(); } catch (e) {}
+        clone.style.left = '0px';
+        clone.style.top = '0px';
+        clone.style.width = '100vw';
+        clone.style.height = '100vh';
+    });
+
+    function closeCinema() {
+        // reverse animation: shrink clone back to original rect then remove
+        clone.style.left = rect.left + 'px';
+        clone.style.top = rect.top + 'px';
+        clone.style.width = rect.width + 'px';
+        clone.style.height = rect.height + 'px';
+        cinemaDim.style.opacity = '0';
+        closeBtn.remove();
+        // after transition remove elements
+        setTimeout(() => {
+            try { clone.pause(); } catch (e) {}
+            clone.remove();
+            if (cinemaDim) cinemaDim.remove();
+        }, 400);
+        window.removeEventListener('keydown', onKey);
+        cinemaDim.removeEventListener('click', closeCinema);
+    }
+
+    function onKey(ev) {
+        if (ev.key === 'Escape') closeCinema();
+    }
+
+    closeBtn.addEventListener('click', closeCinema);
+    cinemaDim.addEventListener('click', closeCinema);
+    window.addEventListener('keydown', onKey);
 }
 
 // ========================================

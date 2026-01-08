@@ -32,6 +32,12 @@ let clickBurst = false;
 let burstTimer = 0;
 let isMouseDown = false;
 let hasDragged = false;
+let isHoveringElement = false; // Track if hovering over an element
+let targetCenterDotScale = 1; // Target scale for center dot
+
+let shapeMode = "normal";
+let currentLetter = "A";
+let letterPoints = [];
 
 class Particle {
   constructor(index) {
@@ -48,7 +54,7 @@ class Particle {
     this.nebulaMinRadius = this.nebulaBaseRadius - 1.5;
     this.morphRadius = this.nebulaMinRadius;
     this.morphAngle = Math.random() * Math.PI * 2;
-    this.nebulaSpeed = 0.01 + Math.random() * 0.02;
+    this.nebulaSpeed = 0.03 + Math.random() * 0.02;
 
     this.x = mouse.x;
     this.y = mouse.y;
@@ -62,31 +68,123 @@ class Particle {
       this.x += Math.cos(this.morphAngle) * this.burstSpeed;
       this.y += Math.sin(this.morphAngle) * this.burstSpeed;
       this.burstSpeed *= 0.9;
-      this.draw();
       return;
     }
 
-    const morphSpeed = 0.04;
+    const morphSpeed = 0.15;
 
     const baseNebulaX = smoothPos.x + Math.cos(this.morphAngle) * this.morphRadius;
     const baseNebulaY = smoothPos.y + Math.sin(this.morphAngle) * this.morphRadius;
 
+    // If user is holding mouse down, make the nebula follow the center very tightly
+    if (isMouseDown) {
+      // Very small delay while holding: particles snap closer to target
+      const holdFollow = 0.92; // higher => less perceptible delay
+
+      // Reduce nebula movement speed and gently shrink radius during hold
+      const holdSpeedFactor = 0.18; // how much to slow morphAngle
+      const holdTargetRadius = 8; // bring particles closer to center
+
+      // Slowly move morphRadius towards a smaller radius for tighter nebula
+      this.morphRadius += (holdTargetRadius - this.morphRadius) * 0.28;
+
+      // Slow the morph angle rotation for a calmer motion
+      this.morphAngle += this.nebulaSpeed * holdSpeedFactor;
+
+      this.targetX = baseNebulaX;
+      this.targetY = baseNebulaY;
+
+      // Snap particles closer to the target with very low delay
+      this.x += (this.targetX - this.x) * holdFollow;
+      this.y += (this.targetY - this.y) * holdFollow;
+
+      // damp velocities for stability
+      this.speedX *= 0.15;
+      this.speedY *= 0.15;
+      return;
+    }
+
+  if (shapeMode === "normal") {
     this.morphRadius += (this.nebulaBaseRadius - this.morphRadius) * 0.05;
     this.morphAngle += this.nebulaSpeed;
 
     this.targetX += (baseNebulaX - this.targetX) * morphSpeed;
     this.targetY += (baseNebulaY - this.targetY) * morphSpeed;
+  } else {
+    this.setShapeTarget();
 
-    let dx = this.targetX - this.x;
-    let dy = this.targetY - this.y;
-    this.speedX += dx * 0.15;
-    this.speedY += dy * 0.15;
-    this.speedX *= 0.7;
-    this.speedY *= 0.7;
-    this.x += this.speedX;
-    this.y += this.speedY;
+    const organicRadius = 1.2;
+    const frequency = 3;
+    const offsetX = Math.cos(this.morphAngle * frequency + this.index) * organicRadius;
+    const offsetY = Math.sin(this.morphAngle * frequency + this.index) * organicRadius;
+    this.shapeTargetX += offsetX;
+    this.shapeTargetY += offsetY;
 
-    this.draw();
+    this.targetX += (this.shapeTargetX - this.targetX) * morphSpeed;
+    this.targetY += (this.shapeTargetY - this.targetY) * morphSpeed;
+
+    this.morphAngle += this.nebulaSpeed;
+  }
+
+  let dx = this.targetX - this.x;
+  let dy = this.targetY - this.y;
+  this.speedX += dx * 0.15;
+  this.speedY += dy * 0.15;
+  this.speedX *= 0.7;
+  this.speedY *= 0.7;
+  this.x += this.speedX;
+  this.y += this.speedY;
+}
+
+  setShapeTarget() {
+    const idxRatio = this.index / particleCount;
+    const spread = 60;
+
+    if (shapeMode === "circle") {
+      const radius = 30;
+      const angle = idxRatio * Math.PI * 2;
+      this.shapeTargetX = smoothPos.x + Math.cos(angle) * radius;
+      this.shapeTargetY = smoothPos.y + Math.sin(angle) * radius;
+    } else if (shapeMode === "spiral") {
+      const spiralFactor = 6;
+      const angle = idxRatio * Math.PI * 4;
+      const radius = spiralFactor * angle;
+      this.shapeTargetX = smoothPos.x + Math.cos(angle) * radius * 0.4;
+      this.shapeTargetY = smoothPos.y + Math.sin(angle) * radius * 0.4;
+    } else if (shapeMode === "triangle") {
+      const side = 60;
+      const segment = Math.floor(idxRatio * 3);
+      const t = (idxRatio * 3) % 1;
+      if (segment === 0) {
+        this.shapeTargetX = smoothPos.x - side / 2 + side * t;
+        this.shapeTargetY = smoothPos.y + side / 2;
+      } else if (segment === 1) {
+        this.shapeTargetX = smoothPos.x + side / 2 - side * t / 2;
+        this.shapeTargetY = smoothPos.y + side / 2 - (Math.sqrt(3) / 2) * side * t;
+      } else {
+        this.shapeTargetX = smoothPos.x - side / 2 + side * t / 2;
+        this.shapeTargetY = smoothPos.y + side / 2 - (Math.sqrt(3) / 2) * side * (1 - t);
+      }
+    } else if (shapeMode === "heart") {
+      const t = idxRatio * Math.PI * 2;
+      const scale = 6;
+      const x = 16 * Math.sin(t) ** 3;
+      const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+      this.shapeTargetX = smoothPos.x + x * scale;
+      this.shapeTargetY = smoothPos.y + y * scale;
+    } else if (shapeMode === "letter") {
+      if (letterPoints.length === 0) {
+        this.shapeTargetX = smoothPos.x + (Math.random() - 0.5) * spread;
+        this.shapeTargetY = smoothPos.y + (Math.random() - 0.5) * spread;
+      } else {
+        const pIndex = this.index % letterPoints.length;
+        this.shapeTargetX = smoothPos.x + letterPoints[pIndex].x - 50;
+        this.shapeTargetY = smoothPos.y + letterPoints[pIndex].y - 50;
+      }
+    } else {
+      this.shapeTargetX = smoothPos.x + (Math.random() - 0.5) * spread;
+      this.shapeTargetY = smoothPos.y + (Math.random() - 0.5) * spread;
+    }
   }
 
   draw() {
@@ -101,16 +199,22 @@ for (let i = 0; i < particleCount; i++) {
 }
 
 function animateCursor() {
-  const delayFactor = 0.1;
+  const delayFactor = 0.3;
   smoothPos.x += (mouse.x - smoothPos.x) * delayFactor;
   smoothPos.y += (mouse.y - smoothPos.y) * delayFactor;
 
   // Update center dot position
   centerDot.style.left = smoothPos.x + 'px';
   centerDot.style.top = smoothPos.y + 'px';
+  
+  // Smooth scale animation for center dot
+  let currentCenterDotScale = parseFloat(centerDot.style.scale) || 1;
+  currentCenterDotScale += (targetCenterDotScale - currentCenterDotScale) * 0.15;
+  centerDot.style.scale = currentCenterDotScale;
 
   particles.forEach(p => {
     p.update();
+    p.draw();
   });
 
   // Handle burst timer
@@ -133,10 +237,62 @@ window.addEventListener("mousemove", e => {
   }
 });
 
+
+document.querySelectorAll("a, button").forEach(el => {
+  el.addEventListener("mouseenter", () => {
+    shapeMode = el.dataset.shape || "circle";
+    console.log(shapeMode);
+    if (shapeMode === "letter" && el.dataset.letter) {
+      currentLetter = el.dataset.letter.toUpperCase();
+      letterPoints = generateLetterPoints(currentLetter);
+    }
+    
+    // Add focused class to parent image-container for visual focus effect
+    const imageContainer = el.closest('.image-container');
+    if (imageContainer) {
+      imageContainer.classList.add('focused');
+    }
+    
+    // Enlarge center dot on hover
+    targetCenterDotScale = 1.6;
+    isHoveringElement = true;
+    
+    // Dispatch custom event with focused element position for radial blur effect
+    const rect = el.getBoundingClientRect();
+    window.dispatchEvent(new CustomEvent('elementFocused', {
+      detail: {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+        width: rect.width,
+        height: rect.height
+      }
+    }));
+  });
+  el.addEventListener("mouseleave", () => {
+    shapeMode = "normal";
+    
+    // Remove focused class from parent image-container
+    const imageContainer = el.closest('.image-container');
+    if (imageContainer) {
+      imageContainer.classList.remove('focused');
+    }
+    
+    // Shrink center dot back to normal
+    targetCenterDotScale = 1;
+    isHoveringElement = false;
+    
+    // Dispatch event to clear focused element
+    window.dispatchEvent(new CustomEvent('elementUnfocused'));
+  });
+});
+
+
 // Track mouse down
 window.addEventListener("mousedown", () => {
   isMouseDown = true;
   hasDragged = false;
+  // While holding, shrink center dot
+  targetCenterDotScale = 0.6;
 });
 
 // Track mouse up and trigger burst only if it was a click (not a drag)
@@ -153,6 +309,8 @@ window.addEventListener("mouseup", () => {
   
   isMouseDown = false;
   hasDragged = false;
+  // Restore center dot size: if still hovering an element, keep enlarged; otherwise normal
+  targetCenterDotScale = isHoveringElement ? 1.6 : 1;
 });
 
   // Start animation

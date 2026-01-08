@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Eftimos</title>
+    <title>EAFTIMOS</title>
 
     <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/favicon-32x32.png">
@@ -17,7 +17,7 @@
     <meta name="description"
         content="An inner house where silence, craft, and the avant-garde meet. Join to receive your access key and early access to releases and updates.">
     <meta name="keywords"
-        content="Eftimos, fashion brand, lifestyle brand, exclusive clothing, premium apparel, streetwear, minimal design, modern fashion, unisex fashion, luxury clothing, belonging, individuality">
+        content="Eaftimos, fashion brand, lifestyle brand, exclusive clothing, premium apparel, streetwear, minimal design, modern fashion, unisex fashion, luxury clothing, belonging, individuality">
 
     <!-- Preload critical fonts -->
     <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
@@ -37,18 +37,24 @@
     <!-- Grain Canvas -->
     <canvas id="grainCanvas"></canvas>
 
-    <!-- Background Video -->
-    <div id="video-background">
+    <!-- Background Video TOP -->
+    <div id="videos-background">       
+        <!-- 
         <video autoplay muted loop playsinline preload="auto">
-            <source src="assets/vid/home-vid.mp4" type="video/mp4">
+            <source src="assets/vid/visualizer/light-leak-orange.mp4" type="video/mp4">
+        </video>
+        -->
+
+        <video autoplay muted loop playsinline preload="auto">
+            <source src="assets/vid/reels-mixed-vid.mp4" type="video/mp4">
         </video>
     </div>
 
-    <nav>
+    <nav class="blending-item">
         <div class="nav-container">
             <a href=""></a>
-            <a href="index.html" class="logo">
-                <img src="assets/images/logo.png" alt="Eftimos Logo" width="150" height="auto">
+            <a href="index.html" class="logo" data-shape="circle">
+                <img src="assets/images/logo-white.png" alt="Eaftimos Logo" width="150" height="auto">
             </a>
             <a href="#" class="shop-btn">
                 <img src="assets/images/shopping-bag.png" alt="">
@@ -240,7 +246,20 @@
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
+        <!-- Video template for Cinema Mode -->
+        <div class="image-template">
+            <div class="video-link">
+                <video autoplay muted loop playsinline width="170" height="170" preload="metadata">
+                    <source src="assets/vid/reels-mixed-vid.mp4" type="video/mp4">
+                </video>
+                <span class="tooltip">Preview Reel</span>
+            </div>
+        </div>
     </div>
+    
+    <!-- Sonidos -->
+    <audio id="noiseSound" src="assets/sounds/white-noise.mp3" preload="auto" loop></audio>
+    <audio id="lockedInSound" src="assets/sounds/locked-in-oneself.mp3" preload="auto"></audio>
 
     <!-- Load scripts at the end for better performance -->
     <script src="assets/js/script.js"></script>
