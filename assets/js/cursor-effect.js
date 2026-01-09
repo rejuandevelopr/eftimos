@@ -199,6 +199,17 @@ for (let i = 0; i < particleCount; i++) {
 }
 
 function animateCursor() {
+  // Hide cursor if visual effects are disabled
+  if (window.visualEffectsEnabled === false) {
+    cursorContainer.style.opacity = '0';
+    document.body.classList.add('show-default-cursor');
+    requestAnimationFrame(animateCursor);
+    return;
+  } else {
+    cursorContainer.style.opacity = '1';
+    document.body.classList.remove('show-default-cursor');
+  }
+  
   const delayFactor = 0.3;
   smoothPos.x += (mouse.x - smoothPos.x) * delayFactor;
   smoothPos.y += (mouse.y - smoothPos.y) * delayFactor;
@@ -238,7 +249,7 @@ window.addEventListener("mousemove", e => {
 });
 
 
-document.querySelectorAll("a, button").forEach(el => {
+document.querySelectorAll("a, button, .video-link, .cinema-close").forEach(el => {
   el.addEventListener("mouseenter", () => {
     shapeMode = el.dataset.shape || "circle";
     console.log(shapeMode);
@@ -257,6 +268,9 @@ document.querySelectorAll("a, button").forEach(el => {
     targetCenterDotScale = 1.6;
     isHoveringElement = true;
     
+    // Check if element has a tooltip (image-link or video-link with tooltip)
+    const hasTooltip = el.classList.contains('image-link') || el.classList.contains('video-link');
+    
     // Dispatch custom event with focused element position for radial blur effect
     const rect = el.getBoundingClientRect();
     window.dispatchEvent(new CustomEvent('elementFocused', {
@@ -267,6 +281,11 @@ document.querySelectorAll("a, button").forEach(el => {
         height: rect.height
       }
     }));
+    
+    // Dispatch tooltip hover event for audio volume increase
+    if (hasTooltip) {
+      window.dispatchEvent(new CustomEvent('tooltipShown'));
+    }
   });
   el.addEventListener("mouseleave", () => {
     shapeMode = "normal";
@@ -281,8 +300,16 @@ document.querySelectorAll("a, button").forEach(el => {
     targetCenterDotScale = 1;
     isHoveringElement = false;
     
+    // Check if element had a tooltip
+    const hasTooltip = el.classList.contains('image-link') || el.classList.contains('video-link');
+    
     // Dispatch event to clear focused element
     window.dispatchEvent(new CustomEvent('elementUnfocused'));
+    
+    // Dispatch tooltip hidden event for audio volume decrease
+    if (hasTooltip) {
+      window.dispatchEvent(new CustomEvent('tooltipHidden'));
+    }
   });
 });
 

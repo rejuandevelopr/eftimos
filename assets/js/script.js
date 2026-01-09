@@ -76,10 +76,20 @@ let maxOffsetX = bufferX;
 let minOffsetY = -contentHeight - bufferY;
 let maxOffsetY = bufferY;
 
+// Make map bounds globally accessible for controls.js audio intensification
+window.minOffsetX = minOffsetX;
+window.maxOffsetX = maxOffsetX;
+window.minOffsetY = minOffsetY;
+window.maxOffsetY = maxOffsetY;
+
 let offsetX = 0;
 let offsetY = 0;
 let targetOffsetX = 0;
 let targetOffsetY = 0;
+
+// Make offset globally accessible for controls.js audio intensification
+window.targetOffsetX = targetOffsetX;
+window.targetOffsetY = targetOffsetY;
 let velocityX = 0;
 let velocityY = 0;
 let isDragging = false;
@@ -221,6 +231,30 @@ function getInitialCenterPosition() {
     };
 }
 
+// Elastic boundaries with progressive resistance
+function applyElasticResistance(pos, min, max) {
+    if (pos < min) {
+        const distance = min - pos;
+        const resistance = resistanceFunc(distance);
+        return min - resistance;
+    } else if (pos > max) {
+        const distance = pos - max;
+        const resistance = resistanceFunc(distance);
+        return max + resistance;
+    }
+    return pos;
+}
+
+function resistanceFunc(distance) {
+    const threshold = 50;
+    if (distance < threshold) {
+        return distance * 0.4;  // 40% resistance for small distances
+    } else {
+        // Much stronger progressive resistance after threshold
+        return threshold * 0.4 + Math.pow(distance - threshold, 0.65) * 0.2;
+    }
+}
+
 function clampOffset() {
     targetOffsetX = Math.max(minOffsetX, Math.min(maxOffsetX, targetOffsetX));
     targetOffsetY = Math.max(minOffsetY, Math.min(maxOffsetY, targetOffsetY));
@@ -260,31 +294,39 @@ function updateImagePositions() {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         let blur = 0;
-        if (distance > blurThreshold) {
-            blur = Math.min(maxBlur, (distance - blurThreshold) / 100 * maxBlur);
-        }
         
-        // Apply radial blur reduction around focused element
-        if (focusedElementPos) {
-            const distToFocused = Math.sqrt(
-                Math.pow(x - focusedElementPos.x, 2) + 
-                Math.pow(y - focusedElementPos.y, 2)
-            );
+        // Only apply blur if visual effects are enabled
+        if (window.visualEffectsEnabled !== false) {
+            if (distance > blurThreshold) {
+                blur = Math.min(maxBlur, (distance - blurThreshold) / 100 * maxBlur);
+            }
             
-            // If within focused radius, reduce blur based on proximity
-            if (distToFocused < focusedElementRadius) {
-                // Calculate reduction factor (1 = no blur, 0 = full blur)
-                const reductionFactor = 1 - (distToFocused / focusedElementRadius);
-                blur = blur * 0// (1 - reductionFactor * 0.8); // Reduce up to 80% of blur
+            // Apply radial blur reduction around focused element
+            if (focusedElementPos) {
+                const distToFocused = Math.sqrt(
+                    Math.pow(x - focusedElementPos.x, 2) + 
+                    Math.pow(y - focusedElementPos.y, 2)
+                );
+                
+                // If within focused radius, reduce blur based on proximity
+                if (distToFocused < focusedElementRadius) {
+                    // Calculate reduction factor (1 = no blur, 0 = full blur)
+                    const reductionFactor = 1 - (distToFocused / focusedElementRadius);
+                    blur = blur * 0// (1 - reductionFactor * 0.8); // Reduce up to 80% of blur
+                }
             }
         }
-
+        
         style.filter = `blur(${blur}px)`;
     }
 }
 
 function animate() {
-    if (!isDragging) {
+    // Keep global window references updated for audio intensification
+    window.targetOffsetX = targetOffsetX;
+    window.targetOffsetY = targetOffsetY;
+    
+    if (!isDragging && !reboundAnimationActive) {
         const diffX = targetOffsetX - offsetX;
         const diffY = targetOffsetY - offsetY;
         
@@ -297,20 +339,87 @@ function animate() {
         if (absVelocityX > minVelocity || absVelocityY > minVelocity) {
             targetOffsetX += velocityX;
             targetOffsetY += velocityY;
-            clampOffset();
+            // Don't clamp - let velocity carry beyond bounds, then rebound will handle it
             velocityX *= friction;
             velocityY *= friction;
         }
     }
 
-    const diffScale = targetScale - scale;
-    scale += diffScale * zoomSmoothness;
+    // Audio intensity is now handled by controls.js based on distance from bounds
 
-    blurRadiusScaled = blurRadius * scale;
+    const diffScale = targetScale - scale;
+    
+    // Only apply zoom and blur if visual effects are enabled
+    if (window.visualEffectsEnabled !== false) {
+        scale += diffScale * zoomSmoothness;
+    } else {
+        // When visual effects are disabled, reset scale to 1
+        scale = 1;
+        targetScale = 1;
+    }
+
+    // Apply blur only if visual effects are enabled
+    const effectiveBlurRadius = (window.visualEffectsEnabled !== false) ? blurRadius : 0;
+    blurRadiusScaled = effectiveBlurRadius * scale;
 
     updateImagePositions();
 
     requestAnimationFrame(animate);
+}
+
+// Rebound animation when releasing outside bounds
+let reboundAnimationActive = false;
+
+function animateReboundIfNeeded() {
+    // Check if we're outside bounds
+    if (targetOffsetX < minOffsetX || targetOffsetX > maxOffsetX ||
+        targetOffsetY < minOffsetY || targetOffsetY > maxOffsetY) {
+        
+        const fromX = targetOffsetX;
+        const fromY = targetOffsetY;
+        const toX = Math.max(minOffsetX, Math.min(maxOffsetX, targetOffsetX));
+        const toY = Math.max(minOffsetY, Math.min(maxOffsetY, targetOffsetY));
+        
+        animateRebound(fromX, toX, fromY, toY);
+    }
+}
+
+function animateRebound(fromX, toX, fromY, toY) {
+    if (reboundAnimationActive) return;
+    
+    // Cancel any existing velocity
+    velocityX = 0;
+    velocityY = 0;
+    
+    reboundAnimationActive = true;
+    const duration = 400; // ms
+    const startTime = performance.now();
+
+    function step(now) {
+        const elapsed = now - startTime;
+        let t = Math.min(elapsed / duration, 1);
+
+        // Easing easeOutCubic for smooth bounce
+        let ease = 1 - Math.pow(1 - t, 3);
+
+        targetOffsetX = fromX + (toX - fromX) * ease;
+        targetOffsetY = fromY + (toY - fromY) * ease;
+        
+        offsetX = targetOffsetX;
+        offsetY = targetOffsetY;
+
+        if (t < 1) {
+            requestAnimationFrame(step);
+        } else {
+            targetOffsetX = toX;
+            targetOffsetY = toY;
+            offsetX = toX;
+            offsetY = toY;
+            reboundAnimationActive = false;
+        }
+    }
+    
+    requestAnimationFrame(step);
 }
 
 let dragStartX = 0;
@@ -359,9 +468,32 @@ canvas.addEventListener('mousemove', (e) => {
     }
 
     const scaleInv = 1 / scale;
-    targetOffsetX += deltaX * scaleInv;
-    targetOffsetY += deltaY * scaleInv;
-    clampOffset();
+    
+    // Calculate resistance factor based on how far outside bounds we are
+    let resistanceFactorX = 1.0;
+    let resistanceFactorY = 1.0;
+    
+    if (targetOffsetX < minOffsetX) {
+        const distance = minOffsetX - targetOffsetX;
+        resistanceFactorX = 1.0 / (1.0 + distance * 0.01); // Progressive resistance
+    } else if (targetOffsetX > maxOffsetX) {
+        const distance = targetOffsetX - maxOffsetX;
+        resistanceFactorX = 1.0 / (1.0 + distance * 0.01);
+    }
+    
+    if (targetOffsetY < minOffsetY) {
+        const distance = minOffsetY - targetOffsetY;
+        resistanceFactorY = 1.0 / (1.0 + distance * 0.01);
+    } else if (targetOffsetY > maxOffsetY) {
+        const distance = targetOffsetY - maxOffsetY;
+        resistanceFactorY = 1.0 / (1.0 + distance * 0.01);
+    }
+    
+    // Apply resistance to movement delta, not to position
+    targetOffsetX += deltaX * scaleInv * resistanceFactorX;
+    targetOffsetY += deltaY * scaleInv * resistanceFactorY;
+    
+    // Immediately update position for responsive dragging
     offsetX = targetOffsetX;
     offsetY = targetOffsetY;
 
@@ -375,12 +507,16 @@ canvas.addEventListener('mousemove', (e) => {
 canvas.addEventListener('mouseup', () => {
     isDragging = false;
     canvas.classList.remove('dragging');
+    // Animate rebound when user releases drag
+    animateReboundIfNeeded();
 });
 
 canvas.addEventListener('mouseleave', () => {
     if (isDragging) {
         isDragging = false;
         canvas.classList.remove('dragging');
+        // Animate rebound when user releases drag
+        animateReboundIfNeeded();
     }
 });
 
@@ -404,7 +540,10 @@ canvas.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         const vid = videoLink.querySelector('video');
-        if (vid) createCinemaMode(vid);
+        if (vid) {
+            const container = e.target.closest('.image-container');
+            createCinemaMode(vid, container);
+        }
         hasMoved = false;
         return;
     }
@@ -601,10 +740,15 @@ function createMorphTransition(originalImg, targetUrl) {
 }
 
 // Create Cinema Mode for inline video tiles
-function createCinemaMode(originalVideo) {
+function createCinemaMode(originalVideo, container) {
     if (!originalVideo) return;
     // Prevent multiple cinema instances
     if (document.getElementById('cinemaClone')) return;
+
+    // Add animating class to container to remove grayscale
+    if (container) {
+        container.classList.add('animating');
+    }
 
     const rect = originalVideo.getBoundingClientRect();
 
@@ -638,12 +782,125 @@ function createCinemaMode(originalVideo) {
 
     document.body.appendChild(clone);
 
+    // Sync video playback time with original video
+    clone.currentTime = originalVideo.currentTime;
+
     // Add close button
     const closeBtn = document.createElement('button');
     closeBtn.className = 'cinema-close';
     closeBtn.id = 'cinemaClose';
     closeBtn.innerHTML = '&#x2715;';
     document.body.appendChild(closeBtn);
+
+    // Create controls
+    const controls = document.createElement('div');
+    controls.className = 'cinema-controls';
+    controls.id = 'cinemaControls';
+    controls.innerHTML = `
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="time-display">
+                <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+            </div>
+        </div>
+        <div class="controls-bottom">
+            <button class="play-pause-btn" id="playPauseBtn">▶</button>
+            <div class="volume-control">
+                <span class="volume-icon" id="volumeIcon">◉</span>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50">
+            </div>
+        </div>
+    `;
+    document.body.appendChild(controls);
+
+    // Set initial volume
+    clone.volume = 0.5;
+
+    // Format time helper
+    function formatTime(seconds) {
+        if (isNaN(seconds)) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return mins + ':' + (secs < 10 ? '0' : '') + secs;
+    }
+
+    // Update progress bar
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const currentTimeSpan = document.getElementById('currentTime');
+    const durationSpan = document.getElementById('duration');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeIcon = document.getElementById('volumeIcon');
+
+    // Set duration when metadata loads
+    clone.addEventListener('loadedmetadata', () => {
+        durationSpan.textContent = formatTime(clone.duration);
+    });
+
+    // Update progress
+    clone.addEventListener('timeupdate', () => {
+        const percent = (clone.currentTime / clone.duration) * 100;
+        progressFill.style.width = percent + '%';
+        currentTimeSpan.textContent = formatTime(clone.currentTime);
+    });
+
+    // Click on progress bar to seek
+    progressBar.addEventListener('click', (e) => {
+        const rect = progressBar.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        clone.currentTime = percent * clone.duration;
+    });
+
+    // Play/Pause button
+    playPauseBtn.addEventListener('click', () => {
+        if (clone.paused) {
+            clone.play();
+            playPauseBtn.textContent = '⏸';
+        } else {
+            clone.pause();
+            playPauseBtn.textContent = '▶';
+        }
+    });
+
+    // Update button on play/pause
+    clone.addEventListener('play', () => {
+        playPauseBtn.textContent = '⏸';
+    });
+
+    clone.addEventListener('pause', () => {
+        playPauseBtn.textContent = '▶';
+    });
+
+    // Volume slider
+    volumeSlider.addEventListener('input', (e) => {
+        const volume = e.target.value / 100;
+        clone.volume = volume;
+        
+        // Update volume icon opacity
+        if (volume === 0) {
+            volumeIcon.style.opacity = '0.3';
+        } else if (volume < 0.5) {
+            volumeIcon.style.opacity = '0.6';
+        } else {
+            volumeIcon.style.opacity = '1';
+        }
+    });
+
+    // Mute toggle on icon click
+    volumeIcon.addEventListener('click', () => {
+        if (clone.volume > 0) {
+            clone.volume = 0;
+            volumeSlider.value = 0;
+            volumeIcon.style.opacity = '0.3';
+        } else {
+            clone.volume = 0.5;
+            volumeSlider.value = 50;
+            volumeIcon.style.opacity = '0.6';
+        }
+    });
 
     // Fade in dim immediately, then expand video to full screen
     requestAnimationFrame(() => {
@@ -655,20 +912,58 @@ function createCinemaMode(originalVideo) {
         clone.style.height = '100vh';
     });
 
+    // Hide original video after a small delay to avoid pop
+    setTimeout(() => {
+        originalVideo.style.transition = 'opacity 0.3s ease';
+        originalVideo.style.opacity = '0';
+    }, 50);
+
     function closeCinema() {
+        // Remove animating class from container to restore grayscale
+        if (container) {
+            container.classList.remove('animating');
+        }
+        
+        // Calculate blur for the video at its original position
+        const videoCenterX = rect.left + rect.width / 2;
+        const videoCenterY = rect.top + rect.height / 2;
+        
+        const distX = videoCenterX - centerX;
+        const distY = videoCenterY - centerY;
+        const distance = Math.sqrt(distX * distX + distY * distY);
+        
+        let videoBlur = (distance / blurRadiusScaled) * maxBlur;
+        videoBlur = Math.max(0, Math.min(maxBlur, videoBlur));
+        
+        // Check if focused element reduces blur
+        if (focusedElementPos) {
+            const focusDistX = videoCenterX - focusedElementPos.x;
+            const focusDistY = videoCenterY - focusedElementPos.y;
+            const focusDistance = Math.sqrt(focusDistX * focusDistX + focusDistY * focusDistY);
+            
+            if (focusDistance < focusedElementRadius) {
+                videoBlur = 0;
+            }
+        }
+        
         // reverse animation: shrink clone back to original rect then remove
         clone.style.left = rect.left + 'px';
         clone.style.top = rect.top + 'px';
         clone.style.width = rect.width + 'px';
         clone.style.height = rect.height + 'px';
+        clone.style.filter = 'blur(' + videoBlur + 'px)';
         cinemaDim.style.opacity = '0';
         closeBtn.remove();
+        // Remove controls
+        const cinemaControls = document.getElementById('cinemaControls');
+        if (cinemaControls) cinemaControls.remove();
         // after transition remove elements
         setTimeout(() => {
+            originalVideo.style.opacity = '1';
             try { clone.pause(); } catch (e) {}
             clone.remove();
             if (cinemaDim) cinemaDim.remove();
-        }, 400);
+        }, 1000);
         window.removeEventListener('keydown', onKey);
         cinemaDim.removeEventListener('click', closeCinema);
     }
@@ -817,9 +1112,32 @@ canvas.addEventListener('touchmove', (e) => {
         }
 
         const scaleInv = 1 / scale;
-        targetOffsetX += deltaX * scaleInv;
-        targetOffsetY += deltaY * scaleInv;
-        clampOffset();
+        
+        // Calculate resistance factor based on how far outside bounds we are
+        let resistanceFactorX = 1.0;
+        let resistanceFactorY = 1.0;
+        
+        if (targetOffsetX < minOffsetX) {
+            const distance = minOffsetX - targetOffsetX;
+            resistanceFactorX = 1.0 / (1.0 + distance * 0.01);
+        } else if (targetOffsetX > maxOffsetX) {
+            const distance = targetOffsetX - maxOffsetX;
+            resistanceFactorX = 1.0 / (1.0 + distance * 0.01);
+        }
+        
+        if (targetOffsetY < minOffsetY) {
+            const distance = minOffsetY - targetOffsetY;
+            resistanceFactorY = 1.0 / (1.0 + distance * 0.01);
+        } else if (targetOffsetY > maxOffsetY) {
+            const distance = targetOffsetY - maxOffsetY;
+            resistanceFactorY = 1.0 / (1.0 + distance * 0.01);
+        }
+        
+        // Apply resistance to movement delta, not to position
+        targetOffsetX += deltaX * scaleInv * resistanceFactorX;
+        targetOffsetY += deltaY * scaleInv * resistanceFactorY;
+        
+        // Immediately update position for responsive dragging
         offsetX = targetOffsetX;
         offsetY = targetOffsetY;
 
@@ -862,6 +1180,8 @@ canvas.addEventListener('touchend', (e) => {
         
         isDragging = false;
         canvas.classList.remove('dragging');
+        // Animate rebound when user releases drag
+        animateReboundIfNeeded();
         setTimeout(() => { hasMoved = false; }, 10);
     }
 });
@@ -877,16 +1197,17 @@ canvas.addEventListener('wheel', (e) => {
     
     if (oldScale === targetScale) return;
     
-    const mouseX = e.clientX - centerX;
-    const mouseY = e.clientY - centerY;
+    // Posición del mouse relativo al canvas
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
     
-    const oldScaleInv = 1 / oldScale;
-    const worldX = (mouseX - offsetX * oldScale) * oldScaleInv;
-    const worldY = (mouseY - offsetY * oldScale) * oldScaleInv;
+    // Calcular la posición del mouse en el espacio del mundo usando el estado target actual
+    const worldX = (mouseX - centerX - targetOffsetX * oldScale) / oldScale;
+    const worldY = (mouseY - centerY - targetOffsetY * oldScale) / oldScale;
     
-    const targetScaleInv = 1 / targetScale;
-    targetOffsetX = (mouseX - worldX * targetScale) * targetScaleInv;
-    targetOffsetY = (mouseY - worldY * targetScale) * targetScaleInv;
+    // Ajustar el offset target para que el punto bajo el mouse permanezca en la misma posición
+    targetOffsetX = (mouseX - centerX - worldX * targetScale) / targetScale;
+    targetOffsetY = (mouseY - centerY - worldY * targetScale) / targetScale;
     
     clampOffset();
 }, { passive: false });
@@ -958,5 +1279,18 @@ if (transitionData) {
         targetScale = data.canvasScale;
     }
 }
+
+// Prevent logo image from being draggable
+document.addEventListener('DOMContentLoaded', () => {
+    const logoImg = document.querySelector('.logo img');
+    if (logoImg) {
+        logoImg.addEventListener('dragstart', (e) => e.preventDefault());
+        logoImg.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        });
+    }
+});
 
 animate();

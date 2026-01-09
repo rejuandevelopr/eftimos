@@ -9,6 +9,9 @@ let grainHeight = window.innerHeight;
 grainCanvasEl.width = grainWidth;
 grainCanvasEl.height = grainHeight;
 
+// Check if visual effects should be enabled (default: true)
+const shouldStartGrain = localStorage.getItem('visualEffectsEnabled') !== 'false';
+
 // ========================================
 // FILM GRAIN EFFECT
 // ========================================
@@ -17,8 +20,37 @@ const grainCtx = grainCanvas.getContext('2d');
 grainCanvas.width = 500;
 grainCanvas.height = 300;
 
-let isAnimating = true;
+let isAnimating = shouldStartGrain;
 let grainAnimationId = null;
+
+// Track hover state for grain intensity boost
+let isHoveringElement = false;
+
+window.addEventListener('tooltipShown', () => {
+    isHoveringElement = true;
+});
+
+window.addEventListener('tooltipHidden', () => {
+    isHoveringElement = false;
+});
+
+// Expose functions to control grain animation
+window.stopGrainEffect = function() {
+    isAnimating = false;
+    if (grainAnimationId) {
+        cancelAnimationFrame(grainAnimationId);
+        grainAnimationId = null;
+    }
+    // Clear the canvas
+    grainMainCtx.clearRect(0, 0, grainWidth, grainHeight);
+};
+
+window.startGrainEffect = function() {
+    if (!isAnimating) {
+        isAnimating = true;
+        animateGrain();
+    }
+};
 
 function updateGrain() {
     const imageData = grainCtx.createImageData(grainCanvas.width, grainCanvas.height);
@@ -60,9 +92,53 @@ function animateGrain() {
 
     grainMainCtx.clearRect(0, 0, grainWidth, grainHeight);
 
-    // Draw film grain
+    // Calculate distance from map bounds (if available from script.js)
+    let grainIntensityMultiplier = 1.0;
+    
+    if (typeof targetOffsetX !== 'undefined' && typeof targetOffsetY !== 'undefined' &&
+        typeof minOffsetX !== 'undefined' && typeof maxOffsetX !== 'undefined' &&
+        typeof minOffsetY !== 'undefined' && typeof maxOffsetY !== 'undefined') {
+        
+        let distanceX = 0;
+        let distanceY = 0;
+        
+        if (targetOffsetX < minOffsetX) {
+            distanceX = minOffsetX - targetOffsetX;
+        } else if (targetOffsetX > maxOffsetX) {
+            distanceX = targetOffsetX - maxOffsetX;
+        }
+        
+        if (targetOffsetY < minOffsetY) {
+            distanceY = minOffsetY - targetOffsetY;
+        } else if (targetOffsetY > maxOffsetY) {
+            distanceY = targetOffsetY - maxOffsetY;
+        }
+        
+        // Calculate total distance from bounds
+        const totalDistance = Math.max(distanceX, distanceY);
+        
+        // Map distance to intensity: 0 distance = 1.0x, large distance = 4.0x
+        const maxIntensityDistance = 500;
+        const normalizedDistance = Math.min(totalDistance / maxIntensityDistance, 1);
+        
+        // Progressive intensity increase: 1.0x to 4.0x
+        grainIntensityMultiplier = 1.0 + Math.pow(normalizedDistance, 0.7) * 3.0;
+    }
+
+    // Draw film grain with dynamic opacity
     updateGrain();
-    grainMainCtx.globalAlpha = 0.4;
+    const baseOpacity = 0.4;
+    let maxOpacity = 1.0; // Maximum opacity (fully opaque) when far from bounds
+    
+    // Boost opacity when hovering over elements
+    if (isHoveringElement) {
+        maxOpacity = 1.0; // Keep at full but apply additional multiplier
+        grainIntensityMultiplier *= 1.2; // 20% boost when hovering
+    }
+    
+    const dynamicOpacity = Math.min(baseOpacity * grainIntensityMultiplier, maxOpacity);
+    
+    grainMainCtx.globalAlpha = dynamicOpacity;
     grainMainCtx.drawImage(grainCanvas, 0, 0, grainWidth, grainHeight);
     grainMainCtx.globalAlpha = 1;
 
@@ -89,8 +165,12 @@ document.addEventListener('visibilitychange', () => {
             cancelAnimationFrame(grainAnimationId);
         }
     } else {
-        isAnimating = true;
-        animateGrain();
+        // Only restart if visual effects are enabled
+        const visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') !== 'false';
+        if (visualEffectsEnabled) {
+            isAnimating = true;
+            animateGrain();
+        }
     }
 });
 
@@ -121,7 +201,9 @@ window.addEventListener('pagehide', () => {
 });
 
 // ========================================
-// START ANIMATION
+// START ANIMATION (only if enabled)
 // ========================================
-animateGrain();
+if (shouldStartGrain) {
+    animateGrain();
+}
 
