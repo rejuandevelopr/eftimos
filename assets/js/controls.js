@@ -18,6 +18,11 @@ function initializeControls() {
             menuToggle.classList.toggle('active');
             dropdownMenu.classList.toggle('active');
             document.body.classList.toggle('menu-open');
+            
+            // Update menu state in script.js for blur control
+            if (window.isMenuActive !== undefined) {
+                window.isMenuActive = dropdownMenu.classList.contains('active');
+            }
         });
 
         // Close menu when clicking on a link (except Collections toggle)
@@ -28,6 +33,11 @@ function initializeControls() {
                     menuToggle.classList.remove('active');
                     dropdownMenu.classList.remove('active');
                     document.body.classList.remove('menu-open');
+                    
+                    // Update menu state in script.js for blur control
+                    if (window.isMenuActive !== undefined) {
+                        window.isMenuActive = false;
+                    }
                 }
             });
         });
@@ -38,6 +48,11 @@ function initializeControls() {
                 menuToggle.classList.remove('active');
                 dropdownMenu.classList.remove('active');
                 document.body.classList.remove('menu-open');
+                
+                // Update menu state in script.js for blur control
+                if (window.isMenuActive !== undefined) {
+                    window.isMenuActive = false;
+                }
             }
         });
 
@@ -47,6 +62,11 @@ function initializeControls() {
                 menuToggle.classList.remove('active');
                 dropdownMenu.classList.remove('active');
                 document.body.classList.remove('menu-open');
+                
+                // Update menu state in script.js for blur control
+                if (window.isMenuActive !== undefined) {
+                    window.isMenuActive = false;
+                }
             }
         });
     }
@@ -77,6 +97,12 @@ function initializeControls() {
             menuToggle.classList.remove('active');
             dropdownMenu.classList.remove('active');
             document.body.classList.remove('menu-open');
+            
+            // Update menu state in script.js for blur control
+            if (window.isMenuActive !== undefined) {
+                window.isMenuActive = false;
+            }
+            
             // Open contact modal
             contactModal.classList.add('active');
         });
@@ -116,13 +142,14 @@ function initializeControls() {
     // ========== VISUAL EFFECTS TOGGLE ==========
 
     const visualToggle = document.getElementById('visualToggle');
-    const visualStatus = document.getElementById('visualStatus');
+    const statusMessage = document.getElementById('statusMessage');
     let visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') !== 'false';
+    let statusTimeout = null;
+    let currentlyShowingMessage = false;
 
     // Initialize visual effects state
     updateVisualEffects();
     updateVisualIcon();
-    updateVisualStatus();
 
     if (visualToggle) {
         visualToggle.addEventListener('click', () => {
@@ -132,13 +159,42 @@ function initializeControls() {
             window.visualEffectsEnabled = visualEffectsEnabled;
             updateVisualEffects();
             updateVisualIcon();
-            updateVisualStatus();
+            showStatusMessage(visualEffectsEnabled ? 'VISUAL EFFECTS: ON' : 'VISUAL EFFECTS: OFF');
         });
     }
 
-    function updateVisualStatus() {
-        if (visualStatus) {
-            visualStatus.textContent = visualEffectsEnabled ? 'VISUAL EFFECTS: ON' : 'VISUAL EFFECTS: OFF';
+    function showStatusMessage(message) {
+        // Clear any existing timeout
+        if (statusTimeout) {
+            clearTimeout(statusTimeout);
+        }
+
+        // If a message is currently showing, fade it out first
+        if (currentlyShowingMessage) {
+            statusMessage.classList.remove('show');
+            // Wait for fade out, then show new message
+            setTimeout(() => {
+                statusMessage.textContent = message;
+                statusMessage.classList.add('show');
+                currentlyShowingMessage = true;
+                
+                // Auto-hide after 3 seconds
+                statusTimeout = setTimeout(() => {
+                    statusMessage.classList.remove('show');
+                    currentlyShowingMessage = false;
+                }, 3000);
+            }, 300); // Match CSS transition time
+        } else {
+            // No message showing, show immediately
+            statusMessage.textContent = message;
+            statusMessage.classList.add('show');
+            currentlyShowingMessage = true;
+            
+            // Auto-hide after 3 seconds
+            statusTimeout = setTimeout(() => {
+                statusMessage.classList.remove('show');
+                currentlyShowingMessage = false;
+            }, 3000);
         }
     }
 
@@ -300,13 +356,9 @@ function initializeControls() {
     // Update volume smoothly every frame
     const volumeUpdateInterval = setInterval(updateNoiseVolume, 16); // ~60fps
 
-    // Get audio status element
-    const audioStatus = document.getElementById('audioStatus');
-
     // Initialize audio state - muted by default
     updateAudio();
     updateAudioIcon();
-    updateAudioStatus();
 
     if (audioToggle) {
         audioToggle.addEventListener('click', (e) => {
@@ -317,14 +369,8 @@ function initializeControls() {
             window.audioEnabled = audioEnabled;
             updateAudio();
             updateAudioIcon();
-            updateAudioStatus();
+            showStatusMessage(audioEnabled ? 'SOUND EFFECTS: ON' : 'SOUND EFFECTS: OFF');
         });
-    }
-
-    function updateAudioStatus() {
-        if (audioStatus) {
-            audioStatus.textContent = audioEnabled ? 'SOUND EFFECTS: ON' : 'SOUND EFFECTS: OFF';
-        }
     }
 
     function updateAudioIcon() {

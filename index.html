@@ -86,9 +86,9 @@
             
             <!-- Control Icons in Sidebar -->
             <div class="sidebar-controls">
-                <div class="sidebar-control-item">
+                <div class="sidebar-control-buttons">
                     <button class="sidebar-control-btn" id="visualToggle" title="Toggle Visual Effects">
-                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
                             <!-- Icono de ojo abierto -->
                             <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                             <circle class="eye-open" cx="12" cy="12" r="3"></circle>
@@ -96,11 +96,8 @@
                             <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" stroke-linecap="round"></line>
                         </svg>
                     </button>
-                    <span class="control-status" id="visualStatus">VISUAL EFFECTS: ON</span>
-                </div>
-                <div class="sidebar-control-item">
                     <button class="sidebar-control-btn" id="audioToggle" title="Toggle Audio">
-                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
                             <!-- Altavoz abierto -->
                             <path class="speaker-on" d="M3 9v6c0 1.105.895 2 2 2h4l5 5V4H9c-1.105 0-2 .895-2 2v3z"></path>
                             <path class="speaker-on" d="M17.5 3.5a4 4 0 0 1 0 5.66M19.07 4.93a8 8 0 0 1 0 11.31"></path>
@@ -110,8 +107,8 @@
                             <line class="speaker-off" style="display:none;" x1="17" y1="9" x2="23" y2="15"></line>
                         </svg>
                     </button>
-                    <span class="control-status" id="audioStatus">SOUND EFFECTS: ON</span>
                 </div>
+                <div class="control-status-message" id="statusMessage"></div>
             </div>
         </div>
     </nav>
@@ -313,12 +310,10 @@
                 <span class="tooltip">Fashion image 11</span>
             </a>
         </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-19.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
+        <div class="image-template reveal-text-template" data-text="DISCOVER THE MYSTERIES">
+            <div class="reveal-text-container">
+                <canvas class="reveal-text-canvas"></canvas>
+            </div>
         </div>
         <!-- Video template for Cinema Mode -->
         <div class="image-template">
@@ -333,6 +328,7 @@
     
     <!-- Sonidos -->
     <audio id="noiseSound" src="assets/sounds/white-noise.mp3" preload="auto" loop></audio>
+    <audio id="whispersSound" src="assets/sounds/whispers.mp3" preload="auto" loop></audio>
     <audio id="lockedInSound" src="assets/sounds/locked-in-oneself.mp3" preload="auto"></audio>
 
     <!-- Load scripts at the end for better performance -->
@@ -340,7 +336,92 @@
     <script src="assets/js/script.js"></script>
     <script src="assets/js/cursor-effect.js"></script>
     <script src="assets/js/grain-effect.js"></script>
+    <script src="assets/js/tooltip-nebula.js"></script>
     <script src="assets/js/perspective-distortion.js"></script>
+    <script src="assets/js/reveal-text.js"></script>
+    
+    <script>
+        (function() {
+            const whispersSound = document.getElementById('whispersSound');
+            
+            if (!whispersSound) return;
+            
+            const BASE_VOLUME = 0.01;
+            const HOVER_VOLUME = 0.10;
+            const TRANSITION_STEPS = 20;
+            
+            let isPlaying = false;
+            let volumeTransitionInterval = null;
+            let volumeMonitorInterval = null;
+            let targetVolume = BASE_VOLUME;
+            
+            function smoothVolumeTransition(target, duration = 300) {
+                if (volumeTransitionInterval) {
+                    clearInterval(volumeTransitionInterval);
+                }
+                
+                const startVolume = whispersSound.volume;
+                const volumeDiff = target - startVolume;
+                const stepDuration = duration / TRANSITION_STEPS;
+                let currentStep = 0;
+                
+                volumeTransitionInterval = setInterval(() => {
+                    currentStep++;
+                    const progress = currentStep / TRANSITION_STEPS;
+                    const easeProgress = progress < 0.5 
+                        ? 2 * progress * progress 
+                        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                    
+                    whispersSound.volume = startVolume + (volumeDiff * easeProgress);
+                    
+                    if (currentStep >= TRANSITION_STEPS) {
+                        clearInterval(volumeTransitionInterval);
+                        volumeTransitionInterval = null;
+                        whispersSound.volume = target;
+                        targetVolume = target;
+                    }
+                }, stepDuration);
+            }
+            
+            function startWhispers() {
+                if (isPlaying) return;
+                
+                whispersSound.volume = BASE_VOLUME;
+                whispersSound.muted = false;
+                targetVolume = BASE_VOLUME;
+                
+                whispersSound.play().then(() => {
+                    isPlaying = true;
+                    
+                    volumeMonitorInterval = setInterval(() => {
+                        if (isPlaying && !volumeTransitionInterval && whispersSound.volume !== targetVolume) {
+                            whispersSound.volume = targetVolume;
+                        }
+                    }, 100);
+                }).catch(() => {});
+            }
+            
+            setTimeout(startWhispers, 200);
+            
+            ['click', 'mousemove', 'keydown', 'touchstart'].forEach(event => {
+                document.addEventListener(event, startWhispers, { once: true });
+            });
+            
+            window.addEventListener('tooltipShown', () => {
+                smoothVolumeTransition(HOVER_VOLUME, 400);
+            });
+            
+            window.addEventListener('tooltipHidden', () => {
+                smoothVolumeTransition(BASE_VOLUME, 500);
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('.image-link') && isPlaying) {
+                    smoothVolumeTransition(0, 400);
+                }
+            });
+        })();
+    </script>
     
 </body>
 

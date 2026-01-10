@@ -35,8 +35,8 @@ const minVelocity = 0.1;
 
 let scale = 1;
 let targetScale = 1;
-const minScale = 0.8;
-const maxScale = 2.5;
+const minScale = 0.4;
+const maxScale = 1.2;
 const zoomSpeed = 0.1;
 const zoomSmoothness = 0.15;
 
@@ -102,6 +102,11 @@ let blurRadiusScaled = blurRadius * scale;
 let focusedElementPos = null;
 let focusedElementRadius = 200; // Radius around element where blur is reduced
 
+// Track menu state for blur override
+let isMenuActive = false;
+// Expose to window for controls.js
+window.isMenuActive = isMenuActive;
+
 window.addEventListener('elementFocused', (e) => {
     focusedElementPos = e.detail;
 });
@@ -151,6 +156,13 @@ function createImageElement(imageIndex, gridX, gridY) {
 
     const template = imageTemplates[imageIndex];
     const clonedContent = template.cloneNode(true);
+    
+    // Check if it's a reveal text template
+    if (template.classList.contains('reveal-text-template')) {
+        container.classList.add('reveal-text-template');
+        container.dataset.text = template.dataset.text || 'HIDDEN TEXT';
+    }
+    
     container.appendChild(clonedContent.firstElementChild);
 
     canvas.appendChild(container);
@@ -295,8 +307,12 @@ function updateImagePositions() {
 
         let blur = 0;
         
-        // Only apply blur if visual effects are enabled
-        if (window.visualEffectsEnabled !== false) {
+        // PRIORITY 1: If menu is active, blur all elements
+        if (window.isMenuActive) {
+            blur = maxBlur;
+        }
+        // PRIORITY 2: Only apply blur if visual effects are enabled
+        else if (window.visualEffectsEnabled !== false) {
             if (distance > blurThreshold) {
                 blur = Math.min(maxBlur, (distance - blurThreshold) / 100 * maxBlur);
             }

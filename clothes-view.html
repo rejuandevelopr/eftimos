@@ -51,7 +51,7 @@
 
 <body style="background-color: #1a1a1a;">
     <!-- Grain Canvas -->
-    <canvas id="grainCanvas" style="opacity: 0.15;"></canvas>
+    <canvas id="grainCanvas" style="opacity: 0.005;"></canvas>
 
     <nav class="blending-item">
         <div class="nav-container">
@@ -89,9 +89,9 @@
             
             <!-- Control Icons in Sidebar -->
             <div class="sidebar-controls">
-                <div class="sidebar-control-item">
+                <div class="sidebar-control-buttons">
                     <button class="sidebar-control-btn" id="visualToggle" title="Toggle Visual Effects">
-                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
                             <!-- Icono de ojo abierto -->
                             <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                             <circle class="eye-open" cx="12" cy="12" r="3"></circle>
@@ -99,11 +99,8 @@
                             <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" stroke-linecap="round"></line>
                         </svg>
                     </button>
-                    <span class="control-status" id="visualStatus">VISUAL EFFECTS: ON</span>
-                </div>
-                <div class="sidebar-control-item">
                     <button class="sidebar-control-btn" id="audioToggle" title="Toggle Audio">
-                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
                             <!-- Altavoz abierto -->
                             <path class="speaker-on" d="M3 9v6c0 1.105.895 2 2 2h4l5 5V4H9c-1.105 0-2 .895-2 2v3z"></path>
                             <path class="speaker-on" d="M17.5 3.5a4 4 0 0 1 0 5.66M19.07 4.93a8 8 0 0 1 0 11.31"></path>
@@ -113,8 +110,8 @@
                             <line class="speaker-off" style="display:none;" x1="17" y1="9" x2="23" y2="15"></line>
                         </svg>
                     </button>
-                    <span class="control-status" id="audioStatus">SOUND EFFECTS: ON</span>
                 </div>
+                <div class="control-status-message" id="statusMessage"></div>
             </div>
         </div>
     </nav>
@@ -150,26 +147,197 @@
             <div class="container-fluid">
                 <div class="grid-view-content">
                     <div class="item">
-                        <img src="assets/images/g-11.webp" alt="">
+                        <a href="#" class="image-link">
+                            <img src="assets/images/g-11.webp" alt="">
+                            <span class="tooltip">AW20 Collection</span>
+                        </a>
                     </div>
                     <div class="item">
-                        <img src="assets/images/g-12.webp" alt="">
+                        <a href="#" class="image-link">
+                            <img src="assets/images/g-12.webp" alt="">
+                            <span class="tooltip">Winter Editorial</span>
+                        </a>
                     </div>
                     <div class="item">
-                        <img src="assets/images/g-16.avif" alt="">
+                        <a href="#" class="image-link">
+                            <img src="assets/images/g-16.avif" alt="">
+                            <span class="tooltip">Avant-Garde Series</span>
+                        </a>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
+    <!-- Sonidos - En esta página usamos whispers como sonido principal -->
+    <audio id="noiseSound" src="assets/sounds/whispers.mp3" preload="auto" loop></audio>
+    <audio id="whispersSound" src="assets/sounds/whispers.mp3" preload="auto" loop></audio>
+    <audio id="lockedInSound" src="assets/sounds/locked-in-oneself.mp3" preload="auto"></audio>
+
     <!-- Load scripts at the end for better performance -->
     <script src="assets/js/script.js"></script>
     <script src="assets/js/cursor-effect.js"></script>
     <script src="assets/js/grain-effect.js"></script>
+    <script src="assets/js/tooltip-nebula.js"></script>
     <script src="assets/js/controls.js"></script>
 
     <script>
+        console.log('🚀 SCRIPT DE WHISPERS INICIADO');
+        
+        // Override audio settings for clothes-view page - make whispers more audible
+        (function() {
+            console.log('🚀 Función anónima ejecutándose...');
+            
+            const noiseSound = document.getElementById('noiseSound');
+            
+            if (!noiseSound) {
+                console.error('❌ No se encontró el elemento de audio noiseSound');
+                console.log('Elementos audio en la página:', document.querySelectorAll('audio'));
+                return;
+            }
+            
+            console.log('✓ Audio element encontrado:', noiseSound.src);
+            
+            // TOMAR CONTROL COMPLETO DEL AUDIO
+            const CLOTHES_BASE_VOLUME = 0.2;
+            const CLOTHES_HOVER_VOLUME = 0.6;
+            let isPlaying = false;
+            
+            // Función para iniciar el audio
+            function startWhispers() {
+                if (isPlaying) return;
+                
+                noiseSound.volume = CLOTHES_BASE_VOLUME;
+                noiseSound.muted = false;
+                
+                noiseSound.play().then(() => {
+                    isPlaying = true;
+                    console.log('✓✓✓ WHISPERS REPRODUCIENDO - Volumen:', noiseSound.volume);
+                }).catch(err => {
+                    console.warn('Audio bloqueado:', err.message);
+                });
+            }
+            
+            // Intentar iniciar inmediatamente
+            setTimeout(startWhispers, 100);
+            
+            // Asegurar inicio en primera interacción
+            const handlers = ['click', 'mousemove', 'keydown', 'touchstart'];
+            handlers.forEach(event => {
+                document.addEventListener(event, startWhispers, { once: true });
+            });
+            
+            // OVERRIDE TOTAL: Interceptar todos los cambios de volumen
+            let volumeOverride = CLOTHES_BASE_VOLUME;
+            
+            // Crear un proxy para controlar el volumen
+            Object.defineProperty(noiseSound, '_realVolume', {
+                value: noiseSound.volume,
+                writable: true
+            });
+            
+            // Actualizar volumen constantemente
+            setInterval(() => {
+                if (isPlaying && noiseSound.volume !== volumeOverride) {
+                    noiseSound.volume = volumeOverride;
+                }
+            }, 50);
+            
+            // Escuchar eventos de tooltip DIRECTAMENTE
+            window.addEventListener('tooltipShown', () => {
+                volumeOverride = CLOTHES_HOVER_VOLUME;
+                noiseSound.volume = CLOTHES_HOVER_VOLUME;
+                console.log('🔊 HOVER DETECTADO - Volumen aumentado a:', CLOTHES_HOVER_VOLUME);
+            });
+            
+            window.addEventListener('tooltipHidden', () => {
+                volumeOverride = CLOTHES_BASE_VOLUME;
+                noiseSound.volume = CLOTHES_BASE_VOLUME;
+                console.log('🔉 HOVER TERMINADO - Volumen base:', CLOTHES_BASE_VOLUME);
+            });
+            
+            // TAMBIÉN escuchar hover directo en los items por si acaso
+            document.addEventListener('DOMContentLoaded', () => {
+                const imageLinks = document.querySelectorAll('.grid-view .image-link');
+                console.log('📍 Items encontrados:', imageLinks.length);
+                
+                imageLinks.forEach((link, index) => {
+                    link.addEventListener('mouseenter', () => {
+                        volumeOverride = CLOTHES_HOVER_VOLUME;
+                        noiseSound.volume = CLOTHES_HOVER_VOLUME;
+                        console.log(`🎯 HOVER DIRECTO en item ${index + 1} - Vol:`, CLOTHES_HOVER_VOLUME);
+                    });
+                    
+                    link.addEventListener('mouseleave', () => {
+                        volumeOverride = CLOTHES_BASE_VOLUME;
+                        noiseSound.volume = CLOTHES_BASE_VOLUME;
+                        console.log(`👋 LEAVE en item ${index + 1} - Vol:`, CLOTHES_BASE_VOLUME);
+                    });
+                    
+                    link.addEventListener('click', () => {
+                        console.log('💥 CLICK - Fade out');
+                        let vol = noiseSound.volume;
+                        const fade = setInterval(() => {
+                            vol -= 0.05;
+                            if (vol <= 0) {
+                                volumeOverride = 0;
+                                noiseSound.volume = 0;
+                                clearInterval(fade);
+                            } else {
+                                volumeOverride = vol;
+                                noiseSound.volume = vol;
+                            }
+                        }, 20);
+                    });
+                });
+            });
+            
+            // DEBUG: Mostrar estado cada 2 segundos
+            setInterval(() => {
+                if (isPlaying) {
+                    console.log('📊 Estado:', {
+                        playing: !noiseSound.paused,
+                        volume: noiseSound.volume,
+                        muted: noiseSound.muted,
+                        src: noiseSound.src.split('/').pop()
+                    });
+                }
+            }, 2000);
+        })();
+    </script>
+
+    <script>
+        // Override grain effect intensity for this page
+        if (typeof updateGrain !== 'undefined') {
+            window.updateGrain = function() {
+                const imageData = grainCtx.createImageData(grainCanvas.width, grainCanvas.height);
+                const centerX = grainCanvas.width / 2;
+                const centerY = grainCanvas.height / 2;
+                const maxDist = Math.sqrt(centerX**2 + centerY**2);
+
+                for (let y = 0; y < grainCanvas.height; y++) {
+                    for (let x = 0; x < grainCanvas.width; x++) {
+                        const i = (y * grainCanvas.width + x) * 4;
+                        const val = Math.random() * 255;
+
+                        const dx = x - centerX;
+                        const dy = y - centerY;
+                        const dist = Math.sqrt(dx*dx + dy*dy) / maxDist;
+
+                        // Reduce alpha drastically (from 0-100 to 0-2)
+                        const alpha = (dist) * 2;
+
+                        imageData.data[i] = val;
+                        imageData.data[i + 1] = val;
+                        imageData.data[i + 2] = val;
+                        imageData.data[i + 3] = alpha;
+                    }
+                }
+
+                grainCtx.putImageData(imageData, 0, 0);
+            };
+        }
+
         window.addEventListener('popstate', function () {
             window.location.href = 'index.html';
         });
@@ -218,6 +386,43 @@
                     if (e.target === contactModal) {
                         contactModal.classList.remove('active');
                     }
+                });
+            }
+
+            // Logo click transition to white
+            const logoLink = document.querySelector('.logo');
+            if (logoLink) {
+                logoLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetUrl = this.getAttribute('href');
+                    
+                    // Create white overlay
+                    let overlay = document.getElementById('transitionOverlay');
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.id = 'transitionOverlay';
+                        overlay.style.position = 'fixed';
+                        overlay.style.top = '0';
+                        overlay.style.left = '0';
+                        overlay.style.right = '0';
+                        overlay.style.bottom = '0';
+                        overlay.style.background = 'white';
+                        overlay.style.zIndex = '100000';
+                        overlay.style.pointerEvents = 'none';
+                        overlay.style.opacity = '0';
+                        overlay.style.transition = 'opacity 0.45s ease';
+                        document.body.appendChild(overlay);
+                    }
+                    
+                    // Trigger fade to white
+                    requestAnimationFrame(() => {
+                        overlay.style.opacity = '1';
+                    });
+                    
+                    // Navigate after transition
+                    setTimeout(() => {
+                        window.location.href = targetUrl;
+                    }, 450);
                 });
             }
         });
