@@ -1,3 +1,16 @@
+/* --- Motion Blur Global Effect --- */
+.motion-blur-enabled {
+    /* Efecto de motion blur global, ajusta el valor para más/menos blur */
+    filter: blur(4px) brightness(1.08) saturate(1.1);
+    transition: filter 0.3s cubic-bezier(0.76,0,0.24,1);
+}
+
+body.motion-blur-enabled #grainCanvas,
+body.motion-blur-enabled #customCursor,
+body.motion-blur-enabled #trailCanvas {
+    /* No aplicar blur a overlays/cursor/canvas si es necesario */
+    filter: none !important;
+}
 @font-face {
     font-family: 'Helvetica';
     src: url('../fonts/Helvetica.ttf') format('truetype');

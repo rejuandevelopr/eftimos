@@ -1,4 +1,38 @@
+// --- Motion Blur Direccional DOM ---
+let lastOffsetX = 0, lastOffsetY = 0;
+let lastBlur = 0;
+function updateMotionBlurDOM() {
+    if (window.visualEffectsEnabled === false) {
+        document.body.classList.remove('motion-blur-dom');
+        document.querySelectorAll('.image-container').forEach(el => {
+            el.style.filter = '';
+        });
+        return;
+    }
+    document.body.classList.add('motion-blur-dom');
+    const dx = Math.abs(offsetX - lastOffsetX);
+    const dy = Math.abs(offsetY - lastOffsetY);
+    let blur = Math.min(12, Math.max(dx, dy) * 0.7);
+    blur = (blur + lastBlur * 2) / 3;
+    lastBlur = blur;
+    document.querySelectorAll('.image-container').forEach(el => {
+        el.style.filter = blur > 0.5 ? `blur(${blur.toFixed(1)}px)` : '';
+    });
+    lastOffsetX = offsetX;
+    lastOffsetY = offsetY;
+}
 const canvas = document.getElementById('canvas');
+let mapGroup = document.getElementById('map-group');
+if (!mapGroup) {
+    mapGroup = document.createElement('div');
+    mapGroup.id = 'map-group';
+    mapGroup.style.width = '100%';
+    mapGroup.style.height = '100%';
+    mapGroup.style.position = 'absolute';
+    mapGroup.style.top = '0';
+    mapGroup.style.left = '0';
+    canvas.appendChild(mapGroup);
+}
 
 // Responsive settings function
 function getResponsiveSettings() {
@@ -33,12 +67,12 @@ const smoothness = 0.08;
 const friction = 0;
 const minVelocity = 0.1;
 
-let scale = 1;
-let targetScale = 1;
-const minScale = 0.4;
-const maxScale = 1.2;
-const zoomSpeed = 0.1;
-const zoomSmoothness = 0.15;
+window.scale = 1;
+window.targetScale = 1;
+window.minScale = 0.4;
+window.maxScale = 1.2;
+window.zoomSpeed = 0.1;
+window.zoomSmoothness = 0.15;
 
 const imageTemplates = document.querySelectorAll('#image-templates .image-template');
 // Build baseImages defensively: support image and video templates
@@ -165,7 +199,7 @@ function createImageElement(imageIndex, gridX, gridY) {
     
     container.appendChild(clonedContent.firstElementChild);
 
-    canvas.appendChild(container);
+    mapGroup.appendChild(container);
 
     return {
         element: container,
@@ -273,6 +307,15 @@ function clampOffset() {
 }
 
 // ✨ OPTIMIZED: Using transform3d for GPU acceleration (30-40% smoother!)
+// Utility: Check if an image is 100% centered (focused) on screen
+function isImageCentered(x, y, imageSizeScaled) {
+    // Consider centered if the image center is within a small threshold of the screen center
+    const threshold = imageSizeScaled * 0.35; // 35% of image size
+    const dx = x - centerX;
+    const dy = y - centerY;
+    return Math.abs(dx) < threshold && Math.abs(dy) < threshold;
+}
+
 function updateImagePositions() {
     const offsetXScaled = offsetX * scale;
     const offsetYScaled = offsetY * scale;
@@ -287,15 +330,14 @@ function updateImagePositions() {
 
         const baseX = img.gridX * gridSpacing + randomOffset.x;
         const baseY = img.gridY * gridSpacing + randomOffset.y;
-        
+
         const x = baseX * scale + offsetXScaled + centerX;
         const y = baseY * scale + offsetYScaled + centerY;
 
         const element = img.element;
         const style = element.style;
-        
+
         // ✨ NEW: Use transform3d instead of left/top for GPU acceleration
-        // This is 30-40% faster and smoother!
         const translateX = x - imageSizeScaledHalf;
         const translateY = y - imageSizeScaledHalf;
         style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`;
@@ -306,7 +348,30 @@ function updateImagePositions() {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         let blur = 0;
-        
+
+        // --- MOBILE TOOLTIP & COLOR LOGIC ---
+        const isMobile = window.innerWidth <= 900 || /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+        const imageLink = element.querySelector('.image-link');
+        const imgTag = imageLink ? imageLink.querySelector('img') : null;
+        const tooltip = element.querySelector('.tooltip');
+
+        if (isMobile && imageLink && imgTag && tooltip) {
+            if (isImageCentered(x, y, imageSizeScaled)) {
+                // Show tooltip and colorize image
+                tooltip.style.opacity = '1';
+                tooltip.style.visibility = 'visible';
+                imgTag.style.filter = 'none';
+                imgTag.style.webkitFilter = 'none';
+                imgTag.classList.add('focused-mobile');
+            } else {
+                tooltip.style.opacity = '';
+                tooltip.style.visibility = '';
+                imgTag.style.filter = 'grayscale(1)';
+                imgTag.style.webkitFilter = 'grayscale(1)';
+                imgTag.classList.remove('focused-mobile');
+            }
+        }
+
         // PRIORITY 1: If menu is active, blur all elements
         if (window.isMenuActive) {
             blur = maxBlur;
@@ -316,14 +381,14 @@ function updateImagePositions() {
             if (distance > blurThreshold) {
                 blur = Math.min(maxBlur, (distance - blurThreshold) / 100 * maxBlur);
             }
-            
+
             // Apply radial blur reduction around focused element
             if (focusedElementPos) {
                 const distToFocused = Math.sqrt(
-                    Math.pow(x - focusedElementPos.x, 2) + 
+                    Math.pow(x - focusedElementPos.x, 2) +
                     Math.pow(y - focusedElementPos.y, 2)
                 );
-                
+
                 // If within focused radius, reduce blur based on proximity
                 if (distToFocused < focusedElementRadius) {
                     // Calculate reduction factor (1 = no blur, 0 = full blur)
@@ -332,7 +397,7 @@ function updateImagePositions() {
                 }
             }
         }
-        
+
         style.filter = `blur(${blur}px)`;
     }
 }
@@ -378,8 +443,8 @@ function animate() {
     const effectiveBlurRadius = (window.visualEffectsEnabled !== false) ? blurRadius : 0;
     blurRadiusScaled = effectiveBlurRadius * scale;
 
+    updateMotionBlurDOM();
     updateImagePositions();
-
     requestAnimationFrame(animate);
 }
 

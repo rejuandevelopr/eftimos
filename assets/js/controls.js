@@ -12,6 +12,138 @@ function initializeControls() {
     const menuToggle = document.getElementById('menuToggle');
     const dropdownMenu = document.getElementById('dropdownMenu');
 
+        // ========== AUDIO FILTER SETUP ========== 
+        // Soporte para low pass filter en noise y whispers
+        let audioCtx = null;
+        let noiseSource = null;
+        let noiseFilter = null;
+        let noiseGain = null;
+        let whispersSource = null;
+        let whispersFilter = null;
+        let whispersGain = null;
+        let filterActive = false;
+        let filterTransitionFrame = null;
+
+        // === WHISPERS VOLUME MODULATION ===
+        let whispersBaseVolume = 0.08; // Valor base, puede ajustarse
+        let whispersTargetVolume = whispersBaseVolume;
+        let whispersCurrentVolume = whispersBaseVolume;
+        let whispersModulationPhase = Math.random() * Math.PI * 2;
+            // Controla si la modulación está activa
+            let whispersModulationEnabled = true;
+        let whispersModulationSpeed = 0.025 + Math.random() * 0.01; // Oscilación extremadamente lenta
+        let whispersModulationAmount = 0.95; // Profundidad de la modulación (muy intensa)
+        let whispersModulationTimer = null;
+
+        // Permite a otros sistemas cambiar el volumen base de whispers
+        window.setWhispersTargetVolume = function(vol) {
+            whispersTargetVolume = vol;
+        };
+
+        function setupAudioFilters() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            // Noise
+            const noiseEl = document.getElementById('noiseSound');
+            if (noiseEl && !noiseSource) {
+                noiseSource = audioCtx.createMediaElementSource(noiseEl);
+                noiseFilter = audioCtx.createBiquadFilter();
+                noiseFilter.type = 'lowpass';
+                noiseFilter.frequency.value = 22050;
+                noiseGain = audioCtx.createGain();
+                noiseSource.connect(noiseFilter).connect(noiseGain).connect(audioCtx.destination);
+            }
+            // Whispers
+            const whispersEl = document.getElementById('whispersSound');
+            if (whispersEl && !whispersSource) {
+                whispersSource = audioCtx.createMediaElementSource(whispersEl);
+                whispersFilter = audioCtx.createBiquadFilter();
+                whispersFilter.type = 'lowpass';
+                whispersFilter.frequency.value = 22050;
+                whispersGain = audioCtx.createGain();
+                whispersSource.connect(whispersFilter).connect(whispersGain).connect(audioCtx.destination);
+                // Inicializar volumen base
+                whispersGain.gain.value = whispersBaseVolume;
+            }
+                // === MODULACIÓN DE VOLUMEN DE WHISPERS ===
+                function updateWhispersVolumeModulation() {
+                    if (!whispersGain) return;
+                    // Interpolación suave hacia el target (por si cambia por hover, etc)
+                    whispersCurrentVolume += (whispersTargetVolume - whispersCurrentVolume) * 0.08;
+                    let finalVol;
+                    if (whispersModulationEnabled) {
+                        // Oscilación suave y random
+                        whispersModulationPhase += whispersModulationSpeed * (0.8 + Math.random() * 0.4);
+                        // Suma de dos senos para hacerlo menos predecible
+                        let mod = Math.sin(whispersModulationPhase) * 0.6 + Math.sin(whispersModulationPhase * 0.37 + 100) * 0.4;
+                        mod *= whispersModulationAmount;
+                        // Clamp para evitar valores negativos
+                        finalVol = Math.max(0, whispersCurrentVolume * (1 + mod));
+                    } else {
+                        finalVol = whispersCurrentVolume;
+                    }
+                    whispersGain.gain.value = finalVol;
+                }
+
+                // Llama a la modulación ~60fps
+                setInterval(updateWhispersVolumeModulation, 16);
+        }
+
+        // Inicializar filtros de audio al cargar la página para evitar poppeo
+        setupAudioFilters();
+
+        function setLowPassFilter(targetFreq, duration = 400) {
+            setupAudioFilters();
+            filterActive = true;
+            const startNoise = noiseFilter.frequency.value;
+            const startWhispers = whispersFilter.frequency.value;
+            const end = performance.now() + duration;
+            function animate() {
+                const now = performance.now();
+                const t = Math.min(1, (now - (end - duration)) / duration);
+                // Ease in-out cubic
+                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                noiseFilter.frequency.value = startNoise + (targetFreq - startNoise) * ease;
+                whispersFilter.frequency.value = startWhispers + (targetFreq - startWhispers) * ease;
+                if (t < 1) {
+                    filterTransitionFrame = requestAnimationFrame(animate);
+                } else {
+                    noiseFilter.frequency.value = targetFreq;
+                    whispersFilter.frequency.value = targetFreq;
+                    filterTransitionFrame = null;
+                }
+            }
+            if (filterTransitionFrame) cancelAnimationFrame(filterTransitionFrame);
+            animate();
+        }
+
+        function restoreLowPassFilter(duration = 400) {
+            setupAudioFilters();
+            filterActive = false;
+            const startNoise = noiseFilter.frequency.value;
+            const startWhispers = whispersFilter.frequency.value;
+            const targetFreq = 22050;
+            const end = performance.now() + duration;
+            function animate() {
+                const now = performance.now();
+                const t = Math.min(1, (now - (end - duration)) / duration);
+                // Ease in-out cubic
+                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                noiseFilter.frequency.value = startNoise + (targetFreq - startNoise) * ease;
+                whispersFilter.frequency.value = startWhispers + (targetFreq - startWhispers) * ease;
+                if (t < 1) {
+                    filterTransitionFrame = requestAnimationFrame(animate);
+                } else {
+                    noiseFilter.frequency.value = targetFreq;
+                    whispersFilter.frequency.value = targetFreq;
+                    filterTransitionFrame = null;
+                }
+            }
+            if (filterTransitionFrame) cancelAnimationFrame(filterTransitionFrame);
+            animate();
+        }
+
     if (menuToggle && dropdownMenu) {
         menuToggle.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -22,6 +154,13 @@ function initializeControls() {
             // Update menu state in script.js for blur control
             if (window.isMenuActive !== undefined) {
                 window.isMenuActive = dropdownMenu.classList.contains('active');
+            }
+
+            // LOW PASS FILTER: aplicar/quitar filtro al abrir/cerrar menú
+            if (dropdownMenu.classList.contains('active')) {
+                setLowPassFilter(1200, 300); // Aún más rápido al abrir
+            } else {
+                restoreLowPassFilter(900);
             }
         });
 
@@ -38,6 +177,9 @@ function initializeControls() {
                     if (window.isMenuActive !== undefined) {
                         window.isMenuActive = false;
                     }
+
+                    // Quitar filtro al cerrar menú
+                    restoreLowPassFilter(500);
                 }
             });
         });
@@ -53,6 +195,9 @@ function initializeControls() {
                 if (window.isMenuActive !== undefined) {
                     window.isMenuActive = false;
                 }
+
+                // Quitar filtro al cerrar menú
+                restoreLowPassFilter(500);
             }
         });
 
@@ -67,6 +212,9 @@ function initializeControls() {
                 if (window.isMenuActive !== undefined) {
                     window.isMenuActive = false;
                 }
+
+                // Quitar filtro al cerrar menú
+                restoreLowPassFilter(500);
             }
         });
     }
@@ -160,6 +308,9 @@ function initializeControls() {
             updateVisualEffects();
             updateVisualIcon();
             showStatusMessage(visualEffectsEnabled ? 'VISUAL EFFECTS: ON' : 'VISUAL EFFECTS: OFF');
+            // Emitir evento global para efectos visuales
+            const evt = new Event('visualEffectsToggled');
+            window.dispatchEvent(evt);
         });
     }
 
@@ -241,7 +392,7 @@ function initializeControls() {
         }
     }
 
-    // ========== AUDIO TOGGLE ==========
+    // ========== AUDIO TOGGLE ========== 
 
     const audioToggle = document.getElementById('audioToggle');
     const noiseSound = document.getElementById('noiseSound');
@@ -253,11 +404,15 @@ function initializeControls() {
     // Set initial volume very low with 3 levels: base, focused, hover with tooltip
     const baseNoiseVolume = 0.003;      // No interaction (almost imperceptible)
     const focusedNoiseVolume = 0.01;    // Element focused (no tooltip)
-    const hoverNoiseVolume = 0.02;      // Hover with tooltip visible
+    const hoverNoiseVolume = 0.006;      // Hover with tooltip visible
     let targetNoiseVolume = baseNoiseVolume;
     let currentNoiseVolume = baseNoiseVolume;
     let unfocusTimeout = null;
     let isTooltipVisible = false;
+    // Para whispers
+    const baseWhispersVolume = 0.16; // Antes 0.08, ahora más audible
+    const focusedWhispersVolume = 0.22;
+    const hoverWhispersVolume = 0.29;
     
     if (noiseSound) {
         noiseSound.volume = baseNoiseVolume;
@@ -310,47 +465,45 @@ function initializeControls() {
     
     // Listen for tooltip show/hide events (highest priority)
     window.addEventListener('tooltipShown', () => {
+            whispersModulationEnabled = false;
         isTooltipVisible = true;
-        // Clear any pending unfocus timeout
         if (unfocusTimeout) {
             clearTimeout(unfocusTimeout);
             unfocusTimeout = null;
         }
         targetNoiseVolume = hoverNoiseVolume; // 0.02
+        window.setWhispersTargetVolume(hoverWhispersVolume);
     });
-    
+
     window.addEventListener('tooltipHidden', () => {
+            whispersModulationEnabled = true;
         isTooltipVisible = false;
-        // When tooltip hides, go back to base volume
         targetNoiseVolume = baseNoiseVolume; // 0.005
+        window.setWhispersTargetVolume(baseWhispersVolume);
     });
-    
-    // Listen for element focus/unfocus events
+
     window.addEventListener('elementFocused', () => {
-        // Clear any pending unfocus timeout
         if (unfocusTimeout) {
             clearTimeout(unfocusTimeout);
             unfocusTimeout = null;
         }
-        // Only set to focused volume if tooltip is not visible
         if (!isTooltipVisible) {
             targetNoiseVolume = focusedNoiseVolume; // 0.01
+            window.setWhispersTargetVolume(focusedWhispersVolume);
         }
     });
-    
+
     window.addEventListener('elementUnfocused', () => {
-        // Add small delay before lowering volume for smoother transitions
-        // This prevents rapid volume drops when moving between elements
         if (unfocusTimeout) {
             clearTimeout(unfocusTimeout);
         }
         unfocusTimeout = setTimeout(() => {
-            // Only go to base if no tooltip is visible
             if (!isTooltipVisible) {
                 targetNoiseVolume = baseNoiseVolume; // 0.005
+                window.setWhispersTargetVolume(baseWhispersVolume);
             }
             unfocusTimeout = null;
-        }, 100); // 100ms delay
+        }, 100);
     });
     
     // Update volume smoothly every frame

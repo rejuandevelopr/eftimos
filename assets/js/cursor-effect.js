@@ -1,3 +1,36 @@
+// Touch (mobile)
+window.addEventListener("touchstart", e => {
+  const pos = getEventPos(e);
+  isMouseDown = true;
+  hasDragged = false;
+  holdActive = false;
+  clearTimeout(holdTimer);
+  holdTimer = setTimeout(() => {
+    if (isMouseDown && !holdActive) {
+      holdActive = true;
+      window._dragTrail = {
+        radius: Math.max(window.innerWidth, window.innerHeight) * 0.45, // start large, animate in
+        opacity: 0.13,
+        state: 'contract',
+        x: pos.x,
+        y: pos.y
+      };
+    }
+  }, HOLD_THRESHOLD);
+  // Only trigger ripple if touch is on map or its elements and not dragging
+  if (hasDragged) return;
+  const el = document.elementFromPoint(pos.x - window.scrollX, pos.y - window.scrollY);
+  if (el && (el.closest && el.closest('#canvas') || el.classList && (el.classList.contains('image-link') || el.classList.contains('video-link')))) {
+    triggerRipple(pos.x, pos.y);
+  }
+});
+
+window.addEventListener("touchend", () => {
+  clearTimeout(holdTimer);
+  isMouseDown = false;
+  hasDragged = false;
+  holdActive = false;
+});
 // Detect if device is mobile/tablet
 function isMobileDevice() {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
@@ -5,38 +38,41 @@ function isMobileDevice() {
     || ('ontouchstart' in window);
 }
 
-// Exit early if mobile device - don't create cursor
-if (isMobileDevice()) {
-  console.log('Mobile device detected - custom cursor disabled');
-  // Do nothing on mobile
-} else {
-  // Desktop only - create custom cursor
-  
-  // Cursor container
-  const cursorContainer = document.createElement('div');
+// Always create the trail canvas for ripple feedback (desktop & mobile)
+let shapeMode = 'normal';
+const isMobile = isMobileDevice();
+let cursorContainer, centerDot;
+if (!isMobile) {
+  cursorContainer = document.createElement('div');
   cursorContainer.id = 'customCursor';
   document.body.appendChild(cursorContainer);
-
-  // Create center dot
-  const centerDot = document.createElement('div');
+  centerDot = document.createElement('div');
   centerDot.className = 'cursor-center-dot';
   cursorContainer.appendChild(centerDot);
+}
 
-  // Create trail canvas
-  const trailCanvas = document.createElement('canvas');
-  trailCanvas.id = 'trailCanvas';
-  document.body.appendChild(trailCanvas);
-  const trailCtx = trailCanvas.getContext('2d', { alpha: true });
-  
-  // Set canvas size
+const trailCanvas = document.createElement('canvas');
+trailCanvas.id = 'trailCanvas';
+document.body.appendChild(trailCanvas);
+const trailCtx = trailCanvas.getContext('2d', { alpha: true });
+trailCanvas.width = window.innerWidth;
+trailCanvas.height = window.innerHeight;
+window.addEventListener('resize', () => {
   trailCanvas.width = window.innerWidth;
   trailCanvas.height = window.innerHeight;
-  
-  // Handle window resize
-  window.addEventListener('resize', () => {
-    trailCanvas.width = window.innerWidth;
-    trailCanvas.height = window.innerHeight;
+});
+// Ripple effect state
+const ripples = [];
+function triggerRipple(x, y) {
+  ripples.push({
+    x,
+    y,
+    radius: 0,
+    maxRadius: Math.max(window.innerWidth, window.innerHeight) * 1.1, // covers whole page
+    opacity: 0.09, // less intense
+    alive: true
   });
+}
 
 const particles = [];
 const particleCount = 40;
@@ -57,10 +93,11 @@ let clickBurst = false;
 let burstTimer = 0;
 let isMouseDown = false;
 let hasDragged = false;
-let isHoveringElement = false; // Track if hovering over an element
-let targetCenterDotScale = 1; // Target scale for center dot
+let holdActive = false;
+let holdTimer = null;
 
-let shapeMode = "normal";
+const HOLD_THRESHOLD = 320; // ms to consider a simple hold
+let targetCenterDotScale = 1; // Target scale for center dot
 let currentLetter = "A";
 let letterPoints = [];
 
@@ -221,6 +258,11 @@ for (let i = 0; i < particleCount; i++) {
 }
 
 function animateCursor() {
+  if (typeof centerDot === 'undefined' || !centerDot) {
+    console.warn('centerDot NO existe o es undefined');
+  } else {
+    console.log('centerDot SÍ existe');
+  }
   // Hide cursor if visual effects are disabled
   if (window.visualEffectsEnabled === false) {
     cursorContainer.style.opacity = '0';
@@ -237,8 +279,14 @@ function animateCursor() {
   smoothPos.y += (mouse.y - smoothPos.y) * delayFactor;
 
   // Update center dot position
-  centerDot.style.left = smoothPos.x + 'px';
-  centerDot.style.top = smoothPos.y + 'px';
+  console.log('shapeMode', typeof shapeMode !== 'undefined' ? shapeMode : 'NO DEFINIDO');
+  if (centerDot) {
+    centerDot.style.left = smoothPos.x + 'px';
+    centerDot.style.top = smoothPos.y + 'px';
+    console.log('centerDot', smoothPos.x, smoothPos.y);
+  } else {
+    console.warn('centerDot existe pero es null');
+  }
   
   // Smooth scale animation for center dot
   let currentCenterDotScale = parseFloat(centerDot.style.scale) || 1;
@@ -268,63 +316,163 @@ function animateCursor() {
   prevMouse.x = mouse.x;
   prevMouse.y = mouse.y;
   
-  // Trail painting on canvas
-  // Only draw trail if visual effects are enabled
-  if (window.visualEffectsEnabled !== false) {
-    // First, fade out the existing trail using destination-out
+  // Trail and ripple painting on canvas
+  // Limpia el canvas completamente durante drag/hold para evitar ghosting
+  if ((isMouseDown && (hasDragged || holdActive)) || (window._dragTrail && window._dragTrail.state === 'contract')) {
+    trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+  } else {
+    // Fade out normal cuando no hay drag/hold
     trailCtx.globalCompositeOperation = 'destination-out';
     trailCtx.fillStyle = 'rgba(0, 0, 0, 0.15)';
     trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
     trailCtx.globalCompositeOperation = 'source-over';
+  }
 
-    // Calculate target trail position
+  // --- Trail logic (desktop only, if enabled) ---
+  if (!isMobile && window.visualEffectsEnabled !== false) {
     let targetTrailX, targetTrailY;
     let interp = 0.15;
-
-    // Si está haciendo drag, no "imprimir" el trail, pero dejar que se desvanezca
-    let printTrail = !(isMouseDown && hasDragged);
-
-    if (isHoveringMapItem) {
-      targetTrailX = (mouse.x + hoveredItemCenter.x) / 2;
-      targetTrailY = (mouse.y + hoveredItemCenter.y) / 2;
-      targetTrailOpacity = 0.25;
-      targetTrailRadius = 140;
-      interp = 0.15;
-    } else if (mouseSpeed > 0.5) {
-      targetTrailX = smoothPos.x;
-      targetTrailY = smoothPos.y;
-      const speedIntensity = Math.min(mouseSpeed / 20, 1);
-      targetTrailOpacity = 0.08 * speedIntensity;
-      targetTrailRadius = 90;
-      interp = 0.15;
-    } else {
-      targetTrailX = smoothPos.x;
-      targetTrailY = smoothPos.y;
-      targetTrailOpacity = 0;
-      targetTrailRadius = 90;
-      interp = 0.05;
+    // Inverse trail for drag
+    if ((isMouseDown && (hasDragged || holdActive)) || (window._dragTrail && window._dragTrail.state === 'contract')) {
+      // Draw a contracting ring from outside to inside, keep animating as long as holding
+      const dragCenterX = smoothPos.x;
+      const dragCenterY = smoothPos.y;
+      // Crear instancia al inicio y actualizar la posición para que siga el mouse
+      if (!window._dragTrail) {
+        window._dragTrail = {
+          radius: 48,
+          opacity: 0.13,
+          state: 'contract',
+          x: dragCenterX,
+          y: dragCenterY
+        };
+      } else {
+        window._dragTrail.x = dragCenterX;
+        window._dragTrail.y = dragCenterY;
+      }
+      if (window._dragTrail.opacity > 0.01) {
+        const grad = trailCtx.createRadialGradient(
+          window._dragTrail.x, window._dragTrail.y, window._dragTrail.radius * 0.7,
+          window._dragTrail.x, window._dragTrail.y, window._dragTrail.radius
+        );
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(0.7, `rgba(0,0,0,${window._dragTrail.opacity})`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        trailCtx.save();
+        trailCtx.globalAlpha = 1;
+        trailCtx.fillStyle = grad;
+        trailCtx.beginPath();
+        trailCtx.arc(window._dragTrail.x, window._dragTrail.y, window._dragTrail.radius, 0, Math.PI * 2);
+        trailCtx.fill();
+        trailCtx.restore();
+      }
+      // On drag release, expand explosively and fade out
+      if (!isMouseDown && window._dragTrail && window._dragTrail.state === 'contract') {
+        window._dragTrail.state = 'expand';
+      }
     }
-
-    trailPosition.x += (targetTrailX - trailPosition.x) * interp;
-    trailPosition.y += (targetTrailY - trailPosition.y) * interp;
-    currentTrailOpacity += (targetTrailOpacity - currentTrailOpacity) * interp;
-    currentTrailRadius += (targetTrailRadius - currentTrailRadius) * interp;
-
-    // Solo "imprimir" el trail si no está en drag
-    if (printTrail && currentTrailOpacity > 0.01) {
-      const gradient = trailCtx.createRadialGradient(trailPosition.x, trailPosition.y, 0, trailPosition.x, trailPosition.y, currentTrailRadius);
-      gradient.addColorStop(0, `rgba(0, 0, 0, ${currentTrailOpacity})`);
-      gradient.addColorStop(0.5, `rgba(0, 0, 0, ${currentTrailOpacity * 0.5})`);
-      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-      trailCtx.fillStyle = gradient;
-      trailCtx.beginPath();
-      trailCtx.arc(trailPosition.x, trailPosition.y, currentTrailRadius, 0, Math.PI * 2);
-      trailCtx.fill();
+    if (window._dragTrail && window._dragTrail.state === 'expand') {
+      window._dragTrail.radius += 64 + window._dragTrail.radius * 0.22;
+      window._dragTrail.opacity *= 0.89;
+      if (window._dragTrail.opacity > 0.01) {
+        const grad = trailCtx.createRadialGradient(
+          window._dragTrail.x, window._dragTrail.y, window._dragTrail.radius * 0.7,
+          window._dragTrail.x, window._dragTrail.y, window._dragTrail.radius
+        );
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(0.7, `rgba(0,0,0,${window._dragTrail.opacity})`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        trailCtx.save();
+        trailCtx.globalAlpha = 1;
+        trailCtx.fillStyle = grad;
+        trailCtx.beginPath();
+        trailCtx.arc(window._dragTrail.x, window._dragTrail.y, window._dragTrail.radius, 0, Math.PI * 2);
+        trailCtx.fill();
+        trailCtx.restore();
+      } else {
+        window._dragTrail = null;
+      }
+    } else if (!isMouseDown || !hasDragged) {
+      // Normal trail logic
+      window._dragTrail = null;
+      // Mostrar trail normal solo si no hay hold ni drag
+      let printTrail = !isMouseDown && !holdActive;
+      // Forzar opacidad mínima para que el trail aparezca aunque el mouse esté quieto
+      if (targetTrailOpacity === 0) targetTrailOpacity = 0.04;
+      if (isHoveringMapItem) {
+        targetTrailX = (mouse.x + hoveredItemCenter.x) / 2;
+        targetTrailY = (mouse.y + hoveredItemCenter.y) / 2;
+        // Trail radius relative to zoom: min at minScale, max at maxScale
+        let zoom = (window.scale - window.minScale) / (window.maxScale - window.minScale);
+        zoom = Math.max(0, Math.min(1, zoom));
+        const minTrail = 90;
+        const maxTrail = 210;
+        targetTrailRadius = minTrail + (maxTrail - minTrail) * zoom;
+        targetTrailOpacity = 0.22;
+        interp = 0.13;
+      } else if (mouseSpeed > 0.5) {
+        targetTrailX = smoothPos.x;
+        targetTrailY = smoothPos.y;
+        const speedIntensity = Math.min(mouseSpeed / 20, 1);
+        targetTrailOpacity = 0.07 * speedIntensity;
+        targetTrailRadius = 90;
+        interp = 0.15;
+      } else {
+        targetTrailX = smoothPos.x;
+        targetTrailY = smoothPos.y;
+        targetTrailOpacity = 0;
+        targetTrailRadius = 90;
+        interp = 0.05;
+      }
+      // Mostrar trail normal siempre que printTrail sea true
+      if (printTrail) {
+        trailPosition.x += (targetTrailX - trailPosition.x) * interp;
+        trailPosition.y += (targetTrailY - trailPosition.y) * interp;
+        currentTrailOpacity += (targetTrailOpacity - currentTrailOpacity) * interp;
+        currentTrailRadius += (targetTrailRadius - currentTrailRadius) * interp;
+        const gradient = trailCtx.createRadialGradient(
+          trailPosition.x, trailPosition.y, 0,
+          trailPosition.x, trailPosition.y, currentTrailRadius
+        );
+        gradient.addColorStop(0.0, `rgba(0,0,0,${currentTrailOpacity})`);
+        gradient.addColorStop(0.85, `rgba(0,0,0,${currentTrailOpacity * 0.01})`);
+        gradient.addColorStop(1.0, 'rgba(0,0,0,0)');
+        trailCtx.save();
+        trailCtx.globalAlpha = 1;
+        trailCtx.fillStyle = gradient;
+        trailCtx.beginPath();
+        trailCtx.arc(trailPosition.x, trailPosition.y, currentTrailRadius, 0, Math.PI * 2);
+        trailCtx.fill();
+        trailCtx.restore();
+      }
     }
-  } else {
-    // Clear the trail canvas when visual effects are disabled
-    trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+  }
+
+  // --- Ripple logic (always enabled) ---
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    const ripple = ripples[i];
+    if (!ripple.alive) continue;
+    ripple.radius += 28 + ripple.radius * 0.13; // fast, but smooth expansion
+    ripple.opacity *= 0.91; // fade out gently
+    if (ripple.opacity < 0.01) {
+      ripple.alive = false;
+      ripples.splice(i, 1);
+      continue;
+    }
+    const grad = trailCtx.createRadialGradient(
+      ripple.x, ripple.y, 0,
+      ripple.x, ripple.y, ripple.radius
+    );
+    grad.addColorStop(0, `rgba(0,0,0,${ripple.opacity})`);
+    grad.addColorStop(0.7, `rgba(0,0,0,${ripple.opacity * 0.08})`);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    trailCtx.save();
+    trailCtx.globalAlpha = 1;
+    trailCtx.fillStyle = grad;
+    trailCtx.beginPath();
+    trailCtx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+    trailCtx.fill();
+    trailCtx.restore();
   }
 
   requestAnimationFrame(animateCursor);
@@ -334,7 +482,7 @@ function animateCursor() {
 window.addEventListener("mousemove", e => {
   mouse.x = e.pageX;  // Use pageX instead of clientX to account for scroll
   mouse.y = e.pageY;  // Use pageY instead of clientY to account for scroll
-  
+  console.log('mousemove', mouse.x, mouse.y);
   // If mouse is down and moving, it's a drag
   if (isMouseDown) {
     hasDragged = true;
@@ -449,32 +597,73 @@ document.querySelectorAll('.text-phrase').forEach(el => {
 });
 
 
-// Track mouse down
-window.addEventListener("mousedown", () => {
+
+// --- Click/touch event listeners for ripple ---
+function getEventPos(e) {
+  if (e.touches && e.touches.length > 0) {
+    return { x: e.touches[0].pageX, y: e.touches[0].pageY };
+  } else {
+    return { x: e.pageX, y: e.pageY };
+  }
+}
+
+// Mouse click (desktop)
+window.addEventListener("mousedown", e => {
   isMouseDown = true;
   hasDragged = false;
-  // While holding, shrink center dot
-  targetCenterDotScale = 0.6;
+  holdActive = false;
+  if (!isMobile) targetCenterDotScale = 0.6;
+  // Hold detection
+  clearTimeout(holdTimer);
+  holdTimer = setTimeout(() => {
+        if (isMouseDown && !holdActive) {
+      holdActive = true;
+      // Start drag trail at current position
+      window._dragTrail = {
+              radius: 48, // same as drag target radius
+        opacity: 0.13,
+        state: 'contract',
+        x: smoothPos.x,
+        y: smoothPos.y
+      };
+    }
+  }, HOLD_THRESHOLD);
+  // Only trigger ripple if click is on map or its elements and not dragging
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (!hasDragged && el && (el.closest('#canvas') || el.classList.contains('image-link') || el.classList.contains('video-link'))) {
+    triggerRipple(e.pageX, e.pageY);
+  }
 });
 
-// Track mouse up and trigger burst only if it was a click (not a drag)
-window.addEventListener("mouseup", () => {
+window.addEventListener("mouseup", e => {
+  clearTimeout(holdTimer);
   if (isMouseDown && !hasDragged) {
     // It was a click, not a drag - trigger burst
-    clickBurst = true;
-    burstTimer = 15;
-    particles.forEach(p => {
-      p.morphAngle = Math.random() * Math.PI * 2;
-      p.burstSpeed = Math.random() * 6 + 2;
-    });
+    if (!isMobile) {
+      clickBurst = true;
+      burstTimer = 15;
+      particles.forEach(p => {
+        p.morphAngle = Math.random() * Math.PI * 2;
+        p.burstSpeed = Math.random() * 6 + 2;
+      });
+    }
   }
-  
   isMouseDown = false;
   hasDragged = false;
-  // Restore center dot size: if still hovering an element, keep enlarged; otherwise normal
-  targetCenterDotScale = isHoveringElement ? 1.6 : 1;
+  holdActive = false;
+  if (!isMobile) targetCenterDotScale = isHoveringElement ? 1.6 : 1;
+});
+
+// Touch (mobile)
+window.addEventListener("touchstart", e => {
+  const pos = getEventPos(e);
+  // Only trigger ripple if touch is on map or its elements and not dragging
+  if (hasDragged) return;
+  const el = document.elementFromPoint(pos.x - window.scrollX, pos.y - window.scrollY);
+  if (el && (el.closest && el.closest('#canvas') || el.classList && (el.classList.contains('image-link') || el.classList.contains('video-link')))) {
+    triggerRipple(pos.x, pos.y);
+  }
 });
 
   // Start animation
   animateCursor();
-} // End of desktop-only code
