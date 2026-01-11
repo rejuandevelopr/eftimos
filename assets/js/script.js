@@ -593,9 +593,11 @@ canvas.addEventListener('mousemove', (e) => {
     targetOffsetX += deltaX * scaleInv * resistanceFactorX;
     targetOffsetY += deltaY * scaleInv * resistanceFactorY;
     
-    // Immediately update position for responsive dragging
-    offsetX = targetOffsetX;
-    offsetY = targetOffsetY;
+    // Suaviza el movimiento durante el drag, pero mantiene responsividad
+    // offsetX/Y se acercan rápidamente a targetOffsetX/Y (lerp)
+    const lerpFactor = 0.25; // Más suavidad (más bajo = más suave)
+    offsetX += (targetOffsetX - offsetX) * lerpFactor;
+    offsetY += (targetOffsetY - offsetY) * lerpFactor;
 
     velocityX = deltaX * scaleInv * 0.8;
     velocityY = deltaY * scaleInv * 0.8;
