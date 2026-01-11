@@ -38,19 +38,20 @@ if (!mapGroup) {
 function getResponsiveSettings() {
     const width = window.innerWidth;
     
+    // Ajuste para 7 elementos: menos separación y menos columnas
     if (width >= 1200) {
-        return { gridSpacing: 620, imageSize: 170, blurRadius: 300, gridColumns: 4 };
+        return { gridSpacing: 420, imageSize: 170, blurRadius: 200, gridColumns: 3 };
     }
     if (width >= 992) {
-        return { gridSpacing: 500, imageSize: 150, blurRadius: 250, gridColumns: 4 };
+        return { gridSpacing: 340, imageSize: 150, blurRadius: 180, gridColumns: 3 };
     }
     if (width >= 768) {
-        return { gridSpacing: 400, imageSize: 140, blurRadius: 200, gridColumns: 4 };
+        return { gridSpacing: 260, imageSize: 140, blurRadius: 150, gridColumns: 3 };
     }
     if (width >= 576) {
-        return { gridSpacing: 200, imageSize: 140, blurRadius: 150, gridColumns: 4 };
+        return { gridSpacing: 180, imageSize: 120, blurRadius: 120, gridColumns: 2 };
     }
-    return { gridSpacing: 450, imageSize: 90, blurRadius: 120, gridColumns: 4 };
+    return { gridSpacing: 150, imageSize: 90, blurRadius: 80, gridColumns: 2 };
 }
 
 // Initialize responsive settings
@@ -60,9 +61,28 @@ let imageSize = settings.imageSize;
 let blurRadius = settings.blurRadius;
 let gridColumns = settings.gridColumns;
 
+// Zoom inicial: 20% del máximo
+window.scale = 0.2 * window.maxScale + 0.8 * window.minScale;
+window.targetScale = window.scale;
+
+// Al cargar, centrar y alejar el mapa
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (typeof getInitialCenterPosition === 'function') {
+            const pos = getInitialCenterPosition();
+            offsetX = pos.x;
+            offsetY = pos.y;
+            targetOffsetX = pos.x;
+            targetOffsetY = pos.y;
+        }
+        window.scale = 0.2 * window.maxScale + 0.8 * window.minScale;
+        window.targetScale = window.scale;
+    }, 120);
+});
+
 const maxBlur = 8;
 const randomOffsetRange = 150;
-const bufferPercent = 0.1;
+const bufferPercent = 0.15; // Más buffer para que los elementos no queden cerca del borde
 const smoothness = 0.08;
 const friction = 0;
 const minVelocity = 0.1;
@@ -241,39 +261,23 @@ function getInitialCenterPosition() {
     if (images.length === 0) {
         return { x: 0, y: 0 };
     }
-    
-    let targetImage = null;
-    
-    imageTemplates.forEach((template, index) => {
-        if (template.classList.contains('initial-center')) {
-            targetImage = images.find(img => img.imageIndex === index);
-        }
+    // Centrar el grupo de imágenes en el centro de la superficie navegable
+    // Calcula el centro del grupo
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    images.forEach(img => {
+        const randomOffset = getRandomOffset(img.gridX, img.gridY);
+        const x = img.gridX * gridSpacing + randomOffset.x;
+        const y = img.gridY * gridSpacing + randomOffset.y;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
     });
-    
-    if (!targetImage) {
-        const middleRow = Math.floor(gridRows / 2);
-        const imagesInMiddleRow = images.filter(img => img.gridY === middleRow);
-        imagesInMiddleRow.sort((a, b) => a.gridX - b.gridX);
-        const targetIndex = Math.min(1, imagesInMiddleRow.length - 1);
-        targetImage = imagesInMiddleRow[targetIndex];
-    }
-    
-    if (!targetImage) {
-        const fallbackImage = images[0];
-        const randomOffset = getRandomOffset(fallbackImage.gridX, fallbackImage.gridY);
-        return {
-            x: -(fallbackImage.gridX * gridSpacing + randomOffset.x),
-            y: -(fallbackImage.gridY * gridSpacing + randomOffset.y)
-        };
-    }
-    
-    const randomOffset = getRandomOffset(targetImage.gridX, targetImage.gridY);
-    const targetImageX = targetImage.gridX * gridSpacing + randomOffset.x;
-    const targetImageY = targetImage.gridY * gridSpacing + randomOffset.y;
-    
+    const groupCenterX = (minX + maxX) / 2;
+    const groupCenterY = (minY + maxY) / 2;
     return {
-        x: -targetImageX,
-        y: -targetImageY
+        x: -groupCenterX,
+        y: -groupCenterY
     };
 }
 
@@ -324,7 +328,11 @@ function updateImagePositions() {
     const blurThreshold = blurRadiusScaled;
     
     const len = images.length;
-    for (let i = 0; i < len; i++) {
+        for (let i = 0; i < len; i++) {
+            // --- Fade out trail on zoom ---
+            if (window.fadeOutTrail) window.fadeOutTrail();
+            // Limpiar suavemente el trail solo si hay cambio de zoom
+            if (window.smoothClearTrail) window.smoothClearTrail();
         const img = images[i];
         const randomOffset = getRandomOffset(img.gridX, img.gridY);
 
@@ -431,7 +439,9 @@ function animate() {
     const diffScale = targetScale - scale;
     
     // Only apply zoom and blur if visual effects are enabled
-    if (window.visualEffectsEnabled !== false) {
+        if (window.visualEffectsEnabled !== false) {
+            // --- Fade out trail on pinch zoom ---
+            if (window.fadeOutTrail) window.fadeOutTrail();
         scale += diffScale * zoomSmoothness;
     } else {
         // When visual effects are disabled, reset scale to 1
@@ -534,6 +544,15 @@ canvas.addEventListener('mousedown', (e) => {
     velocityX = 0;
     velocityY = 0;
     canvas.classList.add('dragging');
+    // Desactiva la modulación de whispers con transición suave
+    if (window.whispersModulationEnabled !== undefined) {
+        // Suaviza el paso a modulación off
+        if (typeof window.setWhispersModulationEnabled === 'function') {
+            window.setWhispersModulationEnabled(false, 400);
+        } else {
+            window.whispersModulationEnabled = false;
+        }
+    }
 });
 
 canvas.addEventListener('mousemove', (e) => {
@@ -581,6 +600,38 @@ canvas.addEventListener('mousemove', (e) => {
     velocityX = deltaX * scaleInv * 0.8;
     velocityY = deltaY * scaleInv * 0.8;
 
+    // --- Pitch dinámico white-noise ---
+    // Calcula la velocidad total del drag
+    const dragSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+    // Pitch dinámico (playbackRate)
+    const minPitch = 0.7;
+    const maxPitch = 2.0;
+    const maxSpeed = 30;
+    let targetPitch = minPitch + Math.min(dragSpeed / maxSpeed, 1) * (maxPitch - minPitch);
+    if (!window._noisePitch) window._noisePitch = minPitch;
+    window._noisePitch += (targetPitch - window._noisePitch) * 0.15;
+    // Aplica el pitch al white-noise y whispers
+    const noiseSound = document.getElementById('noiseSound');
+    const whispersSound = document.getElementById('whispersSound');
+    if (noiseSound) {
+        noiseSound.playbackRate = window._noisePitch;
+    }
+    if (whispersSound) {
+        whispersSound.playbackRate = window._noisePitch;
+    }
+
+// Sincroniza el filtro low pass con el drag visual (trail)
+window.addEventListener('dragTrailStarted', () => {
+    if (window.setLowPassFilter) {
+        window.setLowPassFilter(1200, 20); // ultra responsivo
+    }
+});
+window.addEventListener('dragTrailEnded', () => {
+    if (window.restoreLowPassFilter) {
+        window.restoreLowPassFilter(180); // restauración rápida
+    }
+});
+
     lastX = e.clientX;
     lastY = e.clientY;
 });
@@ -588,6 +639,35 @@ canvas.addEventListener('mousemove', (e) => {
 canvas.addEventListener('mouseup', () => {
     isDragging = false;
     canvas.classList.remove('dragging');
+    // Restaura el filtro low pass igual que menú lateral
+    if (window.restoreLowPassFilter) {
+        window.restoreLowPassFilter(900);
+    }
+    // Restaura el pitch del white-noise y whispers suavemente
+    const noiseSound = document.getElementById('noiseSound');
+    const whispersSound = document.getElementById('whispersSound');
+    const restorePitch = () => {
+        if (!window._noisePitch) window._noisePitch = 1.0;
+        window._noisePitch += (1.0 - window._noisePitch) * 0.12;
+        if (noiseSound) noiseSound.playbackRate = window._noisePitch;
+        if (whispersSound) whispersSound.playbackRate = window._noisePitch;
+        if (Math.abs(window._noisePitch - 1.0) > 0.01) {
+            requestAnimationFrame(restorePitch);
+        } else {
+            window._noisePitch = 1.0;
+            if (noiseSound) noiseSound.playbackRate = 1.0;
+            if (whispersSound) whispersSound.playbackRate = 1.0;
+        }
+    };
+    restorePitch();
+    // Restaura la modulación de whispers con transición suave
+    if (window.whispersModulationEnabled !== undefined) {
+        if (typeof window.setWhispersModulationEnabled === 'function') {
+            window.setWhispersModulationEnabled(true, 600);
+        } else {
+            window.whispersModulationEnabled = true;
+        }
+    }
     // Animate rebound when user releases drag
     animateReboundIfNeeded();
 });
@@ -1154,31 +1234,39 @@ canvas.addEventListener('touchmove', (e) => {
         // Handle pinch zoom
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
-        
         const currentDistance = getTouchDistance(touch1, touch2);
         const midpoint = getTouchMidpoint(touch1, touch2);
-        
-        // Calculate new scale
         const scaleChange = currentDistance / initialPinchDistance;
         const oldScale = targetScale;
         targetScale = Math.max(minScale, Math.min(maxScale, initialPinchScale * scaleChange));
-        
         if (oldScale !== targetScale) {
+            if (window.setLowPassFilter) {
+                const pinchDelta = targetScale - oldScale;
+                const absDelta = Math.min(Math.abs(pinchDelta), 0.5);
+                let freq;
+                if (pinchDelta > 0) {
+                    freq = 3500 + (absDelta / 0.5) * (18000 - 3500);
+                } else {
+                    freq = 3500 - (absDelta / 0.5) * 3200;
+                    freq = Math.max(80, freq);
+                }
+                window.setLowPassFilter(freq, 0);
+                if (window._zoomLPFTimer) clearTimeout(window._zoomLPFTimer);
+                window._zoomLPFTimer = setTimeout(() => {
+                    if (window.restoreLowPassFilter) window.restoreLowPassFilter(0);
+                }, 320);
+            }
             // Adjust offset to zoom towards pinch center
             const mouseX = midpoint.x - centerX;
             const mouseY = midpoint.y - centerY;
-            
             const oldScaleInv = 1 / oldScale;
             const worldX = (mouseX - offsetX * oldScale) * oldScaleInv;
             const worldY = (mouseY - offsetY * oldScale) * oldScaleInv;
-            
             const targetScaleInv = 1 / targetScale;
             targetOffsetX = (mouseX - worldX * targetScale) * targetScaleInv;
             targetOffsetY = (mouseY - worldY * targetScale) * targetScaleInv;
-            
             clampOffset();
         }
-        
         e.preventDefault();
     } else if (isDragging && e.touches.length === 1 && !isPinching) {
         // Handle drag with one finger
@@ -1269,27 +1357,38 @@ canvas.addEventListener('touchend', (e) => {
 
 canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
-    
+    // Limpiar suavemente el trail solo si hay cambio de zoom
+    if (window.smoothClearTrail) window.smoothClearTrail();
     const delta = e.deltaY;
     const zoomFactor = delta > 0 ? (1 - zoomSpeed) : (1 + zoomSpeed);
-    
     const oldScale = targetScale;
     targetScale = Math.max(minScale, Math.min(maxScale, targetScale * zoomFactor));
-    
     if (oldScale === targetScale) return;
-    
+    // Low pass dinámico e intenso según fuerza y dirección del zoom
+    if (window.setLowPassFilter) {
+        const absDelta = Math.min(Math.abs(delta), 300);
+        let freq;
+        if (delta < 0) {
+            freq = 3500 + (absDelta / 300) * (18000 - 3500);
+        } else {
+            freq = 3500 - (absDelta / 300) * 3200;
+            freq = Math.max(80, freq); // BAJA el mínimo a 80Hz para notar más el efecto
+        }
+        window.setLowPassFilter(freq, 0); // transición instantánea
+        if (window._zoomLPFTimer) clearTimeout(window._zoomLPFTimer);
+        window._zoomLPFTimer = setTimeout(() => {
+            if (window.restoreLowPassFilter) window.restoreLowPassFilter(0); // restauración instantánea
+        }, 320);
+    }
     // Posición del mouse relativo al canvas
     const mouseX = e.clientX;
     const mouseY = e.clientY;
-    
     // Calcular la posición del mouse en el espacio del mundo usando el estado target actual
     const worldX = (mouseX - centerX - targetOffsetX * oldScale) / oldScale;
     const worldY = (mouseY - centerY - targetOffsetY * oldScale) / oldScale;
-    
     // Ajustar el offset target para que el punto bajo el mouse permanezca en la misma posición
     targetOffsetX = (mouseX - centerX - worldX * targetScale) / targetScale;
     targetOffsetY = (mouseY - centerY - worldY * targetScale) / targetScale;
-    
     clampOffset();
 }, { passive: false });
 
@@ -1361,8 +1460,10 @@ if (transitionData) {
     }
 }
 
-// Prevent logo image from being draggable
+
+// Previene el drag nativo en imágenes, enlaces y elementos del mapa
 document.addEventListener('DOMContentLoaded', () => {
+    // Logo
     const logoImg = document.querySelector('.logo img');
     if (logoImg) {
         logoImg.addEventListener('dragstart', (e) => e.preventDefault());
@@ -1372,6 +1473,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+
+    // Previene drag nativo en todas las imágenes, enlaces, canvas y contenedores del mapa
+    function preventDragNative(selector) {
+        document.querySelectorAll(selector).forEach(el => {
+            el.setAttribute('draggable', 'false');
+            el.addEventListener('dragstart', e => e.preventDefault());
+            el.addEventListener('mousedown', e => {
+                if (e.button === 0) e.preventDefault();
+            });
+        });
+    }
+    preventDragNative('img, a, .image-link, .video-link, .image-container, #canvas');
+
+    // Refuerzo: si se añaden imágenes dinámicamente al canvas, observar y prevenir drag
+    const canvas = document.getElementById('canvas');
+    if (canvas && window.MutationObserver) {
+        const observer = new MutationObserver(() => {
+            preventDragNative('img, a, .image-link, .video-link, .image-container, #canvas');
+        });
+        observer.observe(canvas, { childList: true, subtree: true });
+    }
+
+    // Si usas drag personalizado, previene drag nativo durante el drag
+    let isCustomDragging = false;
+    // Suponiendo que tienes eventos para drag personalizado:
+    // window.addEventListener('custom-drag-start', () => { isCustomDragging = true; });
+    // window.addEventListener('custom-drag-end', () => { isCustomDragging = false; });
+    // Si tienes una variable global para drag, puedes usarla aquí
+    document.addEventListener('dragstart', function(e) {
+        if (isCustomDragging || document.body.classList.contains('dragging')) {
+            e.preventDefault();
+        }
+    }, true);
 });
 
 animate();

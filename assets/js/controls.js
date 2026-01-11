@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 let userHasInteracted = false;
+let _audioFiltersInitialized = false;
 
 function initializeControls() {
     // ========== NAVBAR & MENU CONTROLS ==========
@@ -40,7 +41,32 @@ function initializeControls() {
             whispersTargetVolume = vol;
         };
 
+        // Permite a otros sistemas activar/desactivar la modulación de whispers con transición suave
+        window.setWhispersModulationEnabled = function(enabled, duration = 400) {
+            if (typeof enabled !== 'boolean') return;
+            if (whispersModulationEnabled === enabled) return;
+            // Transición suave: interpolar modulationAmount
+            const start = whispersModulationAmount;
+            const end = enabled ? 0.95 : 0.0;
+            const startTime = performance.now();
+            function animate() {
+                const now = performance.now();
+                const t = Math.min(1, (now - startTime) / duration);
+                // Ease in-out cubic
+                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                whispersModulationAmount = start + (end - start) * ease;
+                if (t < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    whispersModulationAmount = end;
+                    whispersModulationEnabled = enabled;
+                }
+            }
+            animate();
+        };
+
         function setupAudioFilters() {
+            if (_audioFiltersInitialized) return;
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
@@ -66,6 +92,7 @@ function initializeControls() {
                 // Inicializar volumen base
                 whispersGain.gain.value = whispersBaseVolume;
             }
+            _audioFiltersInitialized = true;
                 // === MODULACIÓN DE VOLUMEN DE WHISPERS ===
                 function updateWhispersVolumeModulation() {
                     if (!whispersGain) return;
@@ -93,17 +120,20 @@ function initializeControls() {
         // Inicializar filtros de audio al cargar la página para evitar poppeo
         setupAudioFilters();
 
-        function setLowPassFilter(targetFreq, duration = 400) {
-            setupAudioFilters();
+        window.setLowPassFilter = function(targetFreq, duration = 400) {
+            // Los filtros solo se inicializan una vez al cargar la página. Nunca recrear ni reconfigurar aquí.
+            if (!_audioFiltersInitialized) setupAudioFilters();
             filterActive = true;
             const startNoise = noiseFilter.frequency.value;
             const startWhispers = whispersFilter.frequency.value;
+            // Hacer la transición más suave: aumentar duración y usar easeInOutSine
+            duration = Math.max(duration, 900); // mínimo 900ms para suavidad
             const end = performance.now() + duration;
             function animate() {
                 const now = performance.now();
                 const t = Math.min(1, (now - (end - duration)) / duration);
-                // Ease in-out cubic
-                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                // Ease in-out sine para suavidad
+                const ease = -(Math.cos(Math.PI * t) - 1) / 2;
                 noiseFilter.frequency.value = startNoise + (targetFreq - startNoise) * ease;
                 whispersFilter.frequency.value = startWhispers + (targetFreq - startWhispers) * ease;
                 if (t < 1) {
@@ -118,18 +148,21 @@ function initializeControls() {
             animate();
         }
 
-        function restoreLowPassFilter(duration = 400) {
-            setupAudioFilters();
+        window.restoreLowPassFilter = function(duration = 400) {
+            // Los filtros solo se inicializan una vez al cargar la página. Nunca recrear ni reconfigurar aquí.
+            if (!_audioFiltersInitialized) setupAudioFilters();
             filterActive = false;
             const startNoise = noiseFilter.frequency.value;
             const startWhispers = whispersFilter.frequency.value;
             const targetFreq = 22050;
+            // Hacer la transición más suave: aumentar duración y usar easeInOutSine
+            duration = Math.max(duration, 900); // mínimo 900ms para suavidad
             const end = performance.now() + duration;
             function animate() {
                 const now = performance.now();
                 const t = Math.min(1, (now - (end - duration)) / duration);
-                // Ease in-out cubic
-                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                // Ease in-out sine para suavidad
+                const ease = -(Math.cos(Math.PI * t) - 1) / 2;
                 noiseFilter.frequency.value = startNoise + (targetFreq - startNoise) * ease;
                 whispersFilter.frequency.value = startWhispers + (targetFreq - startWhispers) * ease;
                 if (t < 1) {
@@ -158,9 +191,11 @@ function initializeControls() {
 
             // LOW PASS FILTER: aplicar/quitar filtro al abrir/cerrar menú
             if (dropdownMenu.classList.contains('active')) {
-                setLowPassFilter(1200, 300); // Aún más rápido al abrir
+                setLowPassFilter(1200, 30); // Ultra responsivo al abrir
+                if (window.setGrainMenuIntensity) window.setGrainMenuIntensity(0.4); // Reducir grain
             } else {
                 restoreLowPassFilter(900);
+                if (window.resetGrainMenuIntensity) window.resetGrainMenuIntensity(); // Restaurar grain
             }
         });
 
@@ -180,6 +215,7 @@ function initializeControls() {
 
                     // Quitar filtro al cerrar menú
                     restoreLowPassFilter(500);
+                    if (window.resetGrainMenuIntensity) window.resetGrainMenuIntensity();
                 }
             });
         });
@@ -198,6 +234,7 @@ function initializeControls() {
 
                 // Quitar filtro al cerrar menú
                 restoreLowPassFilter(500);
+                if (window.resetGrainMenuIntensity) window.resetGrainMenuIntensity();
             }
         });
 

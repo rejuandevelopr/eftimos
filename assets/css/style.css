@@ -1,3 +1,15 @@
+@media (max-width: 1024px) {
+    .menu-toggle {
+        left: 24px !important;
+        padding-left: 12px !important;
+    }
+}
+@media (max-width: 1024px) and (min-width: 769px) {
+    .menu-toggle {
+        left: 24px;
+        padding-left: 8px;
+    }
+}
 /* --- Motion Blur Global Effect --- */
 .motion-blur-enabled {
     /* Efecto de motion blur global, ajusta el valor para más/menos blur */
@@ -197,7 +209,7 @@ body.menu-open #canvas * {
     height: 100vh;
     position: relative;
     overflow: hidden;
-    z-index: 1;
+    z-index: 11;
 }
 
 #canvas.dragging {
@@ -222,11 +234,10 @@ body.menu-open #canvas * {
 
 /* Oscurecer elementos cuando hay hover activo */
 #canvas.has-hover .image-container {
-    opacity: 0.35;
+    opacity: 0.7; /* Antes 0.35, ahora menos transparente */
     transition: opacity 0.3s ease;
 }
-
-/* Mantener el elemento hovered con opacidad completa */
+/* (Regla eliminada: #grainCanvas ya está definida correctamente más abajo) */
 #canvas.has-hover .image-container.is-hovered {
     opacity: 1;
 }
@@ -342,17 +353,24 @@ body.visual-effects-disabled .image-container {
     transition: opacity 0.5s ease;
 }
 
+
 #videos-background video {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.05;
     transition: opacity 0.4s ease, filter 0.4s ease;
-
-    /* MUY IMPORTANTE */
     transform: none;
+    opacity: 0.08;
+}
+
+/* Overlay específico para el video stormlight */
+#stormlight-overlay {
+    opacity: 0.5;
+    mix-blend-mode: screen;
+    pointer-events: none;
+    z-index: 1;
 }
 
 /* Increased opacity and inverted colors when element is focused */
@@ -401,8 +419,9 @@ nav {
     left: 0;
     width: 100%;
     background: transparent;
-    z-index: 10000;
+    z-index: 200000 !important;
     padding: 10px 0;
+    isolation: isolate;
 }
 
 .nav-container {
@@ -415,6 +434,7 @@ nav {
     position: relative;
 }
 
+/* Asegura que el botón hamburguesa siempre sea clickeable */
 .menu-toggle {
     position: absolute;
     left: 0;
@@ -425,9 +445,10 @@ nav {
     border: none;
     cursor: pointer;
     padding: 12px 12px 12px 0;
-    z-index: 10002;
+    z-index: 210000 !important;
     min-width: 48px;
     min-height: 48px;
+    pointer-events: auto !important;
 }
 
 body.visual-effects-disabled .menu-toggle {
@@ -468,6 +489,7 @@ body.visual-effects-disabled .menu-toggle {
     -khtml-user-drag: none;
     -moz-user-drag: none;
     -o-user-drag: none;
+    z-index: 10003;
 }
 
 .logo img {
@@ -947,24 +969,33 @@ body.visual-effects-disabled .dropdown-menu * {
 
 /* Responsive */
 @media (max-width: 768px) {
+
     .nav-container {
-        padding: 0 20px;
+        padding: 12px 20px 0 20px;
         justify-content: flex-start;
+        min-height: 64px;
     }
 
     .menu-toggle {
         display: flex;
         left: 20px;
+        padding-left: 4px;
     }
 
     .logo {
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
+        top: 10px;
     }
 
     .logo img {
         max-width: 100px;
+        margin-top: 0;
+        margin-bottom: 0;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        box-sizing: content-box;
     }
 
     .nav-controls {
@@ -1005,13 +1036,14 @@ body.visual-effects-disabled .dropdown-menu * {
 
 @media (max-width: 480px) {
     .nav-container {
-        padding: 0 15px;
+        padding: 10px 10px 0 10px;
+        min-height: 56px;
     }
 
     .menu-toggle {
         left: 15px;
         gap: 5px;
-        padding: 10px;
+        padding: 10px 10px 10px 6px;
     }
 
     .menu-toggle span {
@@ -1020,7 +1052,9 @@ body.visual-effects-disabled .dropdown-menu * {
     }
 
     .logo img {
-        max-width: 80px;
+        max-width: 75px;
+        padding-top: 8px;
+        padding-bottom: 8px;
     }
 
     .nav-controls {
@@ -1073,12 +1107,24 @@ body.visual-effects-disabled .dropdown-menu * {
 
 
 /* Image Link Styles */
-.image-link {
-    display: block;
-    position: relative;
-    width: 100%;
-    height: 100%;
-    text-decoration: none;
+
+.image-link,
+.image-link img,
+.video-link,
+.video-link video,
+img,
+a {
+    -webkit-user-drag: none;
+    user-drag: none;
+    user-select: none;
+    pointer-events: auto;
+}
+
+img,
+a {
+    -webkit-user-drag: none !important;
+    user-drag: none !important;
+    user-select: none !important;
     pointer-events: auto;
     /* Keep as auto */
     transition: 0.2s ease-in-out;
@@ -1262,6 +1308,7 @@ body.unloading {
 }
 
 /* Grain Canvas */
+/* Grain canvas: fondo de ruido, siempre al fondo, sin opacidad forzada ni animación */
 #grainCanvas {
     position: fixed;
     top: 0;
@@ -1269,10 +1316,8 @@ body.unloading {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 9998;
-    opacity: 0;
-    animation: fadeInGrain 0.3s ease forwards;
-    transition: opacity 0.5s ease;
+    z-index: -1;
+    opacity: 1 !important;
 }
 
 body.unloading #grainCanvas {

@@ -17,22 +17,58 @@ const shouldStartGrain = localStorage.getItem('visualEffectsEnabled') !== 'false
 // ========================================
 const grainCanvas = document.createElement('canvas');
 const grainCtx = grainCanvas.getContext('2d');
-grainCanvas.width = 500;
-grainCanvas.height = 300;
+
+// Resolución original
+const GRAIN_INTERNAL_WIDTH = 500;
+const GRAIN_INTERNAL_HEIGHT = 300;
+grainCanvas.width = GRAIN_INTERNAL_WIDTH;
+grainCanvas.height = GRAIN_INTERNAL_HEIGHT;
+
 
 let isAnimating = shouldStartGrain;
 let grainAnimationId = null;
 
+// Control de intensidad global para el menú
+let grainMenuIntensity = 1.0;
+let grainMenuTarget = 1.0;
+let grainMenuAnimFrame = null;
+const GRAIN_MENU_ANIM_SPEED = 0.08; // 0.05-0.15: menor = más lento
+
 // Track hover state for grain intensity boost
-let isHoveringElement = false;
-
+if (typeof window.isHoveringElement === 'undefined') {
+    window.isHoveringElement = false;
+}
 window.addEventListener('tooltipShown', () => {
-    isHoveringElement = true;
+        window.isHoveringElement = true;
+});
+window.addEventListener('tooltipHidden', () => {
+        window.isHoveringElement = false;
 });
 
-window.addEventListener('tooltipHidden', () => {
-    isHoveringElement = false;
-});
+// Exponer funciones para controlar la intensidad del grain
+window.setGrainMenuIntensity = function(mult) {
+    grainMenuTarget = mult;
+    animateGrainMenuIntensity();
+};
+window.resetGrainMenuIntensity = function() {
+    grainMenuTarget = 1.0;
+    animateGrainMenuIntensity();
+};
+
+function animateGrainMenuIntensity() {
+    if (grainMenuAnimFrame) cancelAnimationFrame(grainMenuAnimFrame);
+    function step() {
+        // Interpolación suave
+        grainMenuIntensity += (grainMenuTarget - grainMenuIntensity) * GRAIN_MENU_ANIM_SPEED;
+        if (Math.abs(grainMenuTarget - grainMenuIntensity) > 0.01) {
+            grainMenuAnimFrame = requestAnimationFrame(step);
+        } else {
+            grainMenuIntensity = grainMenuTarget;
+            grainMenuAnimFrame = null;
+        }
+    }
+    step();
+}
 
 // Expose functions to control grain animation
 window.stopGrainEffect = function() {
@@ -87,8 +123,15 @@ function lerp(start, end, t) {
 // ========================================
 // ANIMATION LOOP
 // ========================================
-function animateGrain() {
+function animateGrain(now) {
     if (!isAnimating) return;
+    let lastGrainFrame = 0;
+    const GRAIN_FPS = 20;
+    if (now && lastGrainFrame && now - lastGrainFrame < 1000 / GRAIN_FPS) {
+        grainAnimationId = requestAnimationFrame(animateGrain);
+        return;
+    }
+    lastGrainFrame = now || performance.now();
 
     grainMainCtx.clearRect(0, 0, grainWidth, grainHeight);
 
@@ -98,50 +141,43 @@ function animateGrain() {
     if (typeof targetOffsetX !== 'undefined' && typeof targetOffsetY !== 'undefined' &&
         typeof minOffsetX !== 'undefined' && typeof maxOffsetX !== 'undefined' &&
         typeof minOffsetY !== 'undefined' && typeof maxOffsetY !== 'undefined') {
-        
         let distanceX = 0;
         let distanceY = 0;
-        
         if (targetOffsetX < minOffsetX) {
             distanceX = minOffsetX - targetOffsetX;
         } else if (targetOffsetX > maxOffsetX) {
             distanceX = targetOffsetX - maxOffsetX;
         }
-        
         if (targetOffsetY < minOffsetY) {
             distanceY = minOffsetY - targetOffsetY;
         } else if (targetOffsetY > maxOffsetY) {
             distanceY = targetOffsetY - maxOffsetY;
         }
-        
         // Calculate total distance from bounds
         const totalDistance = Math.max(distanceX, distanceY);
-        
         // Map distance to intensity: 0 distance = 1.0x, large distance = 4.0x
         const maxIntensityDistance = 500;
         const normalizedDistance = Math.min(totalDistance / maxIntensityDistance, 1);
-        
         // Progressive intensity increase: 1.0x to 4.0x
         grainIntensityMultiplier = 1.0 + Math.pow(normalizedDistance, 0.7) * 3.0;
     }
+
+    // Aplicar el multiplicador global del menú
+    grainIntensityMultiplier *= grainMenuIntensity;
 
     // Draw film grain with dynamic opacity
     updateGrain();
     const baseOpacity = 0.4;
     let maxOpacity = 1.0; // Maximum opacity (fully opaque) when far from bounds
-    
     // Boost opacity when hovering over elements
-    if (isHoveringElement) {
+    if (window.isHoveringElement) {
         maxOpacity = 1.0; // Keep at full but apply additional multiplier
         grainIntensityMultiplier *= 1.2; // 20% boost when hovering
     }
-    
     const dynamicOpacity = Math.min(baseOpacity * grainIntensityMultiplier, maxOpacity);
-    
     grainMainCtx.globalAlpha = dynamicOpacity;
     grainMainCtx.drawImage(grainCanvas, 0, 0, grainWidth, grainHeight);
     grainMainCtx.globalAlpha = 1;
-
     grainAnimationId = requestAnimationFrame(animateGrain);
 }
 
@@ -204,6 +240,6 @@ window.addEventListener('pagehide', () => {
 // START ANIMATION (only if enabled)
 // ========================================
 if (shouldStartGrain) {
-    animateGrain();
+    requestAnimationFrame(animateGrain);
 }
 

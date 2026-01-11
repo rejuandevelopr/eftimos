@@ -8,8 +8,8 @@
     <title>EAFTIMOS</title>
 
     <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/eaf_black-outline.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/eaf_black-outline.png">
     <link rel="manifest" href="assets/images/favicon_io/site.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon_io/android-chrome-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon_io/android-chrome-512x512.png">
@@ -39,15 +39,15 @@
 
     <!-- Background Video TOP -->
     <div id="videos-background">       
-        <!-- 
-        <video autoplay muted loop playsinline preload="auto">
-            <source src="assets/vid/visualizer/light-leak-orange.mp4" type="video/mp4">
-        </video>
-        -->
-
+        <!-- Video de fondo principal -->
         <video autoplay muted loop playsinline preload="auto">
             <source src="assets/vid/reels-mixed-vid.mp4" type="video/mp4">
         </video>
+
+        <!-- Overlay de video con transparencia y blend mode 
+        <video id="stormlight-overlay" autoplay muted loop playsinline preload="auto" style="opacity:0.5;mix-blend-mode:screen;pointer-events:none;">
+            <source src="assets/vid/visualizer/light-leak-orange.mp4" type="video/mp4">   
+        </video> -->
     </div>
 
     <nav class="blending-item">
@@ -136,186 +136,42 @@
     <div id="canvas"></div>
 
     <div id="image-templates" style="display: none;">
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-20.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-21.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-22.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-23.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-24.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-25.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-26.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-27.avif" alt="Fashion Collection Winter" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
+        <!-- 7 elementos del mapa, uno de cada tipo y espaciados -->
+        <div class="image-template initial-center">
+            <a href="landing-page.html" class="image-link">
+                <img src="assets/images/g-6.webp" alt="Featured Fashion Collection" width="170" height="170">
+                <span class="tooltip">ATELIER</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page1.html" class="image-link">
-                <img src="assets/images/g-1.webp" alt="Fashion Mountain Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 1</span>
+                <img src="assets/images/g-1.webp" alt="Fashion Mountain Collection" loading="lazy" width="170" height="170">
+                <span class="tooltip">CRAFT</span>
+            </a>
+        </div>
+        <div class="image-template">
+            <a href="clothes-view.html" class="image-link">
+                <img src="assets/images/g-20.avif" alt="Fashion Collection Winter" loading="lazy" width="170" height="170">
+                <span class="tooltip">TEAM</span>
             </a>
         </div>
         <div class="image-template">
             <a href="page2.html" class="image-link">
-                <img src="assets/images/g-2.webp" alt="Fashion Nature Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 2</span>
+                <img src="assets/images/g-2.webp" alt="Fashion Nature Collection" loading="lazy" width="170" height="170">
+                <span class="tooltip">JOURNAL</span>
             </a>
         </div>
-        <div class="image-template">
-            <a href="page3.html" class="image-link">
-                <img src="assets/images/g-3.webp" alt="Fashion Forest Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 3</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="page4.html" class="image-link">
-                <img src="assets/images/g-4.webp" alt="Fashion Sunset Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 4</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="page5.html" class="image-link">
-                <img src="assets/images/g-5.webp" alt="Fashion Valley Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 5</span>
-            </a>
-        </div>
-        <div class="image-template initial-center">
-            <a href="landing-page.html" class="image-link">
-                <!-- Don't lazy load the center image - it's visible immediately -->
-                <img src="assets/images/g-6.webp" alt="Featured Fashion Collection" width="170" height="170">
-                <span class="tooltip">Fashion image</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="page7.html" class="image-link">
-                <img src="assets/images/g-7.webp" alt="Fashion Lake Collection" loading="lazy" width="170" height="170">
-                <span class="tooltip">Fashion image 6</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="page8.html" class="image-link">
-                <img src="assets/images/g-11.webp" alt="Fashion Winter Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 7</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="page9.html" class="image-link">
-                <img src="assets/images/g-10.webp" alt="Fashion Winter Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 8</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="page10.html" class="image-link">
-                <img src="assets/images/g-12.webp" alt="Fashion Winter Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 9</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="page11.html" class="image-link">
-                <img src="assets/images/g-8.webp" alt="Fashion Winter Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 10</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-13.webp" alt="Fashion Winter Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-14.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-15.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-16.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-17.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-18.avif" alt="Fashion Winter Collection" loading="lazy" width="170"
-                    height="170">
-                <span class="tooltip">Fashion image 11</span>
-            </a>
-        </div>
-        <div class="image-template reveal-text-template" data-text="DISCOVER THE MYSTERIES">
+        <div class="image-template reveal-text-template" data-text="DISCOVER THE SECRETS">
             <div class="reveal-text-container">
                 <canvas class="reveal-text-canvas"></canvas>
             </div>
         </div>
-        <!-- Video template for Cinema Mode -->
+        <div class="image-template">
+            <a href="clothes-view.html" class="image-link">
+                <img src="assets/images/g-14.avif" alt="Fashion Winter Collection" loading="lazy" width="170" height="170">
+                <span class="tooltip">VISION</span>
+            </a>
+        </div>
         <div class="image-template">
             <div class="video-link">
                 <video autoplay muted loop playsinline width="180" height="320" preload="metadata">

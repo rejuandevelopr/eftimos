@@ -127,10 +127,12 @@
         canvas.height = 170;
         
         const ctx = canvas.getContext('2d');
-        ctx.font = 'bold 16px "Helvetica Neue Condensed Bold", Helvetica, sans-serif';
+        ctx.font = 'bold 16px Helvetica Neue Condensed Bold, Helvetica, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.letterSpacing = '2px';
+        // No letterSpacing en canvas API, pero se puede simular en el renderizado si se requiere
+        // Forzar mayúsculas para igualar tooltips
+        canvas.dataset.uppercase = 'true';
     }
 
     function setupEventListeners() {
@@ -181,9 +183,9 @@
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Draw background
-            ctx.fillStyle = 'rgba(15, 15, 15, 0.6)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Draw transparent background (no fill)
+            // ctx.fillStyle = 'rgba(15, 15, 15, 0.6)';
+            // ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             // Draw border
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
@@ -191,7 +193,9 @@
             ctx.strokeRect(0, 0, canvas.width, canvas.height);
             
             // Split text into words for better wrapping
-            const words = item.text.split(' ');
+            // Forzar mayúsculas como en tooltip
+            const displayText = item.text.toUpperCase();
+            const words = displayText.split(' ');
             const lines = [];
             let currentLine = '';
             
@@ -246,13 +250,13 @@
                     
                     // Draw character with calculated opacity
                     if (opacity > 0) {
-                        ctx.fillStyle = `rgba(255, 255, 255, ${opacity * 0.95})`;
+                        // Opacidad máxima aún más baja (por ejemplo, 0.28)
+                        ctx.fillStyle = `rgba(0, 0, 0, ${opacity * 0.28})`;
                         ctx.fillText(char, currentX + charWidth / 2, y);
-                        
-                        // Add glow effect for fully revealed characters
+                        // Glow más tenue
                         if (opacity > 0.7) {
-                            ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-                            ctx.shadowBlur = 10;
+                            ctx.shadowColor = 'rgba(0, 0, 0, 0.05)';
+                            ctx.shadowBlur = 2;
                             ctx.fillText(char, currentX + charWidth / 2, y);
                             ctx.shadowBlur = 0;
                         }
