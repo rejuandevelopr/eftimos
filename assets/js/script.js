@@ -1,3 +1,348 @@
+// --- PRELOADER LOGIC ---
+document.addEventListener('DOMContentLoaded', function() {
+    // Referencias a los toggles del preloader
+    const soundToggleBtn = document.getElementById('preloaderSoundToggle');
+    const visualToggleBtn = document.getElementById('preloaderVisualToggle');
+
+    // Funciones para actualizar iconos en preloader
+    function updatePreloaderVisualIcon() {
+        const eyeOpen = visualToggleBtn.querySelectorAll('.eye-open');
+        const eyeClosed = visualToggleBtn.querySelectorAll('.eye-closed');
+        console.log('[PRELOADER] updatePreloaderVisualIcon', { visualEnabled, eyeOpen, eyeClosed });
+        if (visualEnabled) {
+            eyeOpen.forEach(el => el.style.display = '');
+            eyeClosed.forEach(el => el.style.display = 'none');
+        } else {
+            eyeOpen.forEach(el => el.style.display = 'none');
+            eyeClosed.forEach(el => el.style.display = '');
+        }
+    }
+    function updatePreloaderAudioIcon() {
+        const speakerOn = soundToggleBtn.querySelectorAll('.speaker-on');
+        const speakerOff = soundToggleBtn.querySelectorAll('.speaker-off');
+        console.log('[PRELOADER] updatePreloaderAudioIcon', { soundEnabled, speakerOn, speakerOff });
+        if (soundEnabled) {
+            speakerOn.forEach(el => el.style.display = '');
+            speakerOff.forEach(el => el.style.display = 'none');
+        } else {
+            speakerOn.forEach(el => el.style.display = 'none');
+            speakerOff.forEach(el => el.style.display = '');
+        }
+    }
+    window.updatePreloaderVisualIcon = updatePreloaderVisualIcon;
+    window.updatePreloaderAudioIcon = updatePreloaderAudioIcon;
+    const preloader = document.getElementById('preloader');
+    const preloaderBar = document.getElementById('preloaderBar');
+    const preloaderBarText = document.getElementById('preloaderBarText');
+    const preloaderEnterBtn = document.getElementById('preloaderEnterBtn');
+    // soundToggleBtn y visualToggleBtn ahora se declaran dentro de DOMContentLoaded para evitar duplicidad
+    // Referencias a los toggles del menú lateral
+    const menuVisualToggle = document.getElementById('visualToggle');
+    const menuAudioToggle = document.getElementById('audioToggle');
+    const notification = document.getElementById('preloaderNotification');
+    let soundEnabled = true;
+    let visualEnabled = true;
+    let loadingComplete = false;
+
+    // Mostrar solo en la primera visita
+    if (localStorage.getItem('eftimosPreloaderShown')) {
+        preloader.style.display = 'none';
+        document.body.classList.remove('preloader-active');
+        // Mostrar hamburguesa inmediatamente
+        var menuToggle = document.getElementById('menuToggle');
+        if (menuToggle) {
+            menuToggle.style.opacity = '1';
+            menuToggle.style.pointerEvents = 'auto';
+        }
+        // Aplicar preferencias guardadas
+        window.soundEnabled = localStorage.getItem('eftimosSoundEnabled') !== '0';
+        window.visualEffectsEnabled = localStorage.getItem('eftimosVisualEnabled') !== '0';
+        document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
+        return;
+    } else {
+        preloader.style.display = 'flex';
+        document.body.classList.add('preloader-active');
+    }
+
+    // Lista de assets a cargar (imágenes, videos, sonidos)
+    const assets = [
+        'assets/images/logo-white.png',
+        'assets/images/g-6.webp',
+        'assets/images/g-1.webp',
+        'assets/images/g-2.webp',
+        'assets/images/g-14.avif',
+        'assets/images/g-20.avif',
+        'assets/vid/reels-mixed-vid.mp4',
+        'assets/sounds/white-noise.mp3',
+        'assets/sounds/whispers.mp3',
+        'assets/sounds/locked-in-oneself.mp3'
+    ];
+
+    let loaded = 0;
+    const total = assets.length;
+
+    // Variables para animación suave de la barra y el porcentaje
+    let displayedPercent = 0;
+    let animatingBar = false;
+    function lerp(a, b, t) {
+        return a + (b - a) * t;
+    }
+
+    // Fondo difuminado dinámico
+    function updatePreloaderBg(percent) {
+        // Entre 0.98 y 0.3 de opacidad
+        const blur = 0.98 - percent * 0.68 / 100;
+        preloader.style.background = `rgba(24,24,24,${blur})`;
+    }
+
+    // Notificaciones igual que menú lateral
+    function setNotification(type) {
+        // Animación y auto-hide igual que el menú lateral
+        if (!window._preloaderStatusTimeout) window._preloaderStatusTimeout = null;
+        if (!window._preloaderCurrentlyShowingMessage) window._preloaderCurrentlyShowingMessage = false;
+        let message = '';
+        if (type === 'sound-on') message = 'Sound enabled';
+        else if (type === 'sound-off') message = 'Sound disabled';
+        else if (type === 'visual-on') message = 'Visual effects enabled';
+        else if (type === 'visual-off') message = 'Visual effects disabled';
+        else message = '';
+
+        if (window._preloaderStatusTimeout) {
+            clearTimeout(window._preloaderStatusTimeout);
+        }
+        if (window._preloaderCurrentlyShowingMessage) {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.textContent = message;
+                if (message) {
+                    notification.classList.add('show');
+                    window._preloaderCurrentlyShowingMessage = true;
+                    window._preloaderStatusTimeout = setTimeout(() => {
+                        notification.classList.remove('show');
+                        window._preloaderCurrentlyShowingMessage = false;
+                    }, 3000);
+                } else {
+                    window._preloaderCurrentlyShowingMessage = false;
+                }
+            }, 300);
+        } else {
+            notification.textContent = message;
+            if (message) {
+                notification.classList.add('show');
+                window._preloaderCurrentlyShowingMessage = true;
+                window._preloaderStatusTimeout = setTimeout(() => {
+                    notification.classList.remove('show');
+                    window._preloaderCurrentlyShowingMessage = false;
+                }, 3000);
+            } else {
+                notification.classList.remove('show');
+                window._preloaderCurrentlyShowingMessage = false;
+            }
+        }
+    }
+
+    // Toggles visuales
+    // Sincronización de toggles
+    function syncMenuToggles() {
+        if (menuVisualToggle) {
+            if (window.visualEffectsEnabled) {
+                menuVisualToggle.classList.add('active');
+            } else {
+                menuVisualToggle.classList.remove('active');
+            }
+        }
+        if (menuAudioToggle) {
+            if (window.audioEnabled) {
+                menuAudioToggle.classList.add('active');
+            } else {
+                menuAudioToggle.classList.remove('active');
+            }
+        }
+        // Actualizar iconos de ambos toggles (preloader y menú)
+        if (typeof window.updateVisualIcon === 'function') window.updateVisualIcon();
+        if (typeof window.updateAudioIcon === 'function') window.updateAudioIcon();
+        if (typeof window.updatePreloaderVisualIcon === 'function') window.updatePreloaderVisualIcon();
+        if (typeof window.updatePreloaderAudioIcon === 'function') window.updatePreloaderAudioIcon();
+    }
+
+    soundToggleBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        soundEnabled = !soundEnabled;
+        window.audioEnabled = soundEnabled;
+        localStorage.setItem('audioEnabled', soundEnabled);
+        setNotification(soundEnabled ? 'sound-on' : 'sound-off');
+        window.dispatchEvent(new Event('audioToggled'));
+        // Actualizar iconos de ambos toggles
+        if (typeof window.updateAudioIcon === 'function') window.updateAudioIcon();
+        if (typeof window.updatePreloaderAudioIcon === 'function') window.updatePreloaderAudioIcon();
+        syncMenuToggles();
+    });
+    visualToggleBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        visualEnabled = !visualEnabled;
+        window.visualEffectsEnabled = visualEnabled;
+        localStorage.setItem('visualEffectsEnabled', visualEnabled);
+        setNotification(visualEnabled ? 'visual-on' : 'visual-off');
+        window.dispatchEvent(new Event('visualEffectsToggled'));
+        // Actualizar iconos de ambos toggles
+        if (typeof window.updateVisualIcon === 'function') window.updateVisualIcon();
+        if (typeof window.updatePreloaderVisualIcon === 'function') window.updatePreloaderVisualIcon();
+        syncMenuToggles();
+    });
+
+    // Escuchar cambios desde el menú lateral y actualizar preloader
+    window.addEventListener('visualEffectsToggled', function() {
+        visualEnabled = window.visualEffectsEnabled;
+        syncMenuToggles();
+    });
+    window.addEventListener('audioToggled', function() {
+        soundEnabled = window.audioEnabled;
+        syncMenuToggles();
+    });
+
+    // Inicializar estado visual/audio en ambos toggles
+    syncMenuToggles();
+
+    function updateBar() {
+        const percent = Math.round((loaded / total) * 100);
+        if (!animatingBar) {
+            animatingBar = true;
+            animateBar(percent);
+        }
+    }
+
+    function animateBar(targetPercent) {
+        // Suaviza el valor mostrado
+        displayedPercent = lerp(displayedPercent, targetPercent, 0.18);
+        // Si está muy cerca, lo iguala
+        if (Math.abs(displayedPercent - targetPercent) < 0.5) displayedPercent = targetPercent;
+        preloaderBar.style.width = displayedPercent + '%';
+        preloaderBarText.textContent = Math.round(displayedPercent) + '%';
+        updatePreloaderBg(displayedPercent);
+        const preloaderBarContainer = document.querySelector('.preloader-bar-container');
+        // Permitir avanzar aunque no se llegue a 100% después de cierto tiempo
+        if ((targetPercent >= 100 && displayedPercent >= 100 && !loadingComplete) || (loaded >= total && !loadingComplete)) {
+            loadingComplete = true;
+            preloaderBar.classList.add('hide');
+            preloaderBarText.classList.add('hide');
+            if (preloaderBarContainer) preloaderBarContainer.style.display = 'none';
+            setTimeout(() => {
+                preloaderEnterBtn.textContent = 'Enter';
+                preloaderEnterBtn.classList.add('show');
+                preloaderEnterBtn.disabled = false;
+                preloaderEnterBtn.style.display = 'flex';
+            }, 500);
+            animatingBar = false;
+        } else if (targetPercent < 100 && loaded < total) {
+            loadingComplete = false;
+            preloaderBar.classList.remove('hide');
+            preloaderBarText.classList.remove('hide');
+            if (preloaderBarContainer) preloaderBarContainer.style.display = '';
+            preloaderEnterBtn.classList.remove('show');
+            preloaderEnterBtn.disabled = true;
+            preloaderEnterBtn.style.display = 'none';
+        }
+        if (displayedPercent !== targetPercent) {
+            requestAnimationFrame(() => animateBar(targetPercent));
+        } else {
+            // Si por algún motivo no se llegó a 100% pero ya se intentó cargar todo, permitir avanzar
+            if (!loadingComplete && loaded >= total) {
+                loadingComplete = true;
+                preloaderBar.classList.add('hide');
+                preloaderBarText.classList.add('hide');
+                if (preloaderBarContainer) preloaderBarContainer.style.display = 'none';
+                setTimeout(() => {
+                    preloaderEnterBtn.textContent = 'Enter';
+                    preloaderEnterBtn.classList.add('show');
+                    preloaderEnterBtn.disabled = false;
+                    preloaderEnterBtn.style.display = 'flex';
+                }, 500);
+            }
+            animatingBar = false;
+        }
+    }
+
+    function assetLoaded() {
+        loaded++;
+        updateBar();
+    }
+
+    // Cargar imágenes
+    assets.forEach(src => {
+        if (src.endsWith('.mp3')) {
+            const audio = new Audio();
+            audio.src = src;
+            audio.preload = 'auto';
+            audio.addEventListener('canplaythrough', assetLoaded, { once: true });
+            audio.addEventListener('error', assetLoaded, { once: true });
+        } else if (src.endsWith('.mp4')) {
+            const video = document.createElement('video');
+            video.src = src;
+            video.preload = 'auto';
+            video.addEventListener('canplaythrough', assetLoaded, { once: true });
+            video.addEventListener('error', assetLoaded, { once: true });
+        } else {
+            const img = new Image();
+            img.src = src;
+            img.onload = assetLoaded;
+            img.onerror = assetLoaded;
+        }
+    });
+
+    // Mostrar solo en la primera visita
+    if (localStorage.getItem('eftimosPreloaderShown')) {
+        preloader.style.display = 'none';
+        document.body.classList.remove('preloader-active');
+        // Aplicar preferencias guardadas
+        window.soundEnabled = localStorage.getItem('eftimosSoundEnabled') !== '0';
+        window.visualEffectsEnabled = localStorage.getItem('eftimosVisualEnabled') !== '0';
+        document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
+        return;
+    } else {
+        preloader.style.display = 'flex';
+        document.body.classList.add('preloader-active');
+    }
+
+    // Botón Enter
+    preloaderEnterBtn.addEventListener('click', function() {
+        // Animar el fondo y el logo al mismo tiempo
+        preloader.classList.add('preloader-fade-bg');
+        var preloaderLogo = document.querySelector('.preloader-logo img');
+        if (preloaderLogo) {
+            preloaderLogo.classList.add('preloader-logo-ascend');
+        }
+        // Mostrar hamburguesa con transición sutil
+        var menuToggle = document.getElementById('menuToggle');
+        var sharedLogo = document.getElementById('sharedLogo');
+        if (menuToggle) {
+            menuToggle.style.opacity = '1';
+            menuToggle.style.pointerEvents = 'auto';
+        }
+        if (sharedLogo) {
+            sharedLogo.style.opacity = '1';
+            sharedLogo.style.transition = 'opacity 0.7s cubic-bezier(.77,0,.18,1)';
+        }
+        // Hacer visible la upper bar antes, tras iniciar animaciones
+        setTimeout(() => {
+            document.body.classList.remove('preloader-active'); // Upper bar fade-in
+        }, 100);
+        // Esperar a que termine la animación del logo antes de ocultar el preloader
+        setTimeout(() => {
+            preloader.classList.add('preloader-hide');
+            setTimeout(() => {
+                preloader.style.display = 'none';
+                localStorage.setItem('eftimosPreloaderShown', '1');
+                // Aplicar preferencias
+                window.soundEnabled = soundEnabled;
+                window.visualEffectsEnabled = visualEnabled;
+                document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
+                window.dispatchEvent(new Event('preloaderFinished'));
+            }, 800);
+        }, 1100);
+    });
+});
+// --- FIN PRELOADER LOGIC ---
+
 // --- Motion Blur Direccional DOM ---
 let lastOffsetX = 0, lastOffsetY = 0;
 let lastBlur = 0;
@@ -36,22 +381,8 @@ if (!mapGroup) {
 
 // Responsive settings function
 function getResponsiveSettings() {
-    const width = window.innerWidth;
-    
-    // Ajuste para 7 elementos: menos separación y menos columnas
-    if (width >= 1200) {
-        return { gridSpacing: 420, imageSize: 170, blurRadius: 200, gridColumns: 3 };
-    }
-    if (width >= 992) {
-        return { gridSpacing: 340, imageSize: 150, blurRadius: 180, gridColumns: 3 };
-    }
-    if (width >= 768) {
-        return { gridSpacing: 260, imageSize: 140, blurRadius: 150, gridColumns: 3 };
-    }
-    if (width >= 576) {
-        return { gridSpacing: 180, imageSize: 120, blurRadius: 120, gridColumns: 2 };
-    }
-    return { gridSpacing: 150, imageSize: 90, blurRadius: 80, gridColumns: 2 };
+    // Siempre usar la disposición de PC (3 columnas, espaciado grande)
+    return { gridSpacing: 420, imageSize: 170, blurRadius: 200, gridColumns: 3 };
 }
 
 // Initialize responsive settings
@@ -622,17 +953,17 @@ canvas.addEventListener('mousemove', (e) => {
         whispersSound.playbackRate = window._noisePitch;
     }
 
-// Sincroniza el filtro low pass con el drag visual (trail)
-window.addEventListener('dragTrailStarted', () => {
-    if (window.setLowPassFilter) {
-        window.setLowPassFilter(1200, 20); // ultra responsivo
-    }
-});
-window.addEventListener('dragTrailEnded', () => {
-    if (window.restoreLowPassFilter) {
-        window.restoreLowPassFilter(180); // restauración rápida
-    }
-});
+    // Sincroniza el filtro low pass con el drag visual (trail)
+    window.addEventListener('dragTrailStarted', () => {
+        if (window.setLowPassFilter) {
+            window.setLowPassFilter(1200, 20); // ultra responsivo
+        }
+    });
+    window.addEventListener('dragTrailEnded', () => {
+        if (window.restoreLowPassFilter) {
+            window.restoreLowPassFilter(180); // restauración rápida
+        }
+    });
 
     lastX = e.clientX;
     lastY = e.clientY;
@@ -912,6 +1243,13 @@ function createCinemaMode(originalVideo, container) {
     if (container) {
         container.classList.add('animating');
     }
+    // Ocultar hamburguesa y desactivar menú
+    var navBar = document.querySelector('nav.blending-item');
+    if (navBar) {
+        navBar.style.opacity = '0';
+        navBar.style.pointerEvents = 'none';
+        navBar.style.transition = 'opacity 0.7s cubic-bezier(.77,0,.18,1)';
+    }
 
     const rect = originalVideo.getBoundingClientRect();
 
@@ -1086,6 +1424,27 @@ function createCinemaMode(originalVideo, container) {
         if (container) {
             container.classList.remove('animating');
         }
+        // Restaurar hamburguesa y menú
+        var navBar = document.querySelector('nav.blending-item');
+        if (navBar) {
+            navBar.style.opacity = '1';
+            navBar.style.pointerEvents = '';
+        }
+            // Cerrar cine si se hace click fuera del video y controles
+            function onCinemaDimClick(e) {
+                const controls = document.getElementById('cinemaControls');
+                const clone = document.getElementById('cinemaClone');
+                if (controls && controls.contains(e.target)) return;
+                if (clone && clone.contains(e.target)) return;
+                closeCinema();
+            }
+            cinemaDim.addEventListener('mousedown', onCinemaDimClick);
+            // Limpiar listener al cerrar
+            const prevCloseCinema = closeCinema;
+            closeCinema = function() {
+                cinemaDim.removeEventListener('mousedown', onCinemaDimClick);
+                prevCloseCinema();
+            };
         
         // Calculate blur for the video at its original position
         const videoCenterX = rect.left + rect.width / 2;
@@ -1290,7 +1649,7 @@ canvas.addEventListener('touchmove', (e) => {
         
         if (targetOffsetX < minOffsetX) {
             const distance = minOffsetX - targetOffsetX;
-            resistanceFactorX = 1.0 / (1.0 + distance * 0.01);
+            resistanceFactorX = 1.0 / (1.0 + distance * 0.01); // Progressive resistance
         } else if (targetOffsetX > maxOffsetX) {
             const distance = targetOffsetX - maxOffsetX;
             resistanceFactorX = 1.0 / (1.0 + distance * 0.01);

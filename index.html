@@ -8,8 +8,8 @@
     <title>EAFTIMOS</title>
 
     <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/eaf_black-outline.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/eaf_black-outline.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/eaf_white-outline.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/eaf_white-outline.png">
     <link rel="manifest" href="assets/images/favicon_io/site.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon_io/android-chrome-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon_io/android-chrome-512x512.png">
@@ -34,11 +34,49 @@
 </head>
 
 <body class="canvas-body">
+    <!-- PRELOADER -->
+    <div id="preloader" class="preloader" style="z-index:1000; position:fixed; inset:0; background:#111;">
+        <div class="preloader-content preloader-sober">
+            <!-- Logo compartido -->
+            <div class="preloader-logo">
+                <img src="assets/images/logo-white.png" alt="Eaftimos Logo" id="sharedLogoPreloader" width="120" height="120" draggable="false" style="display:none;" />
+                <canvas class="preloader-logo-reveal-canvas" width="120" height="120" style="display:block;"></canvas>
+            </div>
+            <div class="preloader-bar-container">
+                <div class="preloader-bar-bg hard-corner">
+                    <div class="preloader-bar hard-corner" id="preloaderBar"></div>
+                </div>
+                <span class="preloader-bar-text" id="preloaderBarText">0%</span>
+            </div>
+            <div class="preloader-toggles-bottom">
+                <div class="sidebar-control-buttons">
+                    <button class="sidebar-control-btn" id="preloaderVisualToggle" title="Toggle Visual Effects">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle class="eye-open" cx="12" cy="12" r="3"></circle>
+                            <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" stroke-linecap="round"></line>
+                        </svg>
+                    </button>
+                    <button class="sidebar-control-btn" id="preloaderSoundToggle" title="Toggle Audio">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <path class="speaker-on" d="M3 9v6c0 1.105.895 2 2 2h4l5 5V4H9c-1.105 0-2 .895-2 2v3z"></path>
+                            <path class="speaker-on" d="M17.5 3.5a4 4 0 0 1 0 5.66M19.07 4.93a8 8 0 0 1 0 11.31"></path>
+                            <path class="speaker-off" style="display:none;" d="M11 5L6 9H2v6h4l5 5V5z"></path>
+                            <line class="speaker-off" style="display:none;" x1="23" y1="9" x2="17" y2="15"></line>
+                            <line class="speaker-off" style="display:none;" x1="17" y1="9" x2="23" y2="15"></line>
+                        </svg>
+                    </button>
+                </div>
+                <span class="control-status-message" id="preloaderNotification"></span>
+            </div>
+            <button id="preloaderEnterBtn" class="preloader-enter-btn hard-corner" disabled style="display:none;">Enter</button>
+        </div>
+    </div>
     <!-- Grain Canvas -->
-    <canvas id="grainCanvas"></canvas>
+    <canvas id="grainCanvas" style="visibility:hidden;"></canvas>
 
     <!-- Background Video TOP -->
-    <div id="videos-background">       
+    <div id="videos-background" style="visibility:hidden;">
         <!-- Video de fondo principal -->
         <video autoplay muted loop playsinline preload="auto">
             <source src="assets/vid/reels-mixed-vid.mp4" type="video/mp4">
@@ -53,15 +91,14 @@
     <nav class="blending-item">
         <div class="nav-container">
             <!-- Menu Hamburguesa -->
-            <div class="menu-toggle" id="menuToggle">
+            <div class="menu-toggle" id="menuToggle" style="opacity:0; pointer-events:none; transition:opacity 0.7s cubic-bezier(.77,0,.18,1);">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
-            
-            <!-- Logo Centrado -->
-            <a href="index.html" class="logo" data-shape="circle">
-                <img src="assets/images/logo-white.png" alt="Eaftimos Logo" width="150" height="auto" draggable="false">
+            <!-- Logo compartido con preloader -->
+            <a href="index.html" class="logo shared-logo" data-shape="circle">
+                <img src="assets/images/logo-white.png" alt="Eaftimos Logo" id="sharedLogo" width="150" height="auto" draggable="false">
             </a>
         </div>
         
@@ -196,41 +233,35 @@
     <script src="assets/js/tooltip-nebula.js"></script>
     <script src="assets/js/perspective-distortion.js"></script>
     <script src="assets/js/reveal-text.js"></script>
-    
+    <script src="assets/js/preloader-logo-reveal.js"></script>
+
     <script>
-        (function() {
-            const whispersSound = document.getElementById('whispersSound');
-            
-            if (!whispersSound) return;
-            
+    (function() {
+        // --- WHISPERS SOUND LOGIC (igual que antes) ---
+        const whispersSound = document.getElementById('whispersSound');
+        if (whispersSound) {
             const BASE_VOLUME = 0.04;
             const HOVER_VOLUME = 0.10;
             const TRANSITION_STEPS = 20;
-            
             let isPlaying = false;
             let volumeTransitionInterval = null;
             let volumeMonitorInterval = null;
             let targetVolume = BASE_VOLUME;
-            
             function smoothVolumeTransition(target, duration = 300) {
                 if (volumeTransitionInterval) {
                     clearInterval(volumeTransitionInterval);
                 }
-                
                 const startVolume = whispersSound.volume;
                 const volumeDiff = target - startVolume;
                 const stepDuration = duration / TRANSITION_STEPS;
                 let currentStep = 0;
-                
                 volumeTransitionInterval = setInterval(() => {
                     currentStep++;
                     const progress = currentStep / TRANSITION_STEPS;
                     const easeProgress = progress < 0.5 
                         ? 2 * progress * progress 
                         : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-                    
                     whispersSound.volume = startVolume + (volumeDiff * easeProgress);
-                    
                     if (currentStep >= TRANSITION_STEPS) {
                         clearInterval(volumeTransitionInterval);
                         volumeTransitionInterval = null;
@@ -239,17 +270,13 @@
                     }
                 }, stepDuration);
             }
-            
             function startWhispers() {
                 if (isPlaying) return;
-                
                 whispersSound.volume = BASE_VOLUME;
                 whispersSound.muted = false;
                 targetVolume = BASE_VOLUME;
-                
                 whispersSound.play().then(() => {
                     isPlaying = true;
-                    
                     volumeMonitorInterval = setInterval(() => {
                         if (isPlaying && !volumeTransitionInterval && whispersSound.volume !== targetVolume) {
                             whispersSound.volume = targetVolume;
@@ -257,27 +284,66 @@
                     }, 100);
                 }).catch(() => {});
             }
-            
             setTimeout(startWhispers, 200);
-            
             ['click', 'mousemove', 'keydown', 'touchstart'].forEach(event => {
                 document.addEventListener(event, startWhispers, { once: true });
             });
-            
             window.addEventListener('tooltipShown', () => {
                 smoothVolumeTransition(HOVER_VOLUME, 400);
             });
-            
             window.addEventListener('tooltipHidden', () => {
                 smoothVolumeTransition(BASE_VOLUME, 500);
             });
-            
             document.addEventListener('click', (e) => {
                 if (e.target.closest('.image-link') && isPlaying) {
                     smoothVolumeTransition(0, 400);
                 }
             });
-        })();
+        }
+
+        // --- PRELOADER FADE LOGIC ---
+        function showBackground() {
+            document.getElementById('videos-background').style.visibility = '';
+            document.getElementById('grainCanvas').style.visibility = '';
+        }
+        function fadeOutPreloader() {
+            const preloader = document.getElementById('preloader');
+            preloader.style.transition = 'opacity 1.2s cubic-bezier(.77,0,.18,1)';
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+                preloader.style.display = 'none';
+            }, 1300);
+        }
+        // Mostrar fondo al cargar, pero mantener preloader visible
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                showBackground();
+                // Mostrar el botón Enter cuando todo esté listo
+                var enterBtn = document.getElementById('preloaderEnterBtn');
+                if (enterBtn) {
+                    enterBtn.disabled = false;
+                    enterBtn.style.display = '';
+                    enterBtn.focus();
+                }
+            }, 200);
+        });
+        // Al presionar Enter, fade out del preloader
+        var enterBtn = document.getElementById('preloaderEnterBtn');
+        if (enterBtn) {
+            enterBtn.addEventListener('click', function() {
+                fadeOutPreloader();
+            });
+        }
+        // Permitir presionar Enter desde teclado
+        document.addEventListener('keydown', function(e) {
+            if ((e.key === 'Enter' || e.keyCode === 13) && document.getElementById('preloader').style.opacity !== '0') {
+                var btn = document.getElementById('preloaderEnterBtn');
+                if (btn && !btn.disabled && btn.style.display !== 'none') {
+                    btn.click();
+                }
+            }
+        });
+    })();
     </script>
     
 </body>

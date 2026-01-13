@@ -329,6 +329,7 @@ function initializeControls() {
     const visualToggle = document.getElementById('visualToggle');
     const statusMessage = document.getElementById('statusMessage');
     let visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') !== 'false';
+        window.visualEffectsEnabled = visualEffectsEnabled;
     let statusTimeout = null;
     let currentlyShowingMessage = false;
 
@@ -388,10 +389,8 @@ function initializeControls() {
 
     function updateVisualIcon() {
         if (!visualToggle) return;
-        
         const eyeOpen = visualToggle.querySelectorAll('.eye-open');
         const eyeClosed = visualToggle.querySelectorAll('.eye-closed');
-        
         if (visualEffectsEnabled) {
             eyeOpen.forEach(el => el.style.display = '');
             eyeClosed.forEach(el => el.style.display = 'none');
@@ -399,6 +398,22 @@ function initializeControls() {
             eyeOpen.forEach(el => el.style.display = 'none');
             eyeClosed.forEach(el => el.style.display = '');
         }
+    }
+    // Exponer para otros scripts
+    window.updateVisualIcon = updateVisualIcon;
+        function updateAudioIcon() {
+            if (!audioToggle) return;
+            const speakerOn = audioToggle.querySelectorAll('.speaker-on');
+            const speakerOff = audioToggle.querySelectorAll('.speaker-off');
+            if (audioEnabled) {
+                speakerOn.forEach(el => el.style.display = '');
+                speakerOff.forEach(el => el.style.display = 'none');
+            } else {
+                speakerOn.forEach(el => el.style.display = 'none');
+                speakerOff.forEach(el => el.style.display = '');
+            }
+        }
+        window.updateAudioIcon = updateAudioIcon;
     }
 
     function updateVisualEffects() {
@@ -627,8 +642,16 @@ function initializeControls() {
 
     // ========== MAKE STATES GLOBALLY ACCESSIBLE ==========
 
+    // Asegura que visualEffectsEnabled esté definido en este scope
+    if (typeof visualEffectsEnabled === 'undefined') {
+        if (typeof window.visualEffectsEnabled !== 'undefined') {
+            visualEffectsEnabled = window.visualEffectsEnabled;
+        } else {
+            visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') !== 'false';
+        }
+    }
     window.audioEnabled = audioEnabled;
     window.visualEffectsEnabled = visualEffectsEnabled;
     window.currentNoiseVolume = currentNoiseVolume;
-}
+
 
