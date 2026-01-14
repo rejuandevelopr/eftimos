@@ -120,6 +120,54 @@ function initializeControls() {
         // Inicializar filtros de audio al cargar la página para evitar poppeo
         setupAudioFilters();
 
+        // ========== AUDIO SMOOTH ACTIVATION ON FIRST MAP INTERACTION ==========
+        function smoothActivateAudio() {
+            // Verifica y activa noiseSound
+            if (noiseSound && noiseSound.paused) {
+                noiseSound.muted = false;
+                noiseSound.volume = 0;
+                noiseSound.play().catch(() => {});
+                // Transición suave de volumen
+                let vol = 0;
+                const target = baseNoiseVolume;
+                const step = target / 30; // ~500ms
+                const fade = setInterval(() => {
+                    vol = Math.min(target, vol + step);
+                    noiseSound.volume = vol;
+                    if (vol >= target) clearInterval(fade);
+                }, 16);
+            }
+            // Verifica y activa whispersSound
+            const whispersEl = document.getElementById('whispersSound');
+            if (whispersEl && whispersEl.paused) {
+                whispersEl.muted = false;
+                whispersEl.volume = 0;
+                whispersEl.play().catch(() => {});
+                let vol = 0;
+                const target = whispersBaseVolume;
+                const step = target / 30;
+                const fade = setInterval(() => {
+                    vol = Math.min(target, vol + step);
+                    whispersEl.volume = vol;
+                    if (vol >= target) clearInterval(fade);
+                }, 16);
+            }
+        }
+
+        // Solo activar una vez en el primer click/touch/drag sobre el mapa
+        const mapCanvas = document.getElementById('canvas');
+        if (mapCanvas) {
+            const activateOnce = () => {
+                smoothActivateAudio();
+                mapCanvas.removeEventListener('click', activateOnce);
+                mapCanvas.removeEventListener('touchstart', activateOnce);
+                mapCanvas.removeEventListener('dragstart', activateOnce);
+            };
+            mapCanvas.addEventListener('click', activateOnce);
+            mapCanvas.addEventListener('touchstart', activateOnce);
+            mapCanvas.addEventListener('dragstart', activateOnce);
+        }
+
         window.setLowPassFilter = function(targetFreq, duration = 400) {
             // Los filtros solo se inicializan una vez al cargar la página. Nunca recrear ni reconfigurar aquí.
             if (!_audioFiltersInitialized) setupAudioFilters();
@@ -575,6 +623,26 @@ function initializeControls() {
             updateAudio();
             updateAudioIcon();
             showStatusMessage(audioEnabled ? 'SOUND EFFECTS: ON' : 'SOUND EFFECTS: OFF');
+                // Fuerza la carga y reproducción de sonidos si se activa el audio
+                if (audioEnabled) {
+                    if (noiseSound) {
+                        noiseSound.muted = false;
+                        noiseSound.volume = baseNoiseVolume;
+                        // Si el audio no está listo, fuerza su carga
+                        if (noiseSound.readyState < 2) {
+                            noiseSound.load();
+                        }
+                        noiseSound.play().catch(() => {});
+                    }
+                    if (lockedInSound) {
+                        lockedInSound.muted = false;
+                        if (lockedInSound.readyState < 2) {
+                            lockedInSound.load();
+                        }
+                        lockedInSound.play().catch(() => {});
+                    }
+                    // Si tienes más sonidos, repite la lógica aquí
+                }
         });
     }
 

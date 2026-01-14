@@ -47,6 +47,20 @@
             }
         })();
     </script>
+
+        <!-- Mostrar menú lateral solo cuando el menú está abierto, igual que en index.html -->
+        <style>
+            /* Forzar .active visualmente cuando body.menu-open, para que se apliquen los estilos de .dropdown-menu.active y .dropdown-menu.active::before */
+            body.menu-open #dropdownMenu {
+                /* Simula .dropdown-menu.active */
+                transform: translateX(0) !important;
+            }
+            body.menu-open #dropdownMenu::before {
+                /* Simula .dropdown-menu.active::before */
+                transform: translateX(0) !important;
+                pointer-events: all !important;
+            }
+        </style>
 </head>
 
 <body style="background-color: #1a1a1a;">
@@ -139,7 +153,7 @@
     <main>
         <section class="hero" id="heroSection" style="background-image: url(assets/images/g-11.webp);">
             <div class="container">
-                <h1>AW20</h1>
+                <h1>AW24</h1>
             </div>
         </section>
 
@@ -170,8 +184,8 @@
     </main>
 
     <!-- Sonidos - En esta página usamos whispers como sonido principal -->
-    <audio id="noiseSound" src="assets/sounds/whispers.mp3" preload="auto" loop></audio>
-    <audio id="whispersSound" src="assets/sounds/whispers.mp3" preload="auto" loop></audio>
+    <audio id="noiseSound" src="assets/sounds/breathing.mp3" preload="auto" loop></audio>
+    <audio id="whispersSound" src="assets/sounds/breathing.mp3" preload="auto" loop></audio>
     <audio id="lockedInSound" src="assets/sounds/locked-in-oneself.mp3" preload="auto"></audio>
 
     <!-- Load scripts at the end for better performance -->
@@ -199,7 +213,7 @@
             console.log('✓ Audio element encontrado:', noiseSound.src);
             
             // TOMAR CONTROL COMPLETO DEL AUDIO
-            const CLOTHES_BASE_VOLUME = 0.2;
+            const CLOTHES_BASE_VOLUME = 0.7;
             const CLOTHES_HOVER_VOLUME = 0.6;
             let isPlaying = false;
             
@@ -227,70 +241,7 @@
                 document.addEventListener(event, startWhispers, { once: true });
             });
             
-            // OVERRIDE TOTAL: Interceptar todos los cambios de volumen
-            let volumeOverride = CLOTHES_BASE_VOLUME;
-            
-            // Crear un proxy para controlar el volumen
-            Object.defineProperty(noiseSound, '_realVolume', {
-                value: noiseSound.volume,
-                writable: true
-            });
-            
-            // Actualizar volumen constantemente
-            setInterval(() => {
-                if (isPlaying && noiseSound.volume !== volumeOverride) {
-                    noiseSound.volume = volumeOverride;
-                }
-            }, 50);
-            
-            // Escuchar eventos de tooltip DIRECTAMENTE
-            window.addEventListener('tooltipShown', () => {
-                volumeOverride = CLOTHES_HOVER_VOLUME;
-                noiseSound.volume = CLOTHES_HOVER_VOLUME;
-                console.log('🔊 HOVER DETECTADO - Volumen aumentado a:', CLOTHES_HOVER_VOLUME);
-            });
-            
-            window.addEventListener('tooltipHidden', () => {
-                volumeOverride = CLOTHES_BASE_VOLUME;
-                noiseSound.volume = CLOTHES_BASE_VOLUME;
-                console.log('🔉 HOVER TERMINADO - Volumen base:', CLOTHES_BASE_VOLUME);
-            });
-            
-            // TAMBIÉN escuchar hover directo en los items por si acaso
-            document.addEventListener('DOMContentLoaded', () => {
-                const imageLinks = document.querySelectorAll('.grid-view .image-link');
-                console.log('📍 Items encontrados:', imageLinks.length);
-                
-                imageLinks.forEach((link, index) => {
-                    link.addEventListener('mouseenter', () => {
-                        volumeOverride = CLOTHES_HOVER_VOLUME;
-                        noiseSound.volume = CLOTHES_HOVER_VOLUME;
-                        console.log(`🎯 HOVER DIRECTO en item ${index + 1} - Vol:`, CLOTHES_HOVER_VOLUME);
-                    });
-                    
-                    link.addEventListener('mouseleave', () => {
-                        volumeOverride = CLOTHES_BASE_VOLUME;
-                        noiseSound.volume = CLOTHES_BASE_VOLUME;
-                        console.log(`👋 LEAVE en item ${index + 1} - Vol:`, CLOTHES_BASE_VOLUME);
-                    });
-                    
-                    link.addEventListener('click', () => {
-                        console.log('💥 CLICK - Fade out');
-                        let vol = noiseSound.volume;
-                        const fade = setInterval(() => {
-                            vol -= 0.05;
-                            if (vol <= 0) {
-                                volumeOverride = 0;
-                                noiseSound.volume = 0;
-                                clearInterval(fade);
-                            } else {
-                                volumeOverride = vol;
-                                noiseSound.volume = vol;
-                            }
-                        }, 20);
-                    });
-                });
-            });
+            // Eliminar modificación dinámica del volumen: dejar volumen fijo al iniciar
             
             // DEBUG: Mostrar estado cada 2 segundos
             setInterval(() => {
@@ -306,127 +257,7 @@
         })();
     </script>
 
-    <script>
-        // Override grain effect intensity for this page
-        if (typeof updateGrain !== 'undefined') {
-            window.updateGrain = function() {
-                const imageData = grainCtx.createImageData(grainCanvas.width, grainCanvas.height);
-                const centerX = grainCanvas.width / 2;
-                const centerY = grainCanvas.height / 2;
-                const maxDist = Math.sqrt(centerX**2 + centerY**2);
-
-                for (let y = 0; y < grainCanvas.height; y++) {
-                    for (let x = 0; x < grainCanvas.width; x++) {
-                        const i = (y * grainCanvas.width + x) * 4;
-                        const val = Math.random() * 255;
-
-                        const dx = x - centerX;
-                        const dy = y - centerY;
-                        const dist = Math.sqrt(dx*dx + dy*dy) / maxDist;
-
-                        // Reduce alpha drastically (from 0-100 to 0-2)
-                        const alpha = (dist) * 2;
-
-                        imageData.data[i] = val;
-                        imageData.data[i + 1] = val;
-                        imageData.data[i + 2] = val;
-                        imageData.data[i + 3] = alpha;
-                    }
-                }
-
-                grainCtx.putImageData(imageData, 0, 0);
-            };
-        }
-
-        window.addEventListener('popstate', function () {
-            window.location.href = 'index.html';
-        });
-
-        // Menu toggle functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const menuToggle = document.getElementById('menuToggle');
-            const dropdownMenu = document.getElementById('dropdownMenu');
-            const body = document.body;
-
-            if (menuToggle && dropdownMenu) {
-                menuToggle.addEventListener('click', function() {
-                    menuToggle.classList.toggle('active');
-                    dropdownMenu.classList.toggle('active');
-                    body.classList.toggle('menu-open');
-                });
-            }
-
-            // Collections submenu toggle
-            const collectionsToggle = document.getElementById('collectionsToggle');
-            const collectionsSubmenu = document.getElementById('collectionsSubmenu');
-
-            if (collectionsToggle && collectionsSubmenu) {
-                collectionsToggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    collectionsSubmenu.classList.toggle('active');
-                    collectionsToggle.classList.toggle('active');
-                });
-            }
-
-            // Contact modal functionality
-            const contactBtn = document.getElementById('contactBtn');
-            const contactModal = document.getElementById('contactModal');
-            const contactClose = document.getElementById('contactClose');
-
-            if (contactBtn && contactModal && contactClose) {
-                contactBtn.addEventListener('click', function() {
-                    contactModal.classList.add('active');
-                });
-
-                contactClose.addEventListener('click', function() {
-                    contactModal.classList.remove('active');
-                });
-
-                contactModal.addEventListener('click', function(e) {
-                    if (e.target === contactModal) {
-                        contactModal.classList.remove('active');
-                    }
-                });
-            }
-
-            // Logo click transition to white
-            const logoLink = document.querySelector('.logo');
-            if (logoLink) {
-                logoLink.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const targetUrl = this.getAttribute('href');
-                    
-                    // Create white overlay
-                    let overlay = document.getElementById('transitionOverlay');
-                    if (!overlay) {
-                        overlay = document.createElement('div');
-                        overlay.id = 'transitionOverlay';
-                        overlay.style.position = 'fixed';
-                        overlay.style.top = '0';
-                        overlay.style.left = '0';
-                        overlay.style.right = '0';
-                        overlay.style.bottom = '0';
-                        overlay.style.background = 'white';
-                        overlay.style.zIndex = '100000';
-                        overlay.style.pointerEvents = 'none';
-                        overlay.style.opacity = '0';
-                        overlay.style.transition = 'opacity 0.45s ease';
-                        document.body.appendChild(overlay);
-                    }
-                    
-                    // Trigger fade to white
-                    requestAnimationFrame(() => {
-                        overlay.style.opacity = '1';
-                    });
-                    
-                    // Navigate after transition
-                    setTimeout(() => {
-                        window.location.href = targetUrl;
-                    }, 450);
-                });
-            }
-        });
-    </script>
+    <!-- (Eliminado script inline de menú para que solo controle controls.js) -->
 </body>
 
 </html>

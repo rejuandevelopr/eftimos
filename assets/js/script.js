@@ -875,7 +875,7 @@ canvas.addEventListener('mousedown', (e) => {
     velocityX = 0;
     velocityY = 0;
     canvas.classList.add('dragging');
-    // Desactiva la modulación de whispers con transición suave
+        // Desactiva la modulación de whispers con transición suave
     if (window.whispersModulationEnabled !== undefined) {
         // Suaviza el paso a modulación off
         if (typeof window.setWhispersModulationEnabled === 'function') {
