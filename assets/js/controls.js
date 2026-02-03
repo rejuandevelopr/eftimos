@@ -435,6 +435,9 @@ function initializeControls() {
         }
     }
 
+    // Expose to global scope so other scripts/handlers can call it
+    window.showStatusMessage = showStatusMessage;
+
     function updateVisualIcon() {
         if (!visualToggle) return;
         const eyeOpen = visualToggle.querySelectorAll('.eye-open');

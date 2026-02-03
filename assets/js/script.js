@@ -1,3 +1,8 @@
+// Limita los offsets dentro de los límites definidos
+function clampOffset() {
+    targetOffsetX = Math.max(minOffsetX, Math.min(maxOffsetX, targetOffsetX));
+    targetOffsetY = Math.max(minOffsetY, Math.min(maxOffsetY, targetOffsetY));
+}
 // --- PRELOADER LOGIC ---
 document.addEventListener('DOMContentLoaded', function() {
     // Referencias a los toggles del preloader
@@ -40,8 +45,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuVisualToggle = document.getElementById('visualToggle');
     const menuAudioToggle = document.getElementById('audioToggle');
     const notification = document.getElementById('preloaderNotification');
-    let soundEnabled = true;
-    let visualEnabled = true;
+    let soundEnabled = localStorage.getItem('audioEnabled') === 'false' ? false : true;
+    let visualEnabled = localStorage.getItem('visualEffectsEnabled') === 'false' ? false : true;
     let loadingComplete = false;
 
     // Mostrar solo en la primera visita
@@ -55,8 +60,8 @@ document.addEventListener('DOMContentLoaded', function() {
             menuToggle.style.pointerEvents = 'auto';
         }
         // Aplicar preferencias guardadas
-        window.soundEnabled = localStorage.getItem('eftimosSoundEnabled') !== '0';
-        window.visualEffectsEnabled = localStorage.getItem('eftimosVisualEnabled') !== '0';
+        window.soundEnabled = localStorage.getItem('audioEnabled') === 'false' ? false : true;
+        window.visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') === 'false' ? false : true;
         document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
         return;
     } else {
@@ -636,7 +641,7 @@ function resistanceFunc(distance) {
     }
 }
 
-function clampOffset() {
+    function closeCinema() {
     targetOffsetX = Math.max(minOffsetX, Math.min(maxOffsetX, targetOffsetX));
     targetOffsetY = Math.max(minOffsetY, Math.min(maxOffsetY, targetOffsetY));
 }
@@ -647,6 +652,13 @@ function isImageCentered(x, y, imageSizeScaled) {
     // Consider centered if the image center is within a small threshold of the screen center
     const threshold = imageSizeScaled * 0.35; // 35% of image size
     const dx = x - centerX;
+
+        // --- NUEVO: Forzar reposicionamiento del mapa según cámara en mano ---
+        if (typeof window.setHandheldCameraShake === 'function') {
+            // Reactiva el efecto de cámara en mano para que el mapa/video se reposicione correctamente
+            window.setHandheldCameraShake(true);
+        }
+
     const dy = y - centerY;
     return Math.abs(dx) < threshold && Math.abs(dy) < threshold;
 }
@@ -1129,19 +1141,20 @@ function createMorphTransition(originalImg, targetUrl) {
         clone.style.height = '100vh';
     });
 
-    // Prepare white overlay but DO NOT start fade until clone transition finishes
+    // Prepare black overlay (not white) for fade
     let overlay = document.getElementById('transitionOverlay');
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'transitionOverlay';
         document.body.appendChild(overlay);
     }
-    overlay.style.zIndex = '100000';
+    overlay.style.zIndex = '250000'; // Asegura que cubre la upper bar y todo el contenido
     overlay.style.pointerEvents = 'none';
     overlay.style.transition = 'opacity 0.45s ease';
     overlay.style.opacity = '0';
+    overlay.style.background = '#fff'; // Cambia a blanco sólido
 
-    const overlayFadeDuration = 450; // ms, should match CSS
+    const overlayFadeDuration = 120; // ms, aún más rápido
 
     let cloneDone = false;
     let soundDone = false;
@@ -1158,10 +1171,10 @@ function createMorphTransition(originalImg, targetUrl) {
     // When both clone animation and sound have completed, navigate after overlay fade completes
     function tryNavigateAfterReady() {
         if (!overlayStarted) return; // wait until overlay becomes visible
-        // wait for overlay fade to finish then navigate
+        // wait for overlay fade to finish then navigate (aún más rápido)
         setTimeout(() => {
             window.location.href = targetUrl;
-        }, overlayFadeDuration);
+        }, Math.max(overlayFadeDuration - 60, 40));
     }
 
     // Listen for clone transition end to start overlay fade
@@ -1181,52 +1194,50 @@ function createMorphTransition(originalImg, targetUrl) {
         }
     }, 1200);
 
-    // Play locked-in sound (if available) and wait for it to finish before final navigation
+    // Play locked-in sound (if available) SOONER and at 1.5x speed for transition
     const locked = document.getElementById('lockedInSound');
     if (locked) {
-        const playPromise = (function() {
-            try {
-                locked.currentTime = 0;
-                return locked.play();
-            } catch (e) {
-                return Promise.reject(e);
-            }
-        })();
-
-        playPromise.then(() => {
-            const onEnded = () => {
-                soundDone = true;
-                // Only navigate after overlay has started and finished
-                if (overlayStarted) {
-                    tryNavigateAfterReady();
-                } else if (cloneDone) {
-                    // If clone already done but overlay not started for some reason, start it
-                    startOverlayFade();
-                    tryNavigateAfterReady();
-                } else {
-                    // Wait for clone to finish; overlay will start then and navigation will follow
-                }
-            };
-            locked.addEventListener('ended', onEnded, { once: true });
-
-            // Safety: max wait for ended
-            setTimeout(() => {
-                if (!soundDone) {
+        try {
+            locked.pause();
+            locked.currentTime = 0;
+            locked.playbackRate = 1.5;
+            // Start sound IMMEDIATELY, not after clone
+            const playPromise = locked.play();
+            playPromise.then(() => {
+                const onEnded = () => {
                     soundDone = true;
-                    if (cloneDone) {
+                    if (overlayStarted) {
+                        tryNavigateAfterReady();
+                    } else if (cloneDone) {
                         startOverlayFade();
                         tryNavigateAfterReady();
                     }
+                };
+                locked.addEventListener('ended', onEnded, { once: true });
+                // Safety: max wait for ended
+                setTimeout(() => {
+                    if (!soundDone) {
+                        soundDone = true;
+                        if (cloneDone) {
+                            startOverlayFade();
+                            tryNavigateAfterReady();
+                        }
+                    }
+                }, Math.max(2000, (locked.duration || 0) * 1000 / 1.5 + 200));
+            }).catch(() => {
+                soundDone = true;
+                if (cloneDone) {
+                    startOverlayFade();
+                    tryNavigateAfterReady();
                 }
-            }, Math.max(15000, (locked.duration || 0) * 1000 + 2000));
-        }).catch(() => {
-            // Playback failed; treat as soundDone and proceed when clone done
+            });
+        } catch (e) {
             soundDone = true;
             if (cloneDone) {
                 startOverlayFade();
                 tryNavigateAfterReady();
             }
-        });
+        }
     } else {
         // No sound -> navigate after clone completes and overlay fades
         // onCloneTransitionEnd will start overlay and call tryNavigateAfterReady
@@ -1420,6 +1431,10 @@ function createCinemaMode(originalVideo, container) {
     }, 50);
 
     function closeCinema() {
+        // --- NUEVO: Reposicionar el mapa/video inmediatamente según cámara en mano ---
+        if (typeof window.setHandheldCameraShake === 'function') {
+            window.setHandheldCameraShake(true);
+        }
         // Remove animating class from container to restore grayscale
         if (container) {
             container.classList.remove('animating');
@@ -1468,9 +1483,13 @@ function createCinemaMode(originalVideo, container) {
             }
         }
         
-        // reverse animation: shrink clone back to original rect then remove
-        clone.style.left = rect.left + 'px';
-        clone.style.top = rect.top + 'px';
+        // reverse animation: shrink clone back to original rect + cámara en mano
+        let offset = { x: 0, y: 0 };
+        if (typeof window.getHandheldCameraOffset === 'function') {
+            offset = window.getHandheldCameraOffset() || { x: 0, y: 0 };
+        }
+        clone.style.left = (rect.left + offset.x) + 'px';
+        clone.style.top = (rect.top + offset.y) + 'px';
         clone.style.width = rect.width + 'px';
         clone.style.height = rect.height + 'px';
         clone.style.filter = 'blur(' + videoBlur + 'px)';
@@ -1481,6 +1500,7 @@ function createCinemaMode(originalVideo, container) {
         if (cinemaControls) cinemaControls.remove();
         // after transition remove elements
         setTimeout(() => {
+            // Restaurar solo la opacidad del video original, sin tocar posición ni tamaño
             originalVideo.style.opacity = '1';
             try { clone.pause(); } catch (e) {}
             clone.remove();

@@ -60,7 +60,8 @@ body:not(.preloader-active) nav.blending-item {
     left: 0;
     right: 0;
     bottom: 0;
-    display: block;
+        display: block;
+        bottom: 48px;
     text-align: center;
     color: #eaf7ff;
     font-size: 1rem;

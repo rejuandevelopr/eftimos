@@ -2,6 +2,10 @@
 <html lang="en">
 
 <head>
+        <style>
+        /* Elimina animación global de entrada para esta página */
+        body { animation: none !important; }
+        </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eftimos</title>
@@ -64,6 +68,8 @@
 </head>
 
 <body style="background-color: #1a1a1a;">
+    <!-- Fade-in overlay blanco -->
+    <div id="entryWhiteOverlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:999999;pointer-events:auto;transition:opacity 0.38s cubic-bezier(.77,0,.18,1);opacity:1;"></div>
     <!-- Grain Canvas -->
     <canvas id="grainCanvas" style="opacity: 0.005;"></canvas>
 
@@ -196,65 +202,51 @@
     <script src="assets/js/controls.js"></script>
 
     <script>
-        console.log('🚀 SCRIPT DE WHISPERS INICIADO');
-        
-        // Override audio settings for clothes-view page - make whispers more audible
-        (function() {
-            console.log('🚀 Función anónima ejecutándose...');
-            
-            const noiseSound = document.getElementById('noiseSound');
-            
-            if (!noiseSound) {
-                console.error('❌ No se encontró el elemento de audio noiseSound');
-                console.log('Elementos audio en la página:', document.querySelectorAll('audio'));
-                return;
-            }
-            
-            console.log('✓ Audio element encontrado:', noiseSound.src);
-            
-            // TOMAR CONTROL COMPLETO DEL AUDIO
-            const CLOTHES_BASE_VOLUME = 0.7;
-            const CLOTHES_HOVER_VOLUME = 0.6;
-            let isPlaying = false;
-            
-            // Función para iniciar el audio
-            function startWhispers() {
-                if (isPlaying) return;
-                
-                noiseSound.volume = CLOTHES_BASE_VOLUME;
-                noiseSound.muted = false;
-                
-                noiseSound.play().then(() => {
-                    isPlaying = true;
-                    console.log('✓✓✓ WHISPERS REPRODUCIENDO - Volumen:', noiseSound.volume);
-                }).catch(err => {
-                    console.warn('Audio bloqueado:', err.message);
-                });
-            }
-            
-            // Intentar iniciar inmediatamente
-            setTimeout(startWhispers, 100);
-            
-            // Asegurar inicio en primera interacción
-            const handlers = ['click', 'mousemove', 'keydown', 'touchstart'];
-            handlers.forEach(event => {
-                document.addEventListener(event, startWhispers, { once: true });
+    // Fade-in blanco rápido al entrar
+    window.addEventListener('load', function() {
+        var overlay = document.getElementById('entryWhiteOverlay');
+        if (overlay) {
+            setTimeout(function() {
+                overlay.style.opacity = '0';
+                setTimeout(function() {
+                    overlay.parentNode && overlay.parentNode.removeChild(overlay);
+                }, 380);
+            }, 10); // Mostrar overlay al menos un frame
+        }
+    });
+
+    // Overlay fade blanco al hacer click en el logo superior
+    document.addEventListener('DOMContentLoaded', function() {
+        var logoLink = document.querySelector('a.logo');
+        if (logoLink) {
+            logoLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Crear overlay blanco si no existe
+                var overlay = document.createElement('div');
+                overlay.style.position = 'fixed';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.width = '100vw';
+                overlay.style.height = '100vh';
+                overlay.style.background = '#fff';
+                overlay.style.zIndex = '250000';
+                overlay.style.pointerEvents = 'auto';
+                overlay.style.transition = 'opacity 0.38s cubic-bezier(.77,0,.18,1)';
+                overlay.style.opacity = '0';
+                document.body.appendChild(overlay);
+                // Forzar reflow y luego fade-in
+                void overlay.offsetWidth;
+                overlay.style.opacity = '1';
+                setTimeout(function() {
+                    window.location.href = logoLink.href;
+                }, 380);
             });
-            
-            // Eliminar modificación dinámica del volumen: dejar volumen fijo al iniciar
-            
-            // DEBUG: Mostrar estado cada 2 segundos
-            setInterval(() => {
-                if (isPlaying) {
-                    console.log('📊 Estado:', {
-                        playing: !noiseSound.paused,
-                        volume: noiseSound.volume,
-                        muted: noiseSound.muted,
-                        src: noiseSound.src.split('/').pop()
-                    });
-                }
-            }, 2000);
-        })();
+        }
+    });
+    </script>
+
+    <script>
+    // (Eliminada animación/override de audio y descenso inicial)
     </script>
 
     <!-- (Eliminado script inline de menú para que solo controle controls.js) -->

@@ -132,4 +132,9 @@
         if (shakeActive) smoothShake();
         else if (!returningToCenter) animateToCenter();
     };
+
+    // Exponer la posición actual de cámara en mano
+    window.getHandheldCameraOffset = function() {
+        return { x: lastX, y: lastY };
+    };
 })();
