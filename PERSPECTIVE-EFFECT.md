@@ -1,5 +1,10 @@
 # Efecto de Distorsión de Perspectiva 3D
 
+## ⚠️ ESTADO ACTUAL
+**El efecto está DESACTIVADO por defecto.**
+
+Para activarlo, cambiar la constante `PERSPECTIVE_3D_ENABLED` a `true` en [assets/js/perspective-distortion.js](assets/js/perspective-distortion.js#L5).
+
 ## Descripción
 Este efecto aplica una distorsión de perspectiva 3D a toda la página web que responde tanto al movimiento del ratón (en desktop) como al giroscopio (en dispositivos móviles).
 

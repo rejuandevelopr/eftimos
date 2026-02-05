@@ -1,11 +1,15 @@
 // Perspective Distortion Effect
 // Aplica distorsión 3D basada en movimiento del ratón y giroscopio
 
+// ⚠️ CONFIGURACIÓN: Cambiar a true para activar el efecto de movimiento 3D
+const PERSPECTIVE_3D_ENABLED = false;
+
 class PerspectiveDistortion {
     constructor(options = {}) {
         this.container = options.container || document.body;
         this.intensity = options.intensity || 15; // Intensidad de la distorsión
         this.smoothing = options.smoothing || 0.1; // Suavizado del movimiento
+        this.enabled = PERSPECTIVE_3D_ENABLED; // Control global del efecto
         
         // Posición actual y objetivo del mouse/giroscopio
         this.currentX = 0;
@@ -27,6 +31,12 @@ class PerspectiveDistortion {
     }
     
     init() {
+        // Si el efecto está desactivado globalmente, no inicializar
+        if (!this.enabled) {
+            console.log('ℹ️ Efecto de perspectiva 3D desactivado (cambiar PERSPECTIVE_3D_ENABLED a true para activar)');
+            return;
+        }
+        
         this.setupContainer();
         this.setupMouseTracking();
         this.setupGyroscope();
@@ -158,6 +168,11 @@ class PerspectiveDistortion {
     }
     
     animate() {
+        // No animar si el efecto está desactivado globalmente
+        if (!this.enabled) {
+            return;
+        }
+        
         // Verificar si los efectos visuales están habilitados
         if (window.visualEffectsEnabled === false) {
             // No aplicar transformación cuando está desactivado

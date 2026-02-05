@@ -123,10 +123,13 @@ function lerp(start, end, t) {
 // ========================================
 // ANIMATION LOOP
 // ========================================
+let lastGrainFrame = 0;
+const GRAIN_FPS = 40;
+
 function animateGrain(now) {
     if (!isAnimating) return;
-    let lastGrainFrame = 0;
-    const GRAIN_FPS = 20;
+    
+    // Throttle to 40 FPS for better performance
     if (now && lastGrainFrame && now - lastGrainFrame < 1000 / GRAIN_FPS) {
         grainAnimationId = requestAnimationFrame(animateGrain);
         return;

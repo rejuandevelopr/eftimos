@@ -15,7 +15,9 @@
         console.log('[handheld-camera] #map-group encontrado, inicializando efecto cámara en mano.');
     }
 
-    let BASE_SHAKE_SPEED = 0.015;
+    // Detectar dispositivos móviles y ajustar velocidad
+    const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    let BASE_SHAKE_SPEED = isMobile ? 0.003 : 0.015; // Velocidad reducida en móviles
     let shakeSpeed = BASE_SHAKE_SPEED;
     let targetShakeSpeed = BASE_SHAKE_SPEED;
     let shakeActive = true;
@@ -62,7 +64,18 @@
         if (force) console.log('[handheld-camera] smoothShake(force) llamado.');
         let stopped = false;
         let firstFrame = true;
-        function step() {
+        let lastFrameTime = 0;
+        const FPS_TARGET = 60;
+        const FRAME_INTERVAL = 1000 / FPS_TARGET;
+        
+        function step(timestamp) {
+            // Throttle to 60 FPS
+            if (timestamp - lastFrameTime < FRAME_INTERVAL) {
+                if (!stopped) requestId = requestAnimationFrame(step);
+                return;
+            }
+            lastFrameTime = timestamp;
+            
             // Interpolar suavemente la velocidad
             shakeSpeed = lerp(shakeSpeed, targetShakeSpeed, 0.08);
             if (!shakeActive || !visualEffectsEnabled()) {
@@ -94,7 +107,7 @@
             }
             if (!stopped) requestId = requestAnimationFrame(step);
         }
-        step();
+        step(performance.now());
     }
 
 

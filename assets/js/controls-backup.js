@@ -1,5 +1,5 @@
 // ========== WAIT FOR DOM TO BE READY ==========
-// v2.0 - Manual crossfade system
+// v2.0 - Manual crossfade system - Updated: 2026-02-05 14:30
 document.addEventListener('DOMContentLoaded', function() {
     initializeControls();
 });
@@ -7,10 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
 let userHasInteracted = false;
 let _audioFiltersInitialized = false;
 let preloaderEnterPressed = false; // No permitir audio hasta que se presione Enter
-// Solo establecer si aún no está definido (para páginas sin preloader como clothes-view)
-if (typeof window.preloaderEnterPressed === 'undefined') {
-    window.preloaderEnterPressed = false;
-}
+window.preloaderEnterPressed = false; // Exponerlo globalmente
 
 function initializeControls() {
     // ========== NAVBAR & MENU CONTROLS ==========
@@ -39,7 +36,7 @@ function initializeControls() {
     // Controla si la modulación está activa
     let whispersModulationEnabled = true;
     let whispersModulationSpeed = 0.025 + Math.random() * 0.01; // Oscilación extremadamente lenta
-    let whispersModulationAmount = 0.4; // Profundidad de la modulación (reducida para menos variación)
+    let whispersModulationAmount = 0.95; // Profundidad de la modulación (muy intensa)
     let whispersModulationTimer = null;
     let isFadingOut = false; // Bandera para evitar restauración de volumen durante fade out
 
@@ -334,53 +331,107 @@ function initializeControls() {
     };
 
     function setupAudioFilters() {
-        if (_audioFiltersInitialized) {
-            console.log('[SETUP] Audio filters already initialized');
-            return;
+        if (_audioFiltersInitialized) return;
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-        
-        console.log('[SETUP] Initializing audio filters...');
-        
-        try {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                console.log('[SETUP] AudioContext created');
+        // Noise - IMPORTANTE: Iniciar reproducción ANTES de crear MediaElementSource
+        const noiseEl = document.getElementById('noiseSound');
+        if (noiseEl && !noiseSource) {
+            // NO usar loop = true - usaremos sistema de crossfade manual
+            noiseEl.loop = false;
+            if (noiseEl.paused && window.preloaderEnterPressed && localStorage.getItem('audioEnabled') !== 'false') {
+                noiseEl.play().then(() => {
+                    console.log('[SETUP] White-noise started successfully');
+                    // Iniciar sistema de crossfade loop
+                    startCrossfadeLoop(noiseCrossfadeSystem, noiseEl, true);
+                }).catch((err) => {
+                    console.error('[SETUP] White-noise failed:', err);
+                }); // Iniciar reproducción
+            }
+            // Ahora crear el MediaElementSource (esto toma control del elemento)
+            noiseSource = audioCtx.createMediaElementSource(noiseEl);
+            noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'lowpass';
+            noiseFilter.frequency.value = 22050;
+            noiseGain = audioCtx.createGain();
+            noiseGain.gain.value = 0; // Empezar en 0 para fade in
+            noiseSource.connect(noiseFilter).connect(noiseGain).connect(audioCtx.destination);
+            
+            // Fade in suave del white-noise
+            const targetNoiseVol = 0.12; // Volumen aumentado
+            const fadeInDuration = 600; // 600ms fade in
+            const startTime = performance.now();
+            
+            function fadeInNoise() {
+                const elapsed = performance.now() - startTime;
+                const progress = Math.min(1, elapsed / fadeInDuration);
+                const eased = -(Math.cos(Math.PI * progress) - 1) / 2; // ease in-out
+                
+                if (noiseGain) {
+                    noiseGain.gain.value = targetNoiseVol * eased;
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(fadeInNoise);
+                } else {
+                    if (noiseGain) noiseGain.gain.value = targetNoiseVol;
+                }
             }
             
-            // Noise - Setup AudioContext nodes
-            const noiseEl = document.getElementById('noiseSound');
-            if (noiseEl && !noiseSource) {
-                noiseEl.loop = false;
-                noiseSource = audioCtx.createMediaElementSource(noiseEl);
-                noiseFilter = audioCtx.createBiquadFilter();
-                noiseFilter.type = 'lowpass';
-                noiseFilter.frequency.value = 22050;
-                noiseGain = audioCtx.createGain();
-                noiseGain.gain.value = 0.12; // Volumen final
-                noiseSource.connect(noiseFilter).connect(noiseGain).connect(audioCtx.destination);
-                console.log('[SETUP] ✓ White-noise filters created, gain:', noiseGain.gain.value);
+            if (noiseEl.paused === false) {
+                fadeInNoise();
             }
-            
-            // Whispers - Setup AudioContext nodes
-            const whispersEl = document.getElementById('whispersSound');
-            if (whispersEl && !whispersSource) {
-                whispersEl.loop = false;
-                whispersSource = audioCtx.createMediaElementSource(whispersEl);
-                whispersFilter = audioCtx.createBiquadFilter();
-                whispersFilter.type = 'lowpass';
-                whispersFilter.frequency.value = 22050;
-                whispersGain = audioCtx.createGain();
-                whispersGain.gain.value = whispersBaseVolume; // 0.05
-                whispersSource.connect(whispersFilter).connect(whispersGain).connect(audioCtx.destination);
-                console.log('[SETUP] ✓ Whispers filters created, gain:', whispersGain.gain.value);
-            }
-            
-            _audioFiltersInitialized = true;
-            console.log('[SETUP] ✓ Audio filters initialization complete');
-        } catch (error) {
-            console.error('[SETUP] ✗ Audio filters initialization failed:', error);
         }
-        
+        // Whispers
+        const whispersEl = document.getElementById('whispersSound');
+        if (whispersEl && !whispersSource) {
+            // NO usar loop = true - usaremos sistema de crossfade manual
+            whispersEl.loop = false;
+            if (whispersEl.paused && window.preloaderEnterPressed && localStorage.getItem('audioEnabled') !== 'false') {
+                whispersEl.play().then(() => {
+                    console.log('[SETUP] Whispers started successfully');
+                    // Iniciar sistema de crossfade loop
+                    startCrossfadeLoop(whispersCrossfadeSystem, whispersEl, false);
+                }).catch((err) => {
+                    console.error('[SETUP] Whispers failed:', err);
+                });
+            }
+            whispersSource = audioCtx.createMediaElementSource(whispersEl);
+            whispersFilter = audioCtx.createBiquadFilter();
+            whispersFilter.type = 'lowpass';
+            whispersFilter.frequency.value = 22050;
+            whispersGain = audioCtx.createGain();
+            whispersSource.connect(whispersFilter).connect(whispersGain).connect(audioCtx.destination);
+            // Empezar en 0 para fade in
+            whispersGain.gain.value = 0;
+            
+            // Fade in suave de whispers
+            const targetWhispersVol = whispersBaseVolume;
+            const fadeInDuration = 600; // 600ms fade in
+            const startTime = performance.now();
+            
+            function fadeInWhispers() {
+                const elapsed = performance.now() - startTime;
+                const progress = Math.min(1, elapsed / fadeInDuration);
+                const eased = -(Math.cos(Math.PI * progress) - 1) / 2; // ease in-out
+                
+                if (whispersGain) {
+                    whispersGain.gain.value = targetWhispersVol * eased;
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(fadeInWhispers);
+                } else {
+                    if (whispersGain) whispersGain.gain.value = targetWhispersVol;
+                }
+            }
+            
+            if (whispersEl.paused === false) {
+                fadeInWhispers();
+            }
+        }
+        _audioFiltersInitialized = true;
         // === MODULACIÓN DE VOLUMEN DE WHISPERS ===
         function updateWhispersVolumeModulation() {
             if (!whispersGain) return;
@@ -699,6 +750,7 @@ function initializeControls() {
     }
     // Exponer para otros scripts
     window.updateVisualIcon = updateVisualIcon;
+    }
 
     function updateVisualEffects() {
         const body = document.body;
@@ -715,10 +767,6 @@ function initializeControls() {
             if (typeof window.startGrainEffect === 'function') {
                 window.startGrainEffect();
             }
-            // Restore normal map positioning
-            if (typeof window.restoreMapPositioning === 'function') {
-                window.restoreMapPositioning();
-            }
         } else {
             // Disable visual effects with smooth transition
             body.classList.add('reduced-motion');
@@ -728,10 +776,6 @@ function initializeControls() {
             // Stop grain animation to save performance
             if (typeof window.stopGrainEffect === 'function') {
                 window.stopGrainEffect();
-            }
-            // Reorganize map elements in grid layout
-            if (typeof window.arrangeMapInGrid === 'function') {
-                window.arrangeMapInGrid();
             }
         }
     }
@@ -756,9 +800,9 @@ function initializeControls() {
     let unfocusTimeout = null;
     let isTooltipVisible = false;
     // Para whispers
-    const baseWhispersVolume = 0.04; // Volumen muy bajo cuando no hay hover
-    const focusedWhispersVolume = 0.12; // Volumen cuando hay focus
-    const hoverWhispersVolume = 0.18; // Volumen cuando hay hover con tooltip
+    const baseWhispersVolume = 0.16; // Antes 0.08, ahora más audible
+    const focusedWhispersVolume = 0.22;
+    const hoverWhispersVolume = 0.29;
     
     // No establecer volumen aquí - se maneja a través del gain node del AudioContext
     
@@ -866,35 +910,29 @@ function initializeControls() {
     // Definir funciones antes de usarlas
     
     function updateAudio() {
+        console.log('[DEBUG] updateAudio called, audioEnabled:', audioEnabled);
         if (audioEnabled && window.preloaderEnterPressed) {
-            console.log('[UPDATE-AUDIO] Attempting to start audio...');
-            
-            // Asegurar que los filtros estén inicializados
-            if (!_audioFiltersInitialized) {
-                setupAudioFilters();
-            }
-            
             // Resume audio
             if (noiseSound) {
                 noiseSound.muted = false;
                 noiseSound.loop = false; // NO usar loop = true
-                noiseSound.volume = 1; // Controlado por gain node
+                currentNoiseVolume = baseNoiseVolume;
+                noiseSound.volume = baseNoiseVolume;
                 const playPromise = noiseSound.play();
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
-                        console.log('[UPDATE-AUDIO] ✓ White-noise started');
+                        console.log('[AUDIO] White-noise resumed successfully');
                         startCrossfadeLoop(noiseCrossfadeSystem, noiseSound, true);
-                    }).catch(e => console.log('[UPDATE-AUDIO] White-noise prevented:', e.message));
+                    }).catch(e => console.log('[AUDIO] White-noise resume prevented:', e));
                 }
             }
             if (whispersSound) {
                 whispersSound.muted = false;
                 whispersSound.loop = false; // NO usar loop = true
-                whispersSound.volume = 1; // Controlado por gain node
+                whispersSound.volume = 0.04;
                 whispersSound.play().then(() => {
-                    console.log('[UPDATE-AUDIO] ✓ Whispers started');
                     startCrossfadeLoop(whispersCrossfadeSystem, whispersSound, false);
-                }).catch(e => console.log('[UPDATE-AUDIO] Whispers prevented:', e.message));
+                }).catch(e => console.log('[AUDIO] Whispers resume prevented:', e));
             }
             if (lockedInSound) {
                 lockedInSound.muted = false;
@@ -902,8 +940,12 @@ function initializeControls() {
         } else {
             // Mute basic audio (keep videos unmuted)
             // Detener sistemas de crossfade
-            stopCrossfadeLoop(noiseCrossfadeSystem, true);
-            stopCrossfadeLoop(whispersCrossfadeSystem, false);
+            if (typeof stopCrossfadeLoop === 'function') {
+                stopCrossfadeLoop(noiseCrossfadeSystem, true);
+                stopCrossfadeLoop(whispersCrossfadeSystem, false);
+            } else {
+                console.error('[ERROR] stopCrossfadeLoop is not defined!');
+            }
             if (noiseSound) {
                 noiseSound.muted = true;
                 noiseSound.pause();
@@ -1046,15 +1088,10 @@ function initializeControls() {
         // Enable audio
         audioEnabled = true;
         localStorage.setItem('audioEnabled', audioEnabled);
-        
-        console.log('[FIRST-INTERACTION] Audio activated on first user interaction');
-        console.log('[FIRST-INTERACTION] audioEnabled:', audioEnabled);
-        console.log('[FIRST-INTERACTION] preloaderEnterPressed:', window.preloaderEnterPressed);
-        console.log('[FIRST-INTERACTION] noiseSound:', noiseSound);
-        console.log('[FIRST-INTERACTION] whispersSound:', whispersSound);
-        
         updateAudio();
         updateAudioIcon();
+        
+        console.log('Audio activated on first user interaction');
     }
     
     // Listen for various user interactions
@@ -1076,14 +1113,4 @@ function initializeControls() {
     window.audioEnabled = audioEnabled;
     window.visualEffectsEnabled = visualEffectsEnabled;
     window.currentNoiseVolume = currentNoiseVolume;
-    
-    // Exponer sistemas de crossfade y funciones globalmente para index.html
-    window.noiseCrossfadeSystem = noiseCrossfadeSystem;
-    window.whispersCrossfadeSystem = whispersCrossfadeSystem;
-    window.startCrossfadeLoop = startCrossfadeLoop;
-    window.setupAudioFiltersExternal = setupAudioFilters;
-    window.noiseGain = noiseGain;
-    window.whispersGain = whispersGain;
-    
-    console.log('[CONTROLS] initializeControls() completed successfully');
 }

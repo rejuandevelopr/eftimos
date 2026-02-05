@@ -7,7 +7,7 @@
         body { animation: none !important; }
         </style>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Eftimos</title>
     <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/favicon-32x32.png">
@@ -23,7 +23,6 @@
 
     <!-- Preload critical fonts -->
     <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="preload" href="assets/fonts/Helvetica-Bold.ttf" as="font" type="font/ttf" crossorigin>
 
     <!-- Preload critical CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
@@ -189,15 +188,20 @@
         </section>
     </main>
 
-    <!-- Sonidos - En esta página usamos whispers como sonido principal -->
-    <audio id="noiseSound" src="assets/sounds/breathing.mp3" preload="auto" loop></audio>
-    <audio id="whispersSound" src="assets/sounds/breathing.mp3" preload="auto" loop></audio>
+    <!-- Sonidos - Sistema de crossfade manual (sin loop=true para evitar bloqueo del navegador) -->
+    <audio id="noiseSound" src="assets/sounds/breathing.mp3" preload="auto"></audio>
+    <audio id="whispersSound" src="assets/sounds/breathing.mp3" preload="auto"></audio>
     <audio id="lockedInSound" src="assets/sounds/locked-in-oneself.mp3" preload="auto"></audio>
 
-    <!-- Load scripts at the end for better performance -->
-    <script src="assets/js/script.js"></script>
-    <script src="assets/js/cursor-effect.js"></script>
-    <script src="assets/js/grain-effect.js"></script>
+    <script>
+    // IMPORTANTE: Configurar ANTES de cargar controls.js
+    window.preloaderEnterPressed = true; // Esta página no tiene preloader
+    </script>
+
+    <!-- Load scripts - Solo los necesarios para clothes-view -->
+    <script defer src="assets/js/ui-sounds.js"></script>
+    <!-- script.js y grain-effect.js son para el mapa de index.html, no se usan aquí -->
+    <script defer src="assets/js/cursor-effect.js"></script>
     <script src="assets/js/tooltip-nebula.js"></script>
     <script src="assets/js/controls.js"></script>
 
@@ -221,7 +225,47 @@
         if (logoLink) {
             logoLink.addEventListener('click', function(e) {
                 e.preventDefault();
-                // Crear overlay blanco si no existe
+                
+                // Fade out rápido del audio breathing
+                const noiseSound = document.getElementById('noiseSound');
+                const whispersSound = document.getElementById('whispersSound');
+                const fadeDuration = 300; // 300ms fade out
+                const startTime = performance.now();
+                
+                function fadeOutAudio() {
+                    const elapsed = performance.now() - startTime;
+                    const progress = Math.min(1, elapsed / fadeDuration);
+                    // Ease out cúbico para fade suave
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    const volume = 1 - eased;
+                    
+                    // Aplicar fade a ambos sonidos
+                    if (noiseSound && typeof window.noiseCrossfadeSystem !== 'undefined') {
+                        if (window.noiseGain) {
+                            window.noiseGain.gain.value *= volume;
+                        }
+                    }
+                    
+                    if (whispersSound && typeof window.whispersCrossfadeSystem !== 'undefined') {
+                        if (window.whispersGain) {
+                            window.whispersGain.gain.value *= volume;
+                        }
+                    }
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(fadeOutAudio);
+                    } else {
+                        // Fade out completado, pausar audio
+                        if (noiseSound) noiseSound.pause();
+                        if (whispersSound) whispersSound.pause();
+                        console.log('[LOGO-CLICK] Audio fade out completed');
+                    }
+                }
+                
+                // Iniciar fade out del audio
+                fadeOutAudio();
+                
+                // Crear overlay blanco
                 var overlay = document.createElement('div');
                 overlay.style.position = 'fixed';
                 overlay.style.top = '0';
@@ -237,9 +281,11 @@
                 // Forzar reflow y luego fade-in
                 void overlay.offsetWidth;
                 overlay.style.opacity = '1';
+                
+                // Navegar después del fade out del audio (300ms)
                 setTimeout(function() {
                     window.location.href = logoLink.href;
-                }, 380);
+                }, 320); // Un poco más que el fade del audio
             });
         }
     });

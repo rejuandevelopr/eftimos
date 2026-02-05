@@ -63,6 +63,11 @@ document.addEventListener('DOMContentLoaded', function() {
         window.soundEnabled = localStorage.getItem('audioEnabled') === 'false' ? false : true;
         window.visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') === 'false' ? false : true;
         document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
+        
+        // Marcar que el preloader ya fue pasado para permitir funciones de audio
+        window.preloaderEnterPressed = true;
+        console.log('[AUDIO] Preloader already shown, audio will initialize on first interaction');
+        
         return;
     } else {
         preloader.style.display = 'flex';
@@ -70,13 +75,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Lista de assets a cargar (imágenes, videos, sonidos)
+    // Priorizar assets críticos primero
     const assets = [
         'assets/images/logo-white.png',
-        'assets/images/g-6.webp',
+        'assets/images/g-6.webp', // Imagen central inicial
         'assets/images/g-1.webp',
         'assets/images/g-2.webp',
         'assets/images/g-14.avif',
-        'assets/images/g-20.avif',
+        'assets/images/g-20.avif'
+    ];
+    
+    // Assets no críticos se cargarán después de mostrar el contenido
+    const nonCriticalAssets = [
         'assets/vid/reels-mixed-vid.mp4',
         'assets/sounds/white-noise.mp3',
         'assets/sounds/whispers.mp3',
@@ -174,13 +184,26 @@ document.addEventListener('DOMContentLoaded', function() {
         e.stopPropagation();
         soundEnabled = !soundEnabled;
         window.audioEnabled = soundEnabled;
-        localStorage.setItem('audioEnabled', soundEnabled);
+        localStorage.setItem('audioEnabled', soundEnabled.toString());
+        console.log('[PRELOADER] Audio toggled:', soundEnabled);
         setNotification(soundEnabled ? 'sound-on' : 'sound-off');
-        window.dispatchEvent(new Event('audioToggled'));
+        window.dispatchEvent(new CustomEvent('audioToggled', {
+            detail: { enabled: soundEnabled }
+        }));
         // Actualizar iconos de ambos toggles
         if (typeof window.updateAudioIcon === 'function') window.updateAudioIcon();
         if (typeof window.updatePreloaderAudioIcon === 'function') window.updatePreloaderAudioIcon();
         syncMenuToggles();
+        
+        // Si se activa el audio después de Enter, asegurar reproducción
+        if (soundEnabled && window.preloaderEnterPressed) {
+            console.log('[PRELOADER] Ensuring white-noise plays after toggle...');
+            setTimeout(() => {
+                if (typeof window.ensureWhiteNoisePlaying === 'function') {
+                    window.ensureWhiteNoisePlaying();
+                }
+            }, 100);
+        }
     });
     visualToggleBtn.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -228,6 +251,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Permitir avanzar aunque no se llegue a 100% después de cierto tiempo
         if ((targetPercent >= 100 && displayedPercent >= 100 && !loadingComplete) || (loaded >= total && !loadingComplete)) {
             loadingComplete = true;
+            // Agregar clase 'loaded' al preloader para hacerlo translúcido
+            preloader.classList.add('loaded');
             preloaderBar.classList.add('hide');
             preloaderBarText.classList.add('hide');
             if (preloaderBarContainer) preloaderBarContainer.style.display = 'none';
@@ -253,6 +278,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Si por algún motivo no se llegó a 100% pero ya se intentó cargar todo, permitir avanzar
             if (!loadingComplete && loaded >= total) {
                 loadingComplete = true;
+                // Agregar clase 'loaded' al preloader para hacerlo translúcido
+                preloader.classList.add('loaded');
                 preloaderBar.classList.add('hide');
                 preloaderBarText.classList.add('hide');
                 if (preloaderBarContainer) preloaderBarContainer.style.display = 'none';
@@ -272,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateBar();
     }
 
-    // Cargar imágenes
+    // Cargar imágenes críticas primero
     assets.forEach(src => {
         if (src.endsWith('.mp3')) {
             const audio = new Audio();
@@ -293,6 +320,21 @@ document.addEventListener('DOMContentLoaded', function() {
             img.onerror = assetLoaded;
         }
     });
+    
+    // Lazy load de assets no críticos después de que el usuario entre
+    function loadNonCriticalAssets() {
+        nonCriticalAssets.forEach(src => {
+            if (src.endsWith('.mp3')) {
+                const audio = new Audio();
+                audio.src = src;
+                audio.preload = 'auto';
+            } else if (src.endsWith('.mp4')) {
+                const video = document.createElement('video');
+                video.src = src;
+                video.preload = 'auto';
+            }
+        });
+    }
 
     // Mostrar solo en la primera visita
     if (localStorage.getItem('eftimosPreloaderShown')) {
@@ -308,8 +350,14 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.add('preloader-active');
     }
 
-    // Botón Enter
+    // El event listener del botón Enter está en index.html para evitar conflictos de timing
+    // y asegurar que la animación se ejecute correctamente
+    /*
     preloaderEnterBtn.addEventListener('click', function() {
+        // Establecer flag para permitir audio
+        window.preloaderEnterPressed = true;
+        preloaderEnterPressed = true;
+        
         // Animar el fondo y el logo al mismo tiempo
         preloader.classList.add('preloader-fade-bg');
         var preloaderLogo = document.querySelector('.preloader-logo img');
@@ -331,20 +379,25 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             document.body.classList.remove('preloader-active'); // Upper bar fade-in
         }, 100);
-        // Esperar a que termine la animación del logo antes de ocultar el preloader
+        // Agregar clase preloader-hide inmediatamente para iniciar fade-out
         setTimeout(() => {
             preloader.classList.add('preloader-hide');
-            setTimeout(() => {
-                preloader.style.display = 'none';
-                localStorage.setItem('eftimosPreloaderShown', '1');
-                // Aplicar preferencias
-                window.soundEnabled = soundEnabled;
-                window.visualEffectsEnabled = visualEnabled;
-                document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
-                window.dispatchEvent(new Event('preloaderFinished'));
-            }, 800);
-        }, 1100);
+        }, 100);
+        // Esperar a que termine la animación antes de ocultar completamente
+        setTimeout(() => {
+            preloader.style.display = 'none';
+            localStorage.setItem('eftimosPreloaderShown', '1');
+            // Aplicar preferencias
+            window.soundEnabled = soundEnabled;
+            window.visualEffectsEnabled = visualEnabled;
+            document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
+            window.dispatchEvent(new Event('preloaderFinished'));
+            
+            // Cargar assets no críticos después de entrar
+            setTimeout(loadNonCriticalAssets, 500);
+        }, 700);
     });
+    */
 });
 // --- FIN PRELOADER LOGIC ---
 
@@ -386,8 +439,24 @@ if (!mapGroup) {
 
 // Responsive settings function
 function getResponsiveSettings() {
-    // Siempre usar la disposición de PC (3 columnas, espaciado grande)
-    return { gridSpacing: 420, imageSize: 170, blurRadius: 200, gridColumns: 3 };
+    const width = window.innerWidth;
+    
+    // Mobile portrait
+    if (width < 576) {
+        return { gridSpacing: 350, imageSize: 150, blurRadius: 150, gridColumns: 2 };
+    }
+    // Mobile landscape / Small tablets
+    else if (width < 768) {
+        return { gridSpacing: 380, imageSize: 160, blurRadius: 170, gridColumns: 2 };
+    }
+    // Tablets portrait
+    else if (width < 992) {
+        return { gridSpacing: 400, imageSize: 165, blurRadius: 185, gridColumns: 3 };
+    }
+    // Desktop (mantener la configuración actual para escritorio)
+    else {
+        return { gridSpacing: 420, imageSize: 170, blurRadius: 200, gridColumns: 3 };
+    }
 }
 
 // Initialize responsive settings
@@ -487,6 +556,11 @@ let lastX, lastY;
 let images = [];
 
 let blurRadiusScaled = blurRadius * scale;
+
+// Grid mode variables (must be declared early)
+let isGridMode = false;
+let gridModePositions = [];
+let gridModeTransitioning = false;
 
 // Radial blur effect around focused element
 let focusedElementPos = null;
@@ -664,6 +738,11 @@ function isImageCentered(x, y, imageSizeScaled) {
 }
 
 function updateImagePositions() {
+    // Skip normal positioning if in grid mode
+    if (isGridMode || gridModeTransitioning) {
+        return;
+    }
+    
     const offsetXScaled = offsetX * scale;
     const offsetYScaled = offsetY * scale;
     const imageSizeScaled = imageSize * scale;
@@ -878,6 +957,9 @@ function getTouchMidpoint(touch1, touch2) {
 }
 
 canvas.addEventListener('mousedown', (e) => {
+    // Disable dragging in grid mode
+    if (isGridMode) return;
+    
     isDragging = true;
     lastX = e.clientX;
     lastY = e.clientY;
@@ -887,6 +969,17 @@ canvas.addEventListener('mousedown', (e) => {
     velocityX = 0;
     velocityY = 0;
     canvas.classList.add('dragging');
+    
+    // Inicializar audio si está habilitado y no se ha inicializado
+    const audioEnabled = localStorage.getItem('audioEnabled') !== 'false';
+    if (audioEnabled && typeof window.initializeAudio === 'function') {
+        window.initializeAudio();
+    }
+    
+    // Verificar y asegurar reproducción de white-noise en cada drag
+    if (typeof window.ensureWhiteNoisePlaying === 'function') {
+        window.ensureWhiteNoisePlaying();
+    }
         // Desactiva la modulación de whispers con transición suave
     if (window.whispersModulationEnabled !== undefined) {
         // Suaviza el paso a modulación off
@@ -908,6 +1001,11 @@ canvas.addEventListener('mousemove', (e) => {
     const totalMoveY = Math.abs(e.clientY - dragStartY);
     if (totalMoveX > 5 || totalMoveY > 5) {
         hasMoved = true;
+        
+        // Verificar audio cuando empieza el movimiento real
+        if (typeof window.ensureWhiteNoisePlaying === 'function') {
+            window.ensureWhiteNoisePlaying();
+        }
     }
 
     const scaleInv = 1 / scale;
@@ -975,6 +1073,10 @@ canvas.addEventListener('mousemove', (e) => {
         if (window.restoreLowPassFilter) {
             window.restoreLowPassFilter(180); // restauración rápida
         }
+        // Reproducir sonido de drag end
+        if (window.playUISound) {
+            window.playUISound('dragEnd');
+        }
     });
 
     lastX = e.clientX;
@@ -1030,6 +1132,11 @@ canvas.addEventListener('mouseleave', () => {
 // 🎬 MORPH TRANSITION + CINEMA MODE
 // ========================================
 canvas.addEventListener('click', (e) => {
+    // Verificar y asegurar reproducción de white-noise en cada click
+    if (typeof window.ensureWhiteNoisePlaying === 'function') {
+        window.ensureWhiteNoisePlaying();
+    }
+    
     // Detect image links (navigate) and inline video links (open cinema mode)
     let link = e.target.closest('.image-link');
     if (!link && e.target.classList.contains('image-container')) {
@@ -1076,6 +1183,11 @@ canvas.addEventListener('click', (e) => {
 });
 
 function createMorphTransition(originalImg, targetUrl) {
+    // FADE OUT INMEDIATO de sonidos ambientales (lo primero que ocurre)
+    if (typeof window.fadeOutAmbientSounds === 'function') {
+        window.fadeOutAmbientSounds(200); // 200ms fade out con pitch shift
+    }
+    
     // Get the image's current position on screen
     const rect = originalImg.getBoundingClientRect();
     
@@ -1581,6 +1693,23 @@ if (document.querySelector('.hero')) {
 // ========================================
 
 canvas.addEventListener('touchstart', (e) => {
+    // Disable touch interactions in grid mode
+    if (isGridMode) {
+        e.preventDefault();
+        return;
+    }
+    
+    // Inicializar audio si está habilitado y no se ha inicializado
+    const audioEnabled = localStorage.getItem('audioEnabled') !== 'false';
+    if (audioEnabled && typeof window.initializeAudio === 'function') {
+        window.initializeAudio();
+    }
+    
+    // Verificar y asegurar reproducción de white-noise en cada touch
+    if (typeof window.ensureWhiteNoisePlaying === 'function') {
+        window.ensureWhiteNoisePlaying();
+    }
+    
     if (e.touches.length === 2) {
         // Two fingers - start pinch zoom
         isPinching = true;
@@ -1737,6 +1866,12 @@ canvas.addEventListener('touchend', (e) => {
 });
 
 canvas.addEventListener('wheel', (e) => {
+    // Disable zoom in grid mode
+    if (isGridMode) {
+        e.preventDefault();
+        return;
+    }
+    
     e.preventDefault();
     // Limpiar suavemente el trail solo si hay cambio de zoom
     if (window.smoothClearTrail) window.smoothClearTrail();
@@ -1891,3 +2026,191 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 animate();
+
+// ========== GRID LAYOUT SYSTEM (for disabled visual effects) ==========
+// Note: Variables (isGridMode, gridModePositions, gridModeTransitioning) are declared earlier in the file
+
+// Function to calculate optimal grid layout based on screen orientation
+function calculateGridLayout() {
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const isPortrait = screenHeight > screenWidth;
+    const totalItems = images.length;
+    
+    // Determine optimal grid dimensions based on orientation
+    let cols, rows;
+    
+    if (isPortrait) {
+        // Portrait: prefer vertical layout (fewer columns, more rows)
+        // Calculate columns based on screen width
+        if (screenWidth < 400) {
+            cols = 2;
+        } else if (screenWidth < 600) {
+            cols = 2;
+        } else if (screenWidth < 900) {
+            cols = 3;
+        } else {
+            cols = 4;
+        }
+        rows = Math.ceil(totalItems / cols);
+    } else {
+        // Landscape: prefer horizontal layout (more columns, fewer rows)
+        // Calculate rows based on screen height
+        if (screenHeight < 500) {
+            rows = 2;
+        } else if (screenHeight < 700) {
+            rows = 2;
+        } else if (screenHeight < 900) {
+            rows = 3;
+        } else {
+            rows = 4;
+        }
+        cols = Math.ceil(totalItems / rows);
+    }
+    
+    // Calculate spacing to fit items optimally
+    const padding = Math.min(60, screenWidth * 0.05); // Responsive padding
+    const itemSize = 170; // Fixed item size (matching current image size)
+    
+    const availableWidth = screenWidth - (padding * 2);
+    const availableHeight = screenHeight - (padding * 2);
+    
+    // Calculate spacing to distribute items evenly
+    const spacingX = cols > 1 ? availableWidth / (cols - 0.5) : availableWidth / 2;
+    const spacingY = rows > 1 ? availableHeight / (rows - 0.5) : availableHeight / 2;
+    
+    // Center the grid on screen
+    const gridWidth = (cols - 1) * spacingX;
+    const gridHeight = (rows - 1) * spacingY;
+    const startX = (screenWidth - gridWidth) / 2;
+    const startY = (screenHeight - gridHeight) / 2;
+    
+    return { cols, rows, spacingX, spacingY, startX, startY };
+}
+
+// Arrange map elements in grid layout
+window.arrangeMapInGrid = function() {
+    if (isGridMode || gridModeTransitioning) return;
+    
+    console.log('[GRID] Arranging map in grid layout');
+    console.log('[GRID] Total images:', images.length);
+    console.log('[GRID] Screen dimensions:', window.innerWidth, 'x', window.innerHeight);
+    
+    isGridMode = true;
+    gridModeTransitioning = true;
+    gridModePositions = [];
+    
+    const layout = calculateGridLayout();
+    const { cols, rows, spacingX, spacingY, startX, startY } = layout;
+    
+    console.log('[GRID] Layout:', { cols, rows, spacingX, spacingY, startX, startY });
+    
+    // Calculate target positions for each image
+    images.forEach((img, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        
+        const targetX = startX + (col * spacingX);
+        const targetY = startY + (row * spacingY);
+        
+        // Get current position from transform
+        const transform = img.element.style.transform || '';
+        const match = transform.match(/translate3d\(([^,]+)px,\s*([^,]+)px/);
+        const startX_current = match ? parseFloat(match[1]) : 0;
+        const startY_current = match ? parseFloat(match[2]) : 0;
+        
+        gridModePositions.push({
+            element: img.element,
+            targetX,
+            targetY,
+            startX: startX_current,
+            startY: startY_current
+        });
+    });
+    
+    // Animate to grid positions
+    const duration = 600; // Smooth but quick transition
+    const startTime = performance.now();
+    
+    function animateToGrid() {
+        const elapsed = performance.now() - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        
+        // Ease out cubic for smooth deceleration
+        const eased = 1 - Math.pow(1 - progress, 3);
+        
+        gridModePositions.forEach(pos => {
+            const currentX = pos.startX + (pos.targetX - pos.startX) * eased;
+            const currentY = pos.startY + (pos.targetY - pos.startY) * eased;
+            
+            // Use fixed scale of 1 in grid mode, remove blur
+            pos.element.style.transform = `translate3d(${currentX}px, ${currentY}px, 0) scale(1)`;
+            pos.element.style.filter = 'blur(0px)';
+            
+            // Remove grayscale from images in grid mode
+            const imgTag = pos.element.querySelector('img');
+            if (imgTag) {
+                imgTag.style.filter = 'grayscale(0)';
+            }
+        });
+        
+        if (progress < 1) {
+            requestAnimationFrame(animateToGrid);
+        } else {
+            gridModeTransitioning = false;
+            console.log('[GRID] Grid arrangement complete');
+        }
+    }
+    
+    animateToGrid();
+};
+
+// Restore normal map positioning
+window.restoreMapPositioning = function() {
+    if (!isGridMode) return;
+    
+    console.log('[GRID] Restoring normal map positioning');
+    
+    isGridMode = false;
+    gridModeTransitioning = true;
+    
+    // Restore grayscale to images
+    images.forEach(img => {
+        const imgTag = img.element.querySelector('img');
+        if (imgTag) {
+            imgTag.style.filter = '';
+        }
+    });
+    
+    // The normal updateImagePositions will take over
+    // Just animate the transition smoothly
+    const duration = 600;
+    const startTime = performance.now();
+    
+    function animateRestore() {
+        const elapsed = performance.now() - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        
+        if (progress < 1) {
+            requestAnimationFrame(animateRestore);
+        } else {
+            gridModeTransitioning = false;
+            console.log('[GRID] Normal positioning restored');
+        }
+    }
+    
+    animateRestore();
+};
+
+// Handle window resize in grid mode
+window.addEventListener('resize', () => {
+    if (isGridMode && !gridModeTransitioning) {
+        // Recalculate grid on resize
+        setTimeout(() => {
+            if (isGridMode) {
+                isGridMode = false; // Reset flag
+                window.arrangeMapInGrid(); // Rearrange with new dimensions
+            }
+        }, 150);
+    }
+});
