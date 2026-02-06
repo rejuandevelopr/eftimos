@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+        <style>
+        /* Elimina animación global de entrada para esta página */
+        body { animation: none !important; }
+        </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>About Us - Eaftimos</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="assets/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon_io/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon_io/android-chrome-512x512.png">
+
+    <meta name="description"
+        content="Discover Eaftimos - a fashion studio founded in 2022, working through introspection and craftsmanship.">
+    <meta name="keywords"
+        content="Eaftimos, fashion brand, about us, vision, minimal design, modern fashion, Madrid">
+
+    <!-- Preload critical fonts -->
+    <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
+
+    <!-- Preload critical CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- DNS prefetch for faster resource loading -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+
+        <!-- Mostrar menú lateral solo cuando el menú está abierto, igual que en index.html -->
+        <style>
+            /* Forzar .active visualmente cuando body.menu-open, para que se apliquen los estilos de .dropdown-menu.active y .dropdown-menu.active::before */
+            body.menu-open #dropdownMenu {
+                /* Simula .dropdown-menu.active */
+                transform: translateX(0) !important;
+            }
+            body.menu-open #dropdownMenu::before {
+                /* Simula .dropdown-menu.active::before */
+                transform: translateX(0) !important;
+                pointer-events: all !important;
+            }
+
+            /* Estilos específicos para la página About Us */
+            body {
+                overflow-x: hidden;
+                background-color: #1a1a1a;
+            }
+
+            .origin-container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            /* Video de fondo */
+            #videos-background {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                z-index: 0;
+                overflow: hidden;
+                background-color: #000;
+            }
+
+            #videos-background video {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                min-width: 100%;
+                min-height: 100%;
+                width: auto;
+                height: auto;
+                transform: translate(-50%, -50%);
+                object-fit: cover;
+                opacity: 0.45;
+            }
+
+            /* Contenedor de texto scrolleable */
+            .scroll-content {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 90%;
+                max-width: 800px;
+                height: 70vh;
+                overflow-y: auto;
+                z-index: 10;
+                padding: 3rem;
+                background: transparent;
+                /* Gradientes de difuminado arriba y abajo */
+                -webkit-mask-image: linear-gradient(to bottom, 
+                    transparent 0%, 
+                    black 10%, 
+                    black 90%, 
+                    transparent 100%);
+                mask-image: linear-gradient(to bottom, 
+                    transparent 0%, 
+                    black 10%, 
+                    black 90%, 
+                    transparent 100%);
+            }
+
+            /* Scrollbar personalizado */
+            .scroll-content::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .scroll-content::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.05);
+            }
+
+            .scroll-content::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 3px;
+            }
+
+            .scroll-content::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+
+            .origin-text {
+                color: #ffffff;
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                line-height: 1.8;
+                font-size: 1.1rem;
+                letter-spacing: 0.5px;
+            }
+
+            .origin-text h1 {
+                font-size: 3rem;
+                font-weight: bold;
+                margin-bottom: 2rem;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                background: rgba(26, 26, 26, 0.7);
+                padding: 1rem;
+                backdrop-filter: blur(5px);
+            }
+
+            .origin-text h2 {
+                font-size: 1.8rem;
+                font-weight: bold;
+                margin-top: 3rem;
+                margin-bottom: 1.5rem;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                background: rgba(26, 26, 26, 0.7);
+                padding: 0.8rem;
+                backdrop-filter: blur(5px);
+            }
+
+            .origin-text p {
+                margin-bottom: 1.5rem;
+                text-align: justify;
+                background: transparent;
+                padding: 1rem;
+                filter: blur(0px);
+                transition: filter 0.3s ease-out;
+                will-change: filter;
+            }
+
+            /* Contenedor de imágenes parallax en capa fija */
+            .parallax-images-layer {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: 5;
+                pointer-events: none;
+                overflow: visible;
+            }
+
+            .parallax-image {
+                position: absolute;
+                width: 100%;
+                max-width: 450px;
+                height: auto;
+                border-radius: 4px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+                will-change: transform, filter, opacity;
+                opacity: 0;
+                filter: blur(0px);
+                transition: filter 0.3s ease-out, opacity 0.5s ease-out;
+            }
+
+            /* Títulos parallax con blend mode */
+            .parallax-titles-layer {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: 15;
+                pointer-events: none;
+                overflow: visible;
+            }
+
+            .parallax-title {
+                position: absolute;
+                font-family: Georgia, 'Times New Roman', serif;
+                font-size: 6rem;
+                font-weight: bold;
+                color: transparent;
+                -webkit-text-stroke: 2px #ffffff;
+                text-stroke: 2px #ffffff;
+                mix-blend-mode: difference;
+                white-space: nowrap;
+                will-change: transform, filter, opacity;
+                opacity: 0;
+                line-height: 1;
+                filter: blur(0px);
+                transition: filter 0.3s ease-out, opacity 0.4s ease-out;
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .scroll-content {
+                    width: 95%;
+                    height: 75vh;
+                    padding: 2rem;
+                }
+
+                .origin-text h1 {
+                    font-size: 2rem;
+                }
+
+                .origin-text h2 {
+                    font-size: 1.4rem;
+                }
+
+                .origin-text {
+                    font-size: 1rem;
+                }
+
+                .parallax-image {
+                    max-width: 100%;
+                }
+
+                .parallax-title {
+                    font-size: 3rem;
+                }
+            }
+        </style>
+</head>
+
+<body style="background-color: #1a1a1a;">
+    <!-- Fade-in overlay blanco -->
+    <div id="entryWhiteOverlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:999999;pointer-events:auto;transition:opacity 0.38s cubic-bezier(.77,0,.18,1);opacity:1;"></div>
+    <!-- Grain Canvas -->
+    <canvas id="grainCanvas" style="opacity: 0.005;"></canvas>
+
+    <nav class="blending-item">
+        <div class="nav-container">
+            <!-- Menu Hamburguesa -->
+            <div class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            
+            <!-- Logo Centrado -->
+            <a href="index.html" class="logo" data-shape="circle">
+                <img src="assets/images/logo-white.png" alt="Eaftimos Logo" width="150" height="auto" draggable="false">
+            </a>
+        </div>
+        
+        <!-- Menú Desplegable -->
+        <div class="dropdown-menu" id="dropdownMenu">
+            <div class="menu-links">
+                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer" class="dropdown-link">SHOP</a>
+                <div class="dropdown-item-with-submenu">
+                    <button class="dropdown-link dropdown-toggle" id="collectionsToggle">
+                        COLLECTIONS
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="submenu" id="collectionsSubmenu">
+                        <a href="#nierika" class="submenu-link">NIERIKA AW26</a>
+                        <a href="gallery-view.html" class="submenu-link">RESiLiENCE AW24</a>
+                    </div>
+                </div>
+                <button class="dropdown-link" id="contactBtn">CONTACT</button>
+            </div>
+            
+            <!-- Control Icons in Sidebar -->
+            <div class="sidebar-controls">
+                <div class="sidebar-control-buttons">
+                    <button class="sidebar-control-btn" id="visualToggle" title="Toggle Visual Effects">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <!-- Icono de ojo abierto -->
+                            <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle class="eye-open" cx="12" cy="12" r="3"></circle>
+                            <!-- Icono de ojo cerrado (oculto inicialmente) -->
+                            <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" stroke-linecap="round"></line>
+                        </svg>
+                    </button>
+                    <button class="sidebar-control-btn" id="audioToggle" title="Toggle Audio">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <!-- Altavoz abierto -->
+                            <path class="speaker-on" d="M3 9v6c0 1.105.895 2 2 2h4l5 5V4H9c-1.105 0-2 .895-2 2v3z"></path>
+                            <path class="speaker-on" d="M17.5 3.5a4 4 0 0 1 0 5.66M19.07 4.93a8 8 0 0 1 0 11.31"></path>
+                            <!-- Altavoz mudo (oculto inicialmente) -->
+                            <path class="speaker-off" style="display:none;" d="M11 5L6 9H2v6h4l5 5V5z"></path>
+                            <line class="speaker-off" style="display:none;" x1="23" y1="9" x2="17" y2="15"></line>
+                            <line class="speaker-off" style="display:none;" x1="17" y1="9" x2="23" y2="15"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="control-status-message" id="statusMessage"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contact Form Modal -->
+    <div class="contact-modal" id="contactModal">
+        <div class="contact-modal-content">
+            <button class="contact-close" id="contactClose">&times;</button>
+            <h2>CONTACT US</h2>
+            <form id="contactForm">
+                <div class="form-group">
+                    <input type="text" id="name" name="name" placeholder="NAME" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" id="email" name="email" placeholder="EMAIL" required>
+                </div>
+                <div class="form-group">
+                    <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">SEND</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Background Video -->
+    <div id="videos-background">
+        <video autoplay muted loop playsinline preload="auto">
+            <source src="assets/vid/checking_clothes-vid.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <main>
+        <div class="origin-container">
+            <!-- Capa de títulos parallax (sobre el texto) -->
+            <div class="parallax-titles-layer" id="parallaxTitlesLayer">
+                <div class="parallax-title" data-speed="0.6" data-position="20" data-horizontal="5">VISION</div>
+                <div class="parallax-title" data-speed="0.5" data-position="45" data-horizontal="70">STANCE</div>
+                <div class="parallax-title" data-speed="0.7" data-position="70" data-horizontal="10">SHADOW</div>
+            </div>
+
+            <!-- Capa de imágenes parallax (detrás del texto) -->
+            <div class="parallax-images-layer" id="parallaxImagesLayer">
+                <img src="assets/images/vision-page/vision-n3.jpg" alt="Eaftimos Vision" class="parallax-image" data-speed="0.38" data-position="50" data-horizontal="50">
+            </div>
+
+            <!-- Contenido de texto scrolleable -->
+            <div class="scroll-content" id="scrollContent">
+                <div class="origin-text">
+                    <p>EAFTIMOS IS THE SHADOW THAT LIVES WITHIN US. A FASHION STUDIO FOUNDED IN 2022 AND BASED IN MADRID, WORKING THROUGH INTROSPECTION AND CRAFTSMANSHIP TO TURN CLOTHING INTO AN ACT OF PRESENCE. WE DON'T CHASE TRENDS: WE CHOOSE A STANCE. WE CHOOSE ARCHIVE. WE WORK SLOWLY, WITH FULL CONTROL OVER MATERIALS AND PROCESS.</p>
+
+                    <p>WE DESIGN, CUT, SEW, AND DYE BY HAND. WE PRODUCE MADE-TO-ORDER, IN LIMITED SERIES, USING EUROPEAN-SOURCED FABRICS AND FUNCTIONAL HARDWARE. OUR LANGUAGE IS SOBER AND QUIET; BLACK IS AN OBSESSION. AS YOHJI YAMAMOTO WROTE: "BLACK IS MODEST AND ARROGANT AT THE SAME TIME… ABOVE ALL, BLACK SAYS: 'I DON'T BOTHER YOU — DON'T BOTHER ME'."</p>
+
+                    <p>EACH COLLECTION OPENS A NEW CHAPTER; EAFTIMOS REMAINS: PRECISION, PAUSE, AND MATERIAL HONESTY. IF YOU CHOOSE TO BE DIFFERENT, THERE IS SPACE FOR YOU HERE.</p>
+
+                    <div style="height: 20vh;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Sonidos - Sistema de crossfade manual -->
+    <audio id="noiseSound" src="assets/sounds/breathing.mp3" preload="auto"></audio>
+    <audio id="whispersSound" src="assets/sounds/breathing.mp3" preload="auto"></audio>
+
+    <script>
+    // IMPORTANTE: Configurar ANTES de cargar controls.js
+    window.preloaderEnterPressed = true; // Esta página no tiene preloader
+    </script>
+
+    <!-- Load scripts -->
+    <script defer src="assets/js/ui-sounds.js"></script>
+    <script defer src="assets/js/cursor-effect.js"></script>
+    <script src="assets/js/tooltip-nebula.js"></script>
+    <script src="assets/js/controls.js"></script>
+
+    <script>
+    // Fade-in blanco rápido al entrar
+    window.addEventListener('load', function() {
+        var overlay = document.getElementById('entryWhiteOverlay');
+        if (overlay) {
+            setTimeout(function() {
+                overlay.style.opacity = '0';
+                setTimeout(function() {
+                    overlay.parentNode && overlay.parentNode.removeChild(overlay);
+                }, 380);
+            }, 10);
+        }
+    });
+
+    // Overlay fade blanco al hacer click en el logo superior
+    document.addEventListener('DOMContentLoaded', function() {
+        var logoLink = document.querySelector('a.logo');
+        if (logoLink) {
+            logoLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Fade out rápido del audio
+                const noiseSound = document.getElementById('noiseSound');
+                const whispersSound = document.getElementById('whispersSound');
+                const fadeDuration = 300;
+                const startTime = performance.now();
+                
+                function fadeOutAudio() {
+                    const elapsed = performance.now() - startTime;
+                    const progress = Math.min(1, elapsed / fadeDuration);
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    const volume = 1 - eased;
+                    
+                    if (noiseSound && window.noiseGain) {
+                        window.noiseGain.gain.value *= volume;
+                    }
+                    
+                    if (whispersSound && window.whispersGain) {
+                        window.whispersGain.gain.value *= volume;
+                    }
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(fadeOutAudio);
+                    } else {
+                        if (noiseSound) noiseSound.pause();
+                        if (whispersSound) whispersSound.pause();
+                    }
+                }
+                
+                fadeOutAudio();
+                
+                // Crear overlay blanco
+                var overlay = document.createElement('div');
+                overlay.style.position = 'fixed';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.width = '100vw';
+                overlay.style.height = '100vh';
+                overlay.style.background = '#fff';
+                overlay.style.zIndex = '250000';
+                overlay.style.pointerEvents = 'auto';
+                overlay.style.transition = 'opacity 0.38s cubic-bezier(.77,0,.18,1)';
+                overlay.style.opacity = '0';
+                document.body.appendChild(overlay);
+                void overlay.offsetWidth;
+                overlay.style.opacity = '1';
+                
+                setTimeout(function() {
+                    window.location.href = logoLink.href;
+                }, 320);
+            });
+        }
+
+        // ============================================
+        // PARALLAX SCROLL EFFECT FOR IMAGES WITH BLUR
+        // ============================================
+        const scrollContent = document.getElementById('scrollContent');
+        const parallaxImages = document.querySelectorAll('.parallax-image');
+        const parallaxTitles = document.querySelectorAll('.parallax-title');
+        const textParagraphs = document.querySelectorAll('.origin-text p');
+        const viewportCenterY = window.innerHeight / 2;
+        const focusOffset = 150; // pixels de offset desde el centro
+        const maxBlur = 8; // píxeles máximos de blur
+
+        function calculateBlurForImage(position, scrollTop, scrollHeight) {
+            // Calcular la posición Y actual de la imagen en el viewport
+            const imagePosition = (position / 100) * window.innerHeight;
+            const distanceFromCenter = Math.abs(imagePosition - viewportCenterY);
+            
+            if (distanceFromCenter <= focusOffset) {
+                return 0; // Sin blur en el centro
+            }
+            
+            // Calcular blur proporcional a la distancia
+            const blurAmount = Math.min(
+                ((distanceFromCenter - focusOffset) / 300) * maxBlur,
+                maxBlur
+            );
+            
+            return blurAmount;
+        }
+
+        function calculateBlur(elementRect) {
+            const elementCenterY = elementRect.top + elementRect.height / 2;
+            const distanceFromCenter = Math.abs(elementCenterY - viewportCenterY);
+            
+            if (distanceFromCenter <= focusOffset) {
+                return 0; // Sin blur en el centro
+            }
+            
+            // Calcular blur proporcional a la distancia
+            const blurAmount = Math.min(
+                ((distanceFromCenter - focusOffset) / 300) * maxBlur,
+                maxBlur
+            );
+            
+            return blurAmount;
+        }
+
+        scrollContent.addEventListener('scroll', function() {
+            const scrollTop = scrollContent.scrollTop;
+            const scrollHeight = scrollContent.scrollHeight - scrollContent.clientHeight;
+            const scrollProgress = scrollTop / scrollHeight;
+
+            // Aplicar parallax, blur y opacidad a las imágenes
+            parallaxImages.forEach((img) => {
+                const speed = parseFloat(img.getAttribute('data-speed')) || 0.3;
+                const position = parseFloat(img.getAttribute('data-position')) || 50;
+                const horizontal = parseFloat(img.getAttribute('data-horizontal')) || 50;
+                
+                // Calcular la posición vertical de la imagen basada en el progreso del scroll
+                const basePosition = (position / 100) * scrollHeight;
+                const offset = (scrollTop - basePosition) * speed;
+                
+                // Posicionar la imagen
+                img.style.left = `${horizontal}%`;
+                img.style.top = `${position}%`;
+                img.style.transform = `translate(-50%, calc(-50% + ${offset}px))`;
+                
+                // Calcular y aplicar blur basado en su posición en pantalla
+                const blurAmount = calculateBlurForImage(position, scrollTop, scrollHeight);
+                img.style.filter = `blur(${blurAmount}px)`;
+                
+                // Calcular opacidad basada en el progreso del scroll
+                // Cada imagen se activa en un rango específico del scroll
+                const imageScrollPosition = position / 100; // posición normalizada (0-1)
+                const fadeRange = 0.15; // rango de fade in/out
+                
+                let opacity = 0;
+                
+                // Calcular distancia del scroll actual a la posición de la imagen
+                const distanceToImage = Math.abs(scrollProgress - imageScrollPosition);
+                
+                if (distanceToImage < fadeRange) {
+                    // Dentro del rango, calcular opacidad
+                    opacity = 1 - (distanceToImage / fadeRange);
+                }
+                
+                img.style.opacity = opacity;
+            });
+            
+            // Aplicar parallax a los títulos
+            parallaxTitles.forEach((title) => {
+                const speed = parseFloat(title.getAttribute('data-speed')) || 0.5;
+                const position = parseFloat(title.getAttribute('data-position')) || 50;
+                const horizontal = parseFloat(title.getAttribute('data-horizontal')) || 50;
+                
+                // Calcular offset parallax (los títulos se mueven más lento que el scroll)
+                const parallaxOffset = scrollTop * speed;
+                
+                // Posicionar el título
+                title.style.left = `${horizontal}%`;
+                title.style.top = `${position}%`;
+                title.style.transform = `translate(-50%, calc(-50% - ${parallaxOffset}px))`;
+                
+                // Calcular la posición actual del título en el viewport
+                const titleRect = title.getBoundingClientRect();
+                const titleCenterY = titleRect.top + titleRect.height / 2;
+                const distanceFromCenter = Math.abs(titleCenterY - viewportCenterY);
+                
+                // Calcular opacidad basada en distancia al centro
+                const fadeDistance = 250; // píxeles desde el centro donde empieza el fade
+                let opacity = 0.7;
+                
+                if (distanceFromCenter > focusOffset) {
+                    opacity = Math.max(0, 0.7 - ((distanceFromCenter - focusOffset) / fadeDistance) * 0.7);
+                }
+                
+                // Calcular blur basado en distancia al centro
+                let blurAmount = 0;
+                if (distanceFromCenter > focusOffset) {
+                    blurAmount = Math.min(
+                        ((distanceFromCenter - focusOffset) / 200) * maxBlur,
+                        maxBlur
+                    );
+                }
+                
+                title.style.opacity = opacity;
+                title.style.filter = `blur(${blurAmount}px)`;
+            });
+            
+            // Aplicar blur a los párrafos de texto
+            textParagraphs.forEach((p) => {
+                const pRect = p.getBoundingClientRect();
+                const blurAmount = calculateBlur(pRect);
+                p.style.filter = `blur(${blurAmount}px)`;
+            });
+        });
+        
+        // Ejecutar al cargar para establecer el estado inicial
+        scrollContent.dispatchEvent(new Event('scroll'));
+    });
+    </script>
+</body>
+
+</html>

@@ -18,11 +18,51 @@ const shouldStartGrain = localStorage.getItem('visualEffectsEnabled') !== 'false
 const grainCanvas = document.createElement('canvas');
 const grainCtx = grainCanvas.getContext('2d');
 
-// Resolución original
-const GRAIN_INTERNAL_WIDTH = 500;
-const GRAIN_INTERNAL_HEIGHT = 300;
-grainCanvas.width = GRAIN_INTERNAL_WIDTH;
-grainCanvas.height = GRAIN_INTERNAL_HEIGHT;
+// Detección de dispositivo móvil
+const grainIsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                 window.innerWidth <= 768;
+
+// Función para calcular resolución óptima del grain
+function calculateGrainResolution() {
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const isPortrait = screenHeight > screenWidth;
+    
+    if (grainIsMobile || screenWidth <= 768) {
+        // Móviles: usar aspect ratio de la pantalla para mantener proporciones
+        const aspectRatio = screenWidth / screenHeight;
+        if (isPortrait) {
+            // Vertical: mantener aspect ratio
+            const baseHeight = 400;
+            return {
+                width: Math.round(baseHeight * aspectRatio),
+                height: baseHeight
+            };
+        } else {
+            // Horizontal: mantener aspect ratio
+            const baseWidth = 400;
+            return {
+                width: baseWidth,
+                height: Math.round(baseWidth / aspectRatio)
+            };
+        }
+    } else {
+        // PC: resolución original
+        const aspectRatio = screenWidth / screenHeight;
+        if (aspectRatio > 1.5) {
+            // Pantalla ancha
+            return { width: 500, height: 300 };
+        } else {
+            // Pantalla más cuadrada
+            return { width: 400, height: 400 };
+        }
+    }
+}
+
+// Configurar resolución inicial
+let grainResolution = calculateGrainResolution();
+grainCanvas.width = grainResolution.width;
+grainCanvas.height = grainResolution.height;
 
 
 let isAnimating = shouldStartGrain;
@@ -124,7 +164,8 @@ function lerp(start, end, t) {
 // ANIMATION LOOP
 // ========================================
 let lastGrainFrame = 0;
-const GRAIN_FPS = 40;
+// FPS adaptativo: menor en móviles para mejor rendimiento
+const GRAIN_FPS = grainIsMobile ? 30 : 40;
 
 function animateGrain(now) {
     if (!isAnimating) return;
@@ -187,11 +228,24 @@ function animateGrain(now) {
 // ========================================
 // WINDOW RESIZE
 // ========================================
+let grainResizeTimeout;
 window.addEventListener("resize", () => {
     grainWidth = window.innerWidth;
     grainHeight = window.innerHeight;
     grainCanvasEl.width = grainWidth;
     grainCanvasEl.height = grainHeight;
+    
+    // Recalcular resolución del grain con debounce para evitar múltiples recalculos
+    clearTimeout(grainResizeTimeout);
+    grainResizeTimeout = setTimeout(() => {
+        const newResolution = calculateGrainResolution();
+        if (newResolution.width !== grainCanvas.width || newResolution.height !== grainCanvas.height) {
+            grainCanvas.width = newResolution.width;
+            grainCanvas.height = newResolution.height;
+            grainResolution = newResolution;
+            console.log(`[GRAIN] Resolution updated: ${grainResolution.width}x${grainResolution.height}`);
+        }
+    }, 250);
 });
 
 // ========================================

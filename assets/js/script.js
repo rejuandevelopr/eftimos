@@ -660,7 +660,10 @@ function createAllImages() {
         for (let x = 0; x < imagesInThisRow; x++) {
             if (imageIndex < baseImages.length) {
                 const gridX = x + rowOffset;
-                images.push(createImageElement(imageIndex, gridX, y));
+                const imgElement = createImageElement(imageIndex, gridX, y);
+                // Mark if it's a reveal-text element (visual effect only)
+                imgElement.isVisualEffect = imageTemplates[imageIndex].classList.contains('reveal-text-template');
+                images.push(imgElement);
                 imageIndex++;
             }
         }
@@ -2035,7 +2038,12 @@ function calculateGridLayout() {
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
     const isPortrait = screenHeight > screenWidth;
-    const totalItems = images.length;
+    // Count only non-visual-effect items for grid calculation
+    const totalItems = images.filter(img => !img.isVisualEffect).length;
+    const itemSize = 170; // Fixed item size (matching current image size)
+    const cellWidth = 150; // Cell width
+    const cellHeight = 225; // Cell height
+    const minGap = 20; // Minimum gap between items
     
     // Determine optimal grid dimensions based on orientation
     let cols, rows;
@@ -2055,37 +2063,65 @@ function calculateGridLayout() {
         rows = Math.ceil(totalItems / cols);
     } else {
         // Landscape: prefer horizontal layout (more columns, fewer rows)
-        // Calculate rows based on screen height
-        if (screenHeight < 500) {
-            rows = 2;
+        // For 1920x1080 (typical landscape), prioritize horizontal distribution
+        if (totalItems <= 4) {
+            // Few items: single row or 2x2
+            rows = totalItems <= 2 ? 1 : 2;
         } else if (screenHeight < 700) {
+            // Very short screens: 2 rows max
             rows = 2;
-        } else if (screenHeight < 900) {
-            rows = 3;
+        } else if (screenHeight < 1000) {
+            // Standard landscape (like 1080p): 2-3 rows
+            rows = totalItems <= 6 ? 2 : 3;
         } else {
-            rows = 4;
+            // Tall landscape screens: up to 3 rows
+            rows = 3;
         }
         cols = Math.ceil(totalItems / rows);
     }
     
-    // Calculate spacing to fit items optimally
-    const padding = Math.min(60, screenWidth * 0.05); // Responsive padding
-    const itemSize = 170; // Fixed item size (matching current image size)
+    // Calculate spacing ensuring no overlap
+    const paddingX = Math.max(100, screenWidth * 0.1); // Horizontal padding for breathing room
+    const navbarHeight = 80; // Approximate navbar height
+    const paddingTop = Math.max(navbarHeight + 40, screenHeight * 0.08); // Extra space for navbar + margin
+    const paddingBottom = Math.max(100, screenHeight * 0.1); // Bottom margin - increased for more breathing room
     
-    const availableWidth = screenWidth - (padding * 2);
-    const availableHeight = screenHeight - (padding * 2);
+    const availableWidth = screenWidth - (paddingX * 2);
+    const availableHeight = screenHeight - paddingTop - paddingBottom;
     
-    // Calculate spacing to distribute items evenly
-    const spacingX = cols > 1 ? availableWidth / (cols - 0.5) : availableWidth / 2;
-    const spacingY = rows > 1 ? availableHeight / (rows - 0.5) : availableHeight / 2;
+    // Calculate spacing: total width needed = (cols * cellWidth) + ((cols - 1) * gap)
+    // Available = cols * cellWidth + (cols - 1) * gap
+    // gap = (Available - cols * cellWidth) / (cols - 1)
+    let spacingX, spacingY;
+    
+    if (cols > 1) {
+        const gapX = Math.max(minGap, (availableWidth - (cols * cellWidth)) / (cols - 1));
+        spacingX = cellWidth + gapX;
+    } else {
+        spacingX = cellWidth;
+    }
+    
+    if (rows > 1) {
+        const gapY = Math.max(minGap, (availableHeight - (rows * cellHeight)) / (rows - 1));
+        spacingY = cellHeight + gapY;
+    } else {
+        spacingY = cellHeight;
+    }
     
     // Center the grid on screen
-    const gridWidth = (cols - 1) * spacingX;
-    const gridHeight = (rows - 1) * spacingY;
-    const startX = (screenWidth - gridWidth) / 2;
-    const startY = (screenHeight - gridHeight) / 2;
+    // Total grid dimensions include all cells and gaps between them
+    const gridWidth = cols > 1 ? ((cols - 1) * spacingX + cellWidth) : cellWidth;
+    const gridHeight = rows > 1 ? ((rows - 1) * spacingY + cellHeight) : cellHeight;
+    // Center horizontally within available width (respecting paddingX)
+    const startX = paddingX + (availableWidth - gridWidth) / 2;
+    const startY = paddingTop + (availableHeight - gridHeight) / 2;
     
-    return { cols, rows, spacingX, spacingY, startX, startY };
+    console.log('[GRID-CALC] Cols:', cols, 'Rows:', rows, 'Total items:', totalItems);
+    console.log('[GRID-CALC] Grid dimensions:', gridWidth, 'x', gridHeight);
+    console.log('[GRID-CALC] Start position:', startX, ',', startY);
+    console.log('[GRID-CALC] Cell dimensions:', cellWidth, 'x', cellHeight, '| Item size:', itemSize);
+    
+    return { cols, rows, spacingX, spacingY, startX, startY, cellWidth, cellHeight, itemSize };
 }
 
 // Arrange map elements in grid layout
@@ -2100,18 +2136,35 @@ window.arrangeMapInGrid = function() {
     gridModeTransitioning = true;
     gridModePositions = [];
     
+    // Filter out visual-only elements (reveal-text-template)
+    const gridImages = images.filter(img => !img.isVisualEffect);
+    
+    // Hide visual effect elements
+    images.forEach(img => {
+        if (img.isVisualEffect) {
+            img.element.style.opacity = '0';
+            img.element.style.pointerEvents = 'none';
+        }
+    });
+    
     const layout = calculateGridLayout();
-    const { cols, rows, spacingX, spacingY, startX, startY } = layout;
+    const { cols, rows, spacingX, spacingY, startX, startY, cellWidth, cellHeight, itemSize } = layout;
     
     console.log('[GRID] Layout:', { cols, rows, spacingX, spacingY, startX, startY });
+    console.log('[GRID] Filtered images (excluding visual effects):', gridImages.length);
     
-    // Calculate target positions for each image
-    images.forEach((img, index) => {
+    // Calculate target positions for each image (excluding visual effects)
+    // Each element is centered within its cell
+    const offsetX = (cellWidth - itemSize) / 2; // Horizontal offset to center item in cell
+    const offsetY = (cellHeight - itemSize) / 2; // Vertical offset to center item in cell
+    
+    gridImages.forEach((img, index) => {
         const col = index % cols;
         const row = Math.floor(index / cols);
         
-        const targetX = startX + (col * spacingX);
-        const targetY = startY + (row * spacingY);
+        // Position at cell start, then offset to center the item
+        const targetX = startX + (col * spacingX) + offsetX;
+        const targetY = startY + (row * spacingY) + offsetY;
         
         // Get current position from transform
         const transform = img.element.style.transform || '';
@@ -2129,15 +2182,15 @@ window.arrangeMapInGrid = function() {
     });
     
     // Animate to grid positions
-    const duration = 600; // Smooth but quick transition
+    const duration = 250; // Very fast, snappy transition
     const startTime = performance.now();
     
     function animateToGrid() {
         const elapsed = performance.now() - startTime;
         const progress = Math.min(1, elapsed / duration);
         
-        // Ease out cubic for smooth deceleration
-        const eased = 1 - Math.pow(1 - progress, 3);
+        // Ease out expo for snappy, dynamic deceleration
+        const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
         
         gridModePositions.forEach(pos => {
             const currentX = pos.startX + (pos.targetX - pos.startX) * eased;
@@ -2159,6 +2212,18 @@ window.arrangeMapInGrid = function() {
         } else {
             gridModeTransitioning = false;
             console.log('[GRID] Grid arrangement complete');
+            
+            // Show tooltips automatically on mobile/small screens in grid mode
+            const isMobileOrSmallScreen = window.innerWidth <= 900;
+            if (isMobileOrSmallScreen) {
+                gridModePositions.forEach(pos => {
+                    const tooltip = pos.element.querySelector('.tooltip');
+                    if (tooltip) {
+                        tooltip.style.opacity = '1';
+                        tooltip.style.visibility = 'visible';
+                    }
+                });
+            }
         }
     }
     
@@ -2171,25 +2236,87 @@ window.restoreMapPositioning = function() {
     
     console.log('[GRID] Restoring normal map positioning');
     
-    isGridMode = false;
-    gridModeTransitioning = true;
+    // Hide tooltips on mobile when exiting grid mode
+    const isMobileOrSmallScreen = window.innerWidth <= 900;
+    if (isMobileOrSmallScreen) {
+        images.forEach(img => {
+            const tooltip = img.element.querySelector('.tooltip');
+            if (tooltip) {
+                tooltip.style.opacity = '';
+                tooltip.style.visibility = '';
+            }
+        });
+    }
     
-    // Restore grayscale to images
+    // Restore visibility of visual effect elements
     images.forEach(img => {
-        const imgTag = img.element.querySelector('img');
-        if (imgTag) {
-            imgTag.style.filter = '';
+        if (img.isVisualEffect) {
+            img.element.style.opacity = '';
+            img.element.style.pointerEvents = '';
         }
     });
     
-    // The normal updateImagePositions will take over
-    // Just animate the transition smoothly
+    // Store current grid positions before switching mode
+    const restorePositions = [];
+    
+    images.forEach((img, index) => {
+        // Get current grid position
+        const transform = img.element.style.transform || '';
+        const match = transform.match(/translate3d\(([^,]+)px,\s*([^,]+)px/);
+        const startX_current = match ? parseFloat(match[1]) : 0;
+        const startY_current = match ? parseFloat(match[2]) : 0;
+        
+        // Calculate target normal position
+        const randomOffset = getRandomOffset(img.gridX, img.gridY);
+        const baseX = img.gridX * gridSpacing + randomOffset.x;
+        const baseY = img.gridY * gridSpacing + randomOffset.y;
+        
+        const offsetXScaled = offsetX * scale;
+        const offsetYScaled = offsetY * scale;
+        const imageSizeScaled = imageSize * scale;
+        const imageSizeScaledHalf = imageSizeScaled / 2;
+        
+        const targetX = baseX * scale + offsetXScaled + centerX - imageSizeScaledHalf;
+        const targetY = baseY * scale + offsetYScaled + centerY - imageSizeScaledHalf;
+        
+        restorePositions.push({
+            element: img.element,
+            startX: startX_current,
+            startY: startY_current,
+            targetX,
+            targetY,
+            img
+        });
+    });
+    
+    // Switch mode flags
+    isGridMode = false;
+    gridModeTransitioning = true;
+    
+    // Animate transition back to normal positions
     const duration = 600;
     const startTime = performance.now();
     
     function animateRestore() {
         const elapsed = performance.now() - startTime;
         const progress = Math.min(1, elapsed / duration);
+        
+        // Ease out cubic for smooth deceleration
+        const eased = 1 - Math.pow(1 - progress, 3);
+        
+        restorePositions.forEach(pos => {
+            const currentX = pos.startX + (pos.targetX - pos.startX) * eased;
+            const currentY = pos.startY + (pos.targetY - pos.startY) * eased;
+            
+            // Animate back to normal scale
+            pos.element.style.transform = `translate3d(${currentX}px, ${currentY}px, 0) scale(${scale})`;
+            
+            // Restore grayscale filter
+            const imgTag = pos.element.querySelector('img');
+            if (imgTag) {
+                imgTag.style.filter = '';
+            }
+        });
         
         if (progress < 1) {
             requestAnimationFrame(animateRestore);

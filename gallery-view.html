@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        /* Elimina animación global de entrada para esta página */
+        body { animation: none !important; }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Gallery - Eftimos</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="assets/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon_io/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon_io/android-chrome-512x512.png">
+
+    <meta name="description"
+        content="Explore the Eftimos collection gallery - an immersive visual experience.">
+    <meta name="keywords"
+        content="Eftimos, fashion gallery, collection, minimal design, modern fashion">
+
+    <!-- Preload critical fonts -->
+    <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
+
+    <!-- Preload critical CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- DNS prefetch for faster resource loading -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+
+    <!-- Mostrar menú lateral solo cuando el menú está abierto -->
+    <style>
+        body.menu-open #dropdownMenu {
+            transform: translateX(0) !important;
+        }
+        body.menu-open #dropdownMenu::before {
+            transform: translateX(0) !important;
+            pointer-events: all !important;
+        }
+
+        /* Estilos para la galería */
+        body {
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        /* Video de fondo */
+        #videos-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        #videos-background video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            opacity: 0.1;
+        }
+
+        .gallery-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: auto;
+            max-width: 90vw;
+            max-height: calc(100vh - 200px);
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Galería de imágenes estilo Tinder */
+        .gallery-wrapper {
+            position: relative;
+            width: auto;
+            max-width: 90vw;
+            max-height: calc(100vh - 200px);
+            perspective: 1000px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 100px;
+            margin-top: 70px;
+        }
+
+        .gallery-track {
+            position: relative;
+            width: auto;
+            min-width: 300px;
+            max-width: 90vw;
+            min-height: 400px;
+            max-height: calc(100vh - 200px);
+        }
+
+        .gallery-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: auto;
+            max-width: 90vw;
+            max-height: calc(100vh - 200px);
+            border-radius: 12px;
+            overflow: visible;
+            background: transparent;
+            transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
+                        opacity 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
+                        filter 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+            will-change: transform, opacity, filter;
+        }
+        
+        .gallery-card.active {
+            cursor: grab;
+        }
+        
+        .gallery-card.dragging {
+            cursor: grabbing !important;
+            transition: none;
+        }
+        
+        .gallery-card.zoomed {
+            cursor: grab;
+        }
+        
+        .gallery-card.zoomed.dragging {
+            cursor: grabbing !important;
+        }
+
+        .gallery-card.active {
+            z-index: 10;
+            opacity: 1;
+            filter: blur(0px);
+        }
+
+        .gallery-card.next {
+            z-index: 9;
+            opacity: 0.7;
+            filter: blur(2px);
+            transform: translate(-50%, -50%) scale(0.95) translateY(20px);
+        }
+
+        .gallery-card.hidden {
+            z-index: 1;
+            opacity: 0;
+            filter: blur(8px);
+            transform: translate(-50%, -50%) scale(0.85) translateY(40px);
+            pointer-events: none;
+        }
+
+        .gallery-card.returning {
+            transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) !important;
+        }
+
+        .gallery-card.zoomed {
+            cursor: zoom-out;
+        }
+
+        .gallery-card.swiping-left {
+            transform: translate(-50%, -50%) translateX(-150%) rotate(-20deg) !important;
+            opacity: 0 !important;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s cubic-bezier(0.4, 0, 1, 1) 0.15s !important;
+        }
+
+        .gallery-card.swiping-right {
+            transform: translate(-50%, -50%) translateX(150%) rotate(20deg) !important;
+            opacity: 0 !important;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s cubic-bezier(0.4, 0, 1, 1) 0.15s !important;
+        }
+
+        .gallery-card.coming-from-back {
+            z-index: 1 !important;
+            transform: translate(-50%, -50%) translateX(-180px) scale(0.85) rotate(-15deg) !important;
+            opacity: 0.75 !important;
+            transition: none !important;
+        }
+
+        .gallery-card.coming-from-back.moving-forward {
+            z-index: 100 !important;
+            transform: translate(-50%, -50%) translateX(0) scale(1) rotate(0deg) !important;
+            opacity: 1 !important;
+            transition: transform 0.5s cubic-bezier(0.34, 1.15, 0.64, 1), opacity 0.5s ease, z-index 0s !important;
+        }
+
+        .gallery-card.moving-to-back {
+            z-index: 5 !important;
+            transform: translate(-50%, -50%) scale(0.95) !important;
+            opacity: 0.7 !important;
+            transition: transform 0.5s cubic-bezier(0.34, 1.15, 0.64, 1), opacity 0.5s ease, z-index 0s 0.1s !important;
+        }
+
+        .gallery-card img {
+            width: auto;
+            height: auto;
+            max-width: 90vw;
+            max-height: calc(100vh - 200px);
+            object-fit: contain;
+            display: block;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            pointer-events: none;
+            transition: transform 0.3s ease;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Reducir tamaño en desktop */
+        @media (min-width: 768px) {
+            .gallery-card img {
+                max-width: 420px;
+                max-height: calc(100vh - 250px);
+            }
+            
+            .gallery-card {
+                max-width: 420px;
+                max-height: calc(100vh - 250px);
+            }
+            
+            .gallery-wrapper {
+                max-width: 420px;
+            }
+        }
+
+        .gallery-caption-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 1rem;
+        }
+
+        .gallery-caption {
+            padding: 0.8rem 1.5rem;
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-align: center;
+            border-radius: 8px;
+            white-space: nowrap;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Controles de navegación */
+        .gallery-controls {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 2rem;
+            z-index: 6;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .gallery-controls.hidden {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+            pointer-events: none;
+        }
+
+        .gallery-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .gallery-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .gallery-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Overlay de textos animados */
+        .overlay-words-layer {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90vw;
+            height: calc(100vh - 300px);
+            max-width: 800px;
+            z-index: 20;
+            pointer-events: none;
+            overflow: hidden;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay-words-layer.hidden {
+            opacity: 0;
+        }
+
+        .overlay-word {
+            position: absolute;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 5rem;
+            font-weight: bold;
+            color: transparent;
+            -webkit-text-stroke: 2px #ffffff;
+            text-stroke: 2px #ffffff;
+            mix-blend-mode: difference;
+            white-space: nowrap;
+            will-change: transform, filter, opacity;
+            opacity: 0;
+            filter: blur(20px);
+            transition: opacity 1.2s ease, filter 1.2s ease;
+            line-height: 1;
+        }
+
+        .overlay-word:nth-child(1) { top: 20%; left: 10%; }
+        .overlay-word:nth-child(2) { top: 40%; right: 15%; }
+        .overlay-word:nth-child(3) { top: 60%; left: 20%; }
+        .overlay-word:nth-child(4) { top: 30%; right: 20%; }
+        .overlay-word:nth-child(5) { bottom: 20%; right: 15%; }
+
+        .overlay-word.active {
+            opacity: 1;
+            filter: blur(0px);
+        }
+
+        .overlay-word.fading {
+            opacity: 0;
+            filter: blur(20px);
+        }
+
+        /* Sección de descripción de colección */
+        /* Sección de descripción de colección */
+        .collection-info {
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            padding: 2rem 2rem;
+            background: transparent;
+            z-index: 5;
+            pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .collection-info.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .collection-description {
+            max-width: 800px;
+            margin: 0 auto;
+            color: #fff;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            letter-spacing: 0.5px;
+            text-align: center;
+            opacity: 0.8;
+        }
+    transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .progress-indicator.hidden {
+            opacity: 0;
+            transform: translate(20px, -50%);
+        
+        /* Indicador de progreso */
+        .progress-indicator {
+            position: fixed;
+            top: 50%;
+            right: 2rem;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 15;
+        }
+
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .gallery-container {
+                max-width: 95vw;
+                max-height: calc(100vh - 250px);
+            }
+
+            .gallery-wrapper {
+                max-width: 95vw;
+                margin-bottom: 80px;
+            }
+
+            .gallery-track {
+                max-width: 95vw;
+            }
+
+            .gallery-card {
+                max-height: calc(100vh - 250px);
+                max-width: 95vw;
+            }
+
+            .gallery-card img {
+                max-height: calc(100vh - 250px);
+                max-width: 95vw;
+            }
+
+            .gallery-controls {
+                gap: 1.5rem;
+                bottom: -70px;
+            }
+
+            .gallery-btn {
+                width: 40px;
+                height: 40px;
+            }
+
+            .gallery-btn svg {
+                width: 18px;
+                height: 18px;
+            }
+
+            .overlay-word {
+                font-size: 3rem;
+            }
+
+            .gallery-caption {
+                font-size: 0.9rem;
+                padding: 1.5rem;
+            }
+
+            .collection-description {
+                font-size: 0.85rem;
+                padding: 0 1rem;
+            }
+
+            .progress-indicator {
+                right: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body style="background-color: #000;">
+    <!-- Fade-in overlay blanco -->
+    <div id="entryWhiteOverlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:999999;pointer-events:auto;transition:opacity 0.38s cubic-bezier(.77,0,.18,1);opacity:1;"></div>
+    
+    <!-- Grain Canvas -->
+    <canvas id="grainCanvas" style="opacity: 0.005;"></canvas>
+
+    <!-- Background Video -->
+    <div id="videos-background">
+        <video autoplay muted loop playsinline preload="auto">
+            <source src="assets/vid/water_hand-vid.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <nav class="blending-item">
+        <div class="nav-container">
+            <!-- Menu Hamburguesa -->
+            <div class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            
+            <!-- Logo Centrado -->
+            <a href="index.html" class="logo" data-shape="circle">
+                <img src="assets/images/logo-white.png" alt="Eftimos Logo" width="150" height="auto" draggable="false">
+            </a>
+        </div>
+        
+        <!-- Menú Desplegable -->
+        <div class="dropdown-menu" id="dropdownMenu">
+            <div class="menu-links">
+                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer" class="dropdown-link">SHOP</a>
+                <div class="dropdown-item-with-submenu">
+                    <button class="dropdown-link dropdown-toggle" id="collectionsToggle">
+                        COLLECTIONS
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="submenu" id="collectionsSubmenu">
+                        <a href="#nierika" class="submenu-link">NIERIKA</a>
+                        <a href="gallery-view.html" class="submenu-link">RESiLiENCE AW24</a>
+                    </div>
+                </div>
+                <button class="dropdown-link" id="contactBtn">CONTACT</button>
+            </div>
+            
+            <!-- Control Icons in Sidebar -->
+            <div class="sidebar-controls">
+                <div class="sidebar-control-buttons">
+                    <button class="sidebar-control-btn" id="visualToggle" title="Toggle Visual Effects">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle class="eye-open" cx="12" cy="12" r="3"></circle>
+                            <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" stroke-linecap="round"></line>
+                        </svg>
+                    </button>
+                    <button class="sidebar-control-btn" id="audioToggle" title="Toggle Audio">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <path class="speaker-on" d="M3 9v6c0 1.105.895 2 2 2h4l5 5V4H9c-1.105 0-2 .895-2 2v3z"></path>
+                            <path class="speaker-on" d="M17.5 3.5a4 4 0 0 1 0 5.66M19.07 4.93a8 8 0 0 1 0 11.31"></path>
+                            <path class="speaker-off" style="display:none;" d="M11 5L6 9H2v6h4l5 5V5z"></path>
+                            <line class="speaker-off" style="display:none;" x1="23" y1="9" x2="17" y2="15"></line>
+                            <line class="speaker-off" style="display:none;" x1="17" y1="9" x2="23" y2="15"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="control-status-message" id="statusMessage"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contact Form Modal -->
+    <div class="contact-modal" id="contactModal">
+        <div class="contact-modal-content">
+            <button class="contact-close" id="contactClose">&times;</button>
+            <h2>CONTACT US</h2>
+            <form id="contactForm">
+                <div class="form-group">
+                    <input type="text" id="name" name="name" placeholder="NAME" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" id="email" name="email" placeholder="EMAIL" required>
+                </div>
+                <div class="form-group">
+                    <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">SEND</button>
+            </form>
+        </div>
+    </div>
+
+    <main>
+        <!-- Overlay de textos animados -->
+        <div class="overlay-words-layer" id="overlayWordsLayer">
+            <div class="overlay-word">VISION</div>
+            <div class="overlay-word">CRAFT</div>
+            <div class="overlay-word">SHADOW</div>
+            <div class="overlay-word">STANCE</div>
+            <div class="overlay-word">SILENCE</div>
+        </div>
+
+        <!-- Galería principal -->
+        <div class="gallery-container">
+            <div class="gallery-wrapper">
+                <div class="gallery-track" id="galleryTrack">
+                    <!-- Las tarjetas se generarán dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Controles de navegación -->
+            <div class="gallery-controls">
+                <button class="gallery-btn" id="prevBtn" aria-label="Previous">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <div class="gallery-caption-container" id="galleryCaptionContainer">
+                    <span class="gallery-caption" id="galleryCaption">LOOK 1</span>
+                </div>
+                <button class="gallery-btn" id="nextBtn" aria-label="Next">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Indicador de progreso -->
+        <div class="progress-indicator" id="progressIndicator">
+            <!-- Los puntos se generarán dinámicamente -->
+        </div>
+
+        <!-- Sección de información de la colección -->
+        <div class="collection-info">
+            <div class="collection-description">
+                <p>AW24 COLLECTION — A STUDY IN SHADOW AND FORM. EACH PIECE CRAFTED WITH PRECISION, BORN FROM INTROSPECTION AND SHAPED BY TIME. BLACK AS OBSESSION, SILENCE AS LANGUAGE, FABRIC AS TRUTH.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Sonidos -->
+    <audio id="noiseSound" src="assets/sounds/breathing.mp3" preload="auto"></audio>
+    <audio id="whispersSound" src="assets/sounds/breathing.mp3" preload="auto"></audio>
+
+    <script>
+        window.preloaderEnterPressed = true;
+    </script>
+
+    <!-- Load scripts -->
+    <script defer src="assets/js/ui-sounds.js"></script>
+    <script defer src="assets/js/cursor-effect.js"></script>
+    <script src="assets/js/tooltip-nebula.js"></script>
+    <script src="assets/js/controls.js"></script>
+
+    <script>
+        // Configuración de la galería
+        const galleryImages = [
+            { src: 'assets/images/runway-page/LOOK 1.JPG', caption: 'LOOK 1' },
+            { src: 'assets/images/runway-page/LOOK 2.JPG', caption: 'LOOK 2' },
+            { src: 'assets/images/runway-page/LOOK 3.JPG', caption: 'LOOK 3' },
+            { src: 'assets/images/runway-page/LOOK 4.JPG', caption: 'LOOK 4' },
+            { src: 'assets/images/runway-page/LOOK 5.JPG', caption: 'LOOK 5' },
+            { src: 'assets/images/runway-page/LOOK 6.JPG', caption: 'LOOK 6' },
+            { src: 'assets/images/runway-page/LOOK 7.JPG', caption: 'LOOK 7' },
+            { src: 'assets/images/runway-page/LOOK 8.JPG', caption: 'LOOK 8' },
+            { src: 'assets/images/runway-page/LOOK 9.JPG', caption: 'LOOK 9' },
+            { src: 'assets/images/runway-page/LOOK 10.JPG', caption: 'LOOK 10' },
+            { src: 'assets/images/runway-page/LOOK 11.JPG', caption: 'LOOK 11' },
+            { src: 'assets/images/runway-page/LOOK 12.JPG', caption: 'LOOK 12' },
+            { src: 'assets/images/runway-page/LOOK 13.JPG', caption: 'LOOK 13' },
+            { src: 'assets/images/runway-page/LOOK 14.JPG', caption: 'LOOK 14' },
+            { src: 'assets/images/runway-page/LOOK 15.JPG', caption: 'LOOK 15' },
+            { src: 'assets/images/runway-page/LOOK 16.JPG', caption: 'LOOK 16' }
+        ];
+
+        let currentIndex = 0;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let currentX = 0;
+        let currentY = 0;
+        let dragOffset = 0;
+        let currentScale = 1;
+        let isZoomed = false;
+        let lastTapTime = 0;
+        let panX = 0;
+        let panY = 0;
+        let startPanX = 0;
+        let startPanY = 0;
+        const SWIPE_THRESHOLD = 100; // Píxeles mínimos para cambiar de imagen
+        const MAX_SCALE = 3;
+        const MIN_SCALE = 1;
+
+        // Generar tarjetas de galería
+        function initGallery() {
+            const track = document.getElementById('galleryTrack');
+            const progressIndicator = document.getElementById('progressIndicator');
+
+            galleryImages.forEach((image, index) => {
+                // Crear tarjeta
+                const card = document.createElement('div');
+                card.className = 'gallery-card';
+                if (index === 0) card.classList.add('active');
+                else if (index === 1) card.classList.add('next');
+                else card.classList.add('hidden');
+
+                card.innerHTML = `
+                    <img src="${image.src}" alt="${image.caption}" draggable="false">
+                `;
+
+                track.appendChild(card);
+                
+                // Prevenir completamente el arrastre nativo de la imagen
+                const img = card.querySelector('img');
+                if (img) {
+                    img.ondragstart = () => false;
+                    img.addEventListener('dragstart', (e) => e.preventDefault());
+                    img.addEventListener('contextmenu', (e) => e.preventDefault());
+                }
+
+                // Crear punto de progreso
+                const dot = document.createElement('div');
+                dot.className = 'progress-dot';
+                if (index === 0) dot.classList.add('active');
+                progressIndicator.appendChild(dot);
+
+                // Event listeners para drag
+                card.addEventListener('mousedown', startDrag);
+                card.addEventListener('touchstart', startDrag);
+            });
+
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, { passive: false });
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchend', endDrag);
+
+            // Event listeners para pinch zoom
+            track.addEventListener('touchstart', handleTouchStart, { passive: false });
+            track.addEventListener('touchmove', handleTouchMove, { passive: false });
+            track.addEventListener('touchend', handleTouchEnd);
+            
+            // Event listener para zoom con rueda del ratón
+            track.addEventListener('wheel', handleWheel, { passive: false });
+            
+            // Prevenir arrastre nativo del navegador en las imágenes
+            track.addEventListener('dragstart', (e) => {
+                if (e.target.tagName === 'IMG') {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // Funciones de drag y zoom
+        function startDrag(e) {
+            const card = e.target.closest('.gallery-card');
+            if (card && card.classList.contains('active')) {
+                // Prevenir comportamiento nativo del navegador
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Detectar doble tap para zoom
+                const currentTime = Date.now();
+                const tapGap = currentTime - lastTapTime;
+                
+                if (tapGap < 300 && tapGap > 0) {
+                    // Doble tap detectado
+                    toggleZoom(card);
+                    lastTapTime = 0;
+                    return;
+                }
+                lastTapTime = currentTime;
+
+                isDragging = true;
+                startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+                
+                // Cambiar cursor
+                card.style.cursor = 'grabbing';
+                document.body.style.cursor = 'grabbing';
+                document.body.style.userSelect = 'none';
+                
+                if (isZoomed) {
+                    // Si está zoomeada, guardar posición actual del pan
+                    startPanX = panX;
+                    startPanY = panY;
+                } else {
+                    card.classList.add('dragging');
+                }
+            }
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+
+            e.preventDefault();
+
+            currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            currentY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+            
+            if (isZoomed) {
+                // Si está zoomeada, hacer pan
+                panX = startPanX + (currentX - startX);
+                panY = startPanY + (currentY - startY);
+                
+                const activeCard = document.querySelector('.gallery-card.active');
+                const img = activeCard?.querySelector('img');
+                if (img) {
+                    img.style.transform = `scale(${currentScale}) translate(${panX / currentScale}px, ${panY / currentScale}px)`;
+                }
+            } else {
+                // Si no está zoomeada, swipe normal
+                dragOffset = currentX - startX;
+
+                const activeCard = document.querySelector('.gallery-card.active');
+                if (activeCard) {
+                    const rotation = dragOffset * 0.05;
+                    activeCard.style.transform = `translate(-50%, -50%) translateX(${dragOffset}px) rotate(${rotation}deg)`;
+                }
+            }
+        }
+
+        function endDrag(e) {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            // Restaurar cursor
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (activeCard) {
+                activeCard.style.cursor = '';
+            }
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            
+            if (isZoomed) {
+                // Si está zoomeada, solo terminar el pan
+                return;
+            }
+
+            if (activeCard) {
+                activeCard.classList.remove('dragging');
+
+                // Solo cambiar de imagen si supera el threshold
+                if (Math.abs(dragOffset) > SWIPE_THRESHOLD) {
+                    if (dragOffset < 0) {
+                        // Swipe izquierda (siguiente)
+                        activeCard.classList.add('swiping-left');
+                        setTimeout(() => nextImage(), 250);
+                    } else {
+                        // Swipe derecha (también siguiente)
+                        activeCard.classList.add('swiping-right');
+                        setTimeout(() => nextImage(), 250);
+                    }
+                } else {
+                    // Volver al centro con animación elástica
+                    activeCard.classList.add('returning');
+                    activeCard.style.transform = 'translate(-50%, -50%)';
+                    setTimeout(() => {
+                        activeCard.classList.remove('returning');
+                    }, 400);
+                }
+            }
+
+            dragOffset = 0;
+        }
+
+        // Funciones de zoom
+        function toggleZoom(card) {
+            if (isZoomed) {
+                resetZoom();
+            } else {
+                applyZoom(card);
+            }
+        }
+
+        function applyZoom(card, scale) {
+            isZoomed = true;
+            if (scale !== undefined) {
+                currentScale = scale;
+            } else {
+                currentScale = 2;
+            }
+            const img = card ? card.querySelector('img') : document.querySelector('.gallery-card.active img');
+            if (img) {
+                img.style.transform = `scale(${currentScale})`;
+                if (card) card.classList.add('zoomed');
+            }
+            hideUIElements();
+        }
+
+        function resetZoom() {
+            isZoomed = false;
+            currentScale = 1;
+            panX = 0;
+            panY = 0;
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (activeCard) {
+                const img = activeCard.querySelector('img');
+                if (img) {
+                    img.style.transform = `scale(1)`;
+                }
+                activeCard.classList.remove('zoomed');
+            }
+            showUIElements();
+        }
+
+        function hideUIElements() {
+            document.querySelector('.gallery-controls')?.classList.add('hidden');
+            document.querySelector('.overlay-words-layer')?.classList.add('hidden');
+            document.querySelector('.collection-info')?.classList.add('hidden');
+            document.querySelector('.progress-indicator')?.classList.add('hidden');
+        }
+
+        function showUIElements() {
+            document.querySelector('.gallery-controls')?.classList.remove('hidden');
+            document.querySelector('.overlay-words-layer')?.classList.remove('hidden');
+            document.querySelector('.collection-info')?.classList.remove('hidden');
+            document.querySelector('.progress-indicator')?.classList.remove('hidden');
+        }
+
+        // Soporte para pinch zoom en móviles
+        let initialDistance = 0;
+        let initialScale = 1;
+
+        function handleTouchStart(e) {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                initialDistance = getDistance(e.touches[0], e.touches[1]);
+                initialScale = currentScale;
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const currentDistance = getDistance(e.touches[0], e.touches[1]);
+                const scale = (currentDistance / initialDistance) * initialScale;
+                
+                currentScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+                
+                const activeCard = document.querySelector('.gallery-card.active');
+                if (activeCard) {
+                    const img = activeCard.querySelector('img');
+                    if (img) {
+                        img.style.transform = `scale(${currentScale})`;
+                    }
+                    
+                    if (currentScale > 1.1 && !isZoomed) {
+                        isZoomed = true;
+                        activeCard.classList.add('zoomed');
+                        hideUIElements();
+                    } else if (currentScale <= 1.05 && isZoomed) {
+                        resetZoom();
+                    }
+                }
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (e.touches.length < 2) {
+                initialDistance = 0;
+                if (currentScale < 1.1) {
+                    resetZoom();
+                }
+            }
+        }
+
+        function getDistance(touch1, touch2) {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function handleWheel(e) {
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (!activeCard) return;
+            
+            const img = activeCard.querySelector('img');
+            if (!img) return;
+            
+            e.preventDefault();
+            
+            // Obtener posición del cursor relativa a la imagen
+            const rect = img.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // Normalizar coordenadas (0 a 1)
+            const normalizedX = mouseX / rect.width;
+            const normalizedY = mouseY / rect.height;
+            
+            // Guardar escala anterior
+            const oldScale = currentScale;
+            
+            // Determinar dirección del scroll (positivo = zoom out, negativo = zoom in)
+            const delta = e.deltaY;
+            const zoomStep = 0.15; // Mayor sensibilidad
+            
+            if (delta < 0) {
+                // Scroll up = zoom in
+                if (currentScale < MAX_SCALE) {
+                    // Calcular nuevo scale
+                    const newScale = Math.min(currentScale + zoomStep, MAX_SCALE);
+                    
+                    // Zoom focal: mantener el punto bajo el cursor fijo
+                    // Obtener el punto del cursor relativo al centro de la imagen en pantalla
+                    const imgCenterX = rect.width / 2;
+                    const imgCenterY = rect.height / 2;
+                    const offsetX = mouseX - imgCenterX;
+                    const offsetY = mouseY - imgCenterY;
+                    
+                    // Fórmula correcta para zoom focal:
+                    // new_pan = (cursor_offset - old_pan) * (new_scale / old_scale) + old_pan - cursor_offset * (new_scale - old_scale)
+                    // Simplificado: new_pan = old_pan - cursor_offset * (new_scale / old_scale - 1)
+                    const scaleRatio = newScale / currentScale;
+                    panX = panX - offsetX * (scaleRatio - 1);
+                    panY = panY - offsetY * (scaleRatio - 1);
+                    
+                    currentScale = newScale;
+                    
+                    img.style.transform = `scale(${currentScale}) translate(${panX / currentScale}px, ${panY / currentScale}px)`;
+                    isZoomed = true;
+                    activeCard.classList.add('zoomed');
+                    if (currentScale > MIN_SCALE) {
+                        hideUIElements();
+                    }
+                }
+            } else {
+                // Scroll down = zoom out
+                if (currentScale > MIN_SCALE) {
+                    const oldScale = currentScale;
+                    currentScale = Math.max(currentScale - zoomStep, MIN_SCALE);
+                    const newScale = currentScale;
+                    
+                    // Obtener posición del cursor relativa a la imagen
+                    const imgRect = img.getBoundingClientRect();
+                    const mouseX = e.clientX - imgRect.left;
+                    const mouseY = e.clientY - imgRect.top;
+                    
+                    // Centro de la imagen
+                    const imgCenterX = imgRect.width / 2;
+                    const imgCenterY = imgRect.height / 2;
+                    
+                    // Offset desde el centro hasta el cursor
+                    const offsetX = mouseX - imgCenterX;
+                    const offsetY = mouseY - imgCenterY;
+                    
+                    // Aplicar fórmula focal point
+                    const scaleRatio = newScale / oldScale;
+                    const focalPanX = panX - offsetX * (scaleRatio - 1);
+                    const focalPanY = panY - offsetY * (scaleRatio - 1);
+                    
+                    // Factor de interpolación: 0 cuando está cerca de MIN_SCALE, 1 cuando está cerca de MAX_SCALE
+                    const zoomRange = MAX_SCALE - MIN_SCALE;
+                    const currentZoomOffset = currentScale - MIN_SCALE;
+                    const interpolationFactor = Math.pow(currentZoomOffset / zoomRange, 1.5); // Exponente para suavizar transición
+                    
+                    // Interpolar entre focal point y centro (0, 0)
+                    panX = focalPanX * interpolationFactor;
+                    panY = focalPanY * interpolationFactor;
+                    
+                    img.style.transform = `scale(${currentScale}) translate(${panX / currentScale}px, ${panY / currentScale}px)`;
+                    if (currentScale <= MIN_SCALE) {
+                        isZoomed = false;
+                        activeCard.classList.remove('zoomed');
+                        panX = 0;
+                        panY = 0;
+                        img.style.transform = `scale(1)`;
+                        showUIElements();
+                    }
+                }
+            }
+        }
+
+        // Navegación
+        function updateCards() {
+            // Resetear zoom al cambiar de imagen
+            resetZoom();
+
+            const cards = document.querySelectorAll('.gallery-card');
+            const dots = document.querySelectorAll('.progress-dot');
+
+            cards.forEach((card, index) => {
+                card.classList.remove('active', 'next', 'hidden', 'swiping-left', 'swiping-right', 'returning', 'coming-from-back', 'moving-forward', 'moving-to-back');
+                card.style.transform = 'translate(-50%, -50%)';
+                
+                // Resetear zoom de la imagen
+                const img = card.querySelector('img');
+                if (img) {
+                    img.style.transform = 'scale(1)';
+                }
+
+                if (index === currentIndex) {
+                    card.classList.add('active');
+                } else if (index === currentIndex + 1 || (currentIndex === galleryImages.length - 1 && index === 0)) {
+                    card.classList.add('next');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+
+            // Actualizar el caption
+            const captionElement = document.getElementById('galleryCaption');
+            if (captionElement && galleryImages[currentIndex]) {
+                captionElement.textContent = galleryImages[currentIndex].caption;
+            }
+        }
+
+        function nextImage() {
+            currentIndex = (currentIndex + 1) % galleryImages.length;
+            updateCards();
+        }
+
+        function prevImage() {
+            // Calcular el índice de la imagen anterior
+            const prevIndex = (currentIndex - 1 + galleryImages.length) % galleryImages.length;
+            const cards = document.querySelectorAll('.gallery-card');
+            const prevCard = cards[prevIndex];
+            const oldCurrentIndex = currentIndex;
+            const currentCard = cards[oldCurrentIndex];
+            
+            // Convertir inmediatamente la tarjeta actual a "next" sin animación
+            currentCard.style.transition = 'none';
+            currentCard.classList.remove('active');
+            currentCard.classList.add('next');
+            currentCard.offsetHeight; // Force reflow
+            
+            // Preparar la tarjeta anterior con estado inicial (pequeña, a la izquierda, rotada, desde atrás)
+            prevCard.classList.remove('hidden', 'next');
+            prevCard.classList.add('coming-from-back');
+            
+            // Forzar reflow para que la transición funcione
+            prevCard.offsetHeight;
+            
+            // Actualizar el índice
+            currentIndex = prevIndex;
+            
+            // Animar la tarjeta hacia adelante desde la izquierda con rotación
+            setTimeout(() => {
+                prevCard.classList.add('moving-forward', 'active');
+                
+                // Restaurar transiciones de la tarjeta que ahora es "next"
+                setTimeout(() => {
+                    currentCard.style.transition = '';
+                }, 50);
+                
+                // Actualizar el resto de tarjetas después de la animación
+                setTimeout(() => {
+                    // Limpiar clases de animación de la tarjeta que acaba de llegar
+                    prevCard.classList.remove('coming-from-back', 'moving-forward');
+                    
+                    // Actualizar solo las tarjetas restantes que necesitan cambiar de estado
+                    cards.forEach((card, index) => {
+                        // Excluir la tarjeta actual (nueva activa) y la que era la activa (ahora next)
+                        if (index !== currentIndex && index !== oldCurrentIndex) {
+                            // Remover clases de animación
+                            card.classList.remove('active', 'coming-from-back', 'moving-forward', 'moving-to-back');
+                            
+                            // Determinar el nuevo estado correcto
+                            const shouldBeNext = (index === currentIndex + 1) || (currentIndex === galleryImages.length - 1 && index === 0);
+                            const isNext = card.classList.contains('next');
+                            const isHidden = card.classList.contains('hidden');
+                            
+                            // Solo cambiar estado si es necesario y desactivar transiciones temporalmente
+                            if (shouldBeNext && !isNext) {
+                                // Cambiar de hidden a next
+                                card.style.transition = 'none';
+                                card.classList.remove('hidden');
+                                card.classList.add('next');
+                                card.offsetHeight; // Force reflow
+                                card.style.transition = '';
+                            } else if (!shouldBeNext && !isHidden) {
+                                // Cambiar de next a hidden
+                                card.style.transition = 'none';
+                                card.classList.remove('next');
+                                card.classList.add('hidden');
+                                card.offsetHeight; // Force reflow
+                                card.style.transition = '';
+                            }
+                        }
+                    });
+                }, 500);
+                
+                // Actualizar dots
+                const dots = document.querySelectorAll('.progress-dot');
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentIndex);
+                });
+                
+                // Actualizar caption
+                const captionElement = document.getElementById('galleryCaption');
+                if (captionElement && galleryImages[currentIndex]) {
+                    captionElement.textContent = galleryImages[currentIndex].caption;
+                }
+            }, 20);
+        }
+
+        // Event listeners para botones
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (activeCard) {
+                activeCard.classList.add('swiping-right');
+                setTimeout(() => nextImage(), 250);
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (activeCard) {
+                activeCard.classList.add('swiping-left');
+                setTimeout(() => prevImage(), 250);
+            }
+        });
+
+        // Soporte para teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                document.getElementById('nextBtn').click();
+            } else if (e.key === 'ArrowLeft') {
+                document.getElementById('prevBtn').click();
+            }
+        });
+
+        // Animación de textos overlay
+        function animateOverlayWords() {
+            const words = document.querySelectorAll('.overlay-word');
+            let currentWordIndex = 0;
+
+            function showNextWord() {
+                // Desvanecer la palabra actual
+                words.forEach(word => {
+                    if (word.classList.contains('active')) {
+                        word.classList.remove('active');
+                        word.classList.add('fading');
+                    }
+                });
+
+                // Mostrar la siguiente palabra
+                setTimeout(() => {
+                    words.forEach(word => word.classList.remove('fading'));
+                    words[currentWordIndex].classList.add('active');
+                    currentWordIndex = (currentWordIndex + 1) % words.length;
+                }, 600);
+            }
+
+            // Mostrar primera palabra inmediatamente
+            words[0].classList.add('active');
+            currentWordIndex = 1;
+
+            // Ciclo de animación
+            setInterval(showNextWord, 4000);
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            initGallery();
+            animateOverlayWords();
+        });
+
+        // Fade-in blanco al entrar
+        window.addEventListener('load', function() {
+            var overlay = document.getElementById('entryWhiteOverlay');
+            if (overlay) {
+                setTimeout(function() {
+                    overlay.style.opacity = '0';
+                    setTimeout(function() {
+                        overlay.parentNode && overlay.parentNode.removeChild(overlay);
+                    }, 380);
+                }, 10);
+            }
+        });
+
+        // Overlay fade blanco al hacer click en el logo
+        document.addEventListener('DOMContentLoaded', function() {
+            var logoLink = document.querySelector('a.logo');
+            if (logoLink) {
+                logoLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Fade out del audio
+                    const noiseSound = document.getElementById('noiseSound');
+                    const whispersSound = document.getElementById('whispersSound');
+                    const fadeDuration = 300;
+                    const startTime = performance.now();
+                    
+                    function fadeOutAudio() {
+                        const elapsed = performance.now() - startTime;
+                        const progress = Math.min(1, elapsed / fadeDuration);
+                        const eased = 1 - Math.pow(1 - progress, 3);
+                        const volume = 1 - eased;
+                        
+                        if (noiseSound && window.noiseGain) {
+                            window.noiseGain.gain.value *= volume;
+                        }
+                        
+                        if (whispersSound && window.whispersGain) {
+                            window.whispersGain.gain.value *= volume;
+                        }
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(fadeOutAudio);
+                        } else {
+                            if (noiseSound) noiseSound.pause();
+                            if (whispersSound) whispersSound.pause();
+                        }
+                    }
+                    
+                    fadeOutAudio();
+                    
+                    // Crear overlay blanco
+                    var overlay = document.createElement('div');
+                    overlay.style.position = 'fixed';
+                    overlay.style.top = '0';
+                    overlay.style.left = '0';
+                    overlay.style.width = '100vw';
+                    overlay.style.height = '100vh';
+                    overlay.style.background = '#fff';
+                    overlay.style.zIndex = '250000';
+                    overlay.style.pointerEvents = 'auto';
+                    overlay.style.transition = 'opacity 0.38s cubic-bezier(.77,0,.18,1)';
+                    overlay.style.opacity = '0';
+                    document.body.appendChild(overlay);
+                    void overlay.offsetWidth;
+                    overlay.style.opacity = '1';
+                    
+                    setTimeout(function() {
+                        window.location.href = logoLink.href;
+                    }, 320);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
