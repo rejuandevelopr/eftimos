@@ -522,7 +522,7 @@ let gridRows = Math.ceil(totalImages / gridColumns);
 let windowWidth = window.innerWidth;
 let windowHeight = window.innerHeight;
 let centerX = windowWidth / 2;
-let centerY = windowHeight / 2;
+let centerY = windowHeight / 2 - 80; // Subido 80px para centrar mejor el enfoque
 
 let bufferX = windowWidth * bufferPercent;
 let bufferY = windowHeight * bufferPercent;

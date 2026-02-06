@@ -73,9 +73,9 @@
 
         .gallery-container {
             position: fixed;
-            top: 50%;
+            top: 72%;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -72%);
             width: 100vw;
             height: 80vh;
             max-height: 80vh;
@@ -191,7 +191,7 @@
             padding: 0.8rem 1.5rem;
             background: rgba(0,0,0,0.8);
             color: #fff;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
             font-size: 0.9rem;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -204,7 +204,7 @@
         /* Controles de navegación */
         .gallery-controls {
             position: absolute;
-            bottom: -80px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -320,20 +320,20 @@
             max-width: 800px;
             margin: 0 auto;
             color: #fff;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
             font-size: 0.95rem;
             line-height: 1.8;
             letter-spacing: 0.5px;
             text-align: center;
             opacity: 0.8;
         }
-    transition: opacity 0.4s ease, transform 0.4s ease;
-        }
+
 
         .progress-indicator.hidden {
             opacity: 0;
             transform: translate(20px, -50%);
-        
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
         /* Indicador de progreso */
         .progress-indicator {
             position: fixed;
@@ -556,12 +556,26 @@
     <script>
         // Configuración de la galería - Aquí puedes agregar tus propias imágenes BTS
         const galleryImages = [
-            { src: 'assets/images/runway-page/LOOK 1.JPG', caption: 'BTS 1' },
-            { src: 'assets/images/runway-page/LOOK 2.JPG', caption: 'BTS 2' },
-            { src: 'assets/images/runway-page/LOOK 3.JPG', caption: 'BTS 3' },
-            { src: 'assets/images/runway-page/LOOK 4.JPG', caption: 'BTS 4' },
-            { src: 'assets/images/runway-page/LOOK 5.JPG', caption: 'BTS 5' },
-            { src: 'assets/images/runway-page/LOOK 6.JPG', caption: 'BTS 6' }
+            { src: 'assets/images/bts-resiliance/eaftimosbts1511.jpg', caption: 'Behind The Scenes 1' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1512.jpg', caption: 'Behind The Scenes 2' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1513.jpg', caption: 'Behind The Scenes 3' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1514.jpg', caption: 'Behind The Scenes 4' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1515.jpg', caption: 'Behind The Scenes 5' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1516.jpg', caption: 'Behind The Scenes 6' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1517.jpg', caption: 'Behind The Scenes 7' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1518.jpg', caption: 'Behind The Scenes 8' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1519.jpg', caption: 'Behind The Scenes 9' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1520.jpg', caption: 'Behind The Scenes 10' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1521.jpg', caption: 'Behind The Scenes 11' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1522.jpg', caption: 'Behind The Scenes 12' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1523.jpg', caption: 'Behind The Scenes 13' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1524.jpg', caption: 'Behind The Scenes 14' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1525.jpg', caption: 'Behind The Scenes 15' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1526.jpg', caption: 'Behind The Scenes 16' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1528.jpg', caption: 'Behind The Scenes 17' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1529.jpg', caption: 'Behind The Scenes 18' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1530.jpg', caption: 'Behind The Scenes 19' },
+            { src: 'assets/images/bts-resiliance/eaftimosbts1531.jpg', caption: 'Behind The Scenes 20' }
         ];
 
         let currentIndex = 0;
@@ -731,7 +745,18 @@
         let velocity = 0;
         let momentumAnimationId = null;
         let virtualPosition = 0; // Posición virtual continua del carrusel
+        let transitionRemoved = false; // Flag para controlar cuándo quitar transiciones
         const galleryWrapper = document.querySelector('.gallery-wrapper');
+                // Mouse wheel navigation for carousel
+        galleryWrapper.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            let delta = e.deltaY || e.deltaX || 0;
+            if (delta > 0) {
+                nextImage();
+            } else if (delta < 0) {
+                prevImage();
+            }
+        }, { passive: false });
         const FRICTION = 0.92; // Fricción (0.95 = muy suave, 0.85 = más fricción)
         const MIN_VELOCITY = 0.5; // Velocidad mínima antes de detener
 
@@ -742,12 +767,21 @@
             lastX = e.clientX;
             lastTime = Date.now();
             velocity = 0;
+            dragOffset = 0;
+            transitionRemoved = false;
             
             // Cancelar cualquier animación de momentum activa
             if (momentumAnimationId) {
                 cancelAnimationFrame(momentumAnimationId);
                 momentumAnimationId = null;
+                virtualPosition = 0;
             }
+            
+            // Activar transiciones INMEDIATAMENTE para entrada suave
+            const cards = document.querySelectorAll('.gallery-card');
+            cards.forEach(card => {
+                card.style.transition = 'transform 0.2s ease-out, filter 0.2s ease-out, opacity 0.2s ease-out, z-index 0s';
+            });
             
             galleryWrapper.style.cursor = 'grabbing';
             e.preventDefault();
@@ -759,13 +793,23 @@
             const currentTime = Date.now();
             const deltaTime = currentTime - lastTime;
             const deltaX = e.clientX - lastX;
+            const newDragOffset = e.clientX - startX;
+            
+            // Después de 40px de movimiento, quitar transiciones para drag fluido
+            if (!transitionRemoved && Math.abs(newDragOffset) > 40) {
+                const cards = document.querySelectorAll('.gallery-card');
+                cards.forEach(card => {
+                    card.style.transition = 'none';
+                });
+                transitionRemoved = true;
+            }
             
             // Calcular velocidad instantánea
             if (deltaTime > 0) {
-                velocity = deltaX / deltaTime * 16; // Normalizar a 60fps
+                velocity = deltaX / deltaTime * 16;
             }
             
-            dragOffset = e.clientX - startX;
+            dragOffset = newDragOffset;
             lastX = e.clientX;
             lastTime = currentTime;
             
@@ -786,11 +830,20 @@
             lastX = e.touches[0].clientX;
             lastTime = Date.now();
             velocity = 0;
+            dragOffset = 0;
+            transitionRemoved = false;
             
             if (momentumAnimationId) {
                 cancelAnimationFrame(momentumAnimationId);
                 momentumAnimationId = null;
+                virtualPosition = 0;
             }
+            
+            // Activar transiciones INMEDIATAMENTE para entrada suave
+            const cards = document.querySelectorAll('.gallery-card');
+            cards.forEach(card => {
+                card.style.transition = 'transform 0.2s ease-out, filter 0.2s ease-out, opacity 0.2s ease-out, z-index 0s';
+            });
         });
 
         galleryWrapper.addEventListener('touchmove', (e) => {
@@ -799,12 +852,22 @@
             const currentTime = Date.now();
             const deltaTime = currentTime - lastTime;
             const deltaX = e.touches[0].clientX - lastX;
+            const newDragOffset = e.touches[0].clientX - startX;
+            
+            // Después de 40px de movimiento, quitar transiciones para drag fluido
+            if (!transitionRemoved && Math.abs(newDragOffset) > 40) {
+                const cards = document.querySelectorAll('.gallery-card');
+                cards.forEach(card => {
+                    card.style.transition = 'none';
+                });
+                transitionRemoved = true;
+            }
             
             if (deltaTime > 0) {
                 velocity = deltaX / deltaTime * 16;
             }
             
-            dragOffset = e.touches[0].clientX - startX;
+            dragOffset = newDragOffset;
             lastX = e.touches[0].clientX;
             lastTime = currentTime;
             
@@ -822,6 +885,11 @@
         function applyDragOffset() {
             const cards = document.querySelectorAll('.gallery-card');
             const totalImages = galleryImages.length;
+            
+            // Si el dragOffset es muy pequeño, no aplicar cambios para evitar pop
+            if (Math.abs(dragOffset) < 2) {
+                return;
+            }
             
             // Calcular cuántas "posiciones" nos hemos movido (puede ser fraccionario)
             const dragProgress = dragOffset / 380; // 380 es la separación entre tarjetas
@@ -881,7 +949,6 @@
                 card.style.filter = `blur(${blur}px) brightness(${brightness})`;
                 card.style.opacity = opacity;
                 card.style.zIndex = zIndex;
-                card.style.transition = 'none';
             });
         }
 
@@ -980,24 +1047,45 @@
         // Hacer snap al elemento más cercano
         function snapToNearest() {
             const cards = document.querySelectorAll('.gallery-card');
-            cards.forEach(card => card.style.transition = '');
+            const totalImages = galleryImages.length;
             
-            // Calcular cuántos pasos completos hemos avanzado
-            // CAMBIO DE SIGNO: invertimos para que coincida con la dirección correcta
-            const steps = Math.round(virtualPosition / 380);
+            // Calcular la distancia virtual desde currentIndex en "unidades de imagen"
+            const virtualImageOffset = virtualPosition / 380;
             
-            if (steps !== 0) {
-                // Actualizar el índice según los pasos
-                const totalImages = galleryImages.length;
-                currentIndex = (currentIndex + steps % totalImages + totalImages) % totalImages;
+            // Encontrar qué imagen está más cerca del centro (distancia 0)
+            let minDistance = Infinity;
+            let bestIndex = currentIndex;
+            
+            for (let i = 0; i < totalImages; i++) {
+                // Calcular la distancia de esta imagen desde el centro considerando el offset virtual
+                let dist = i - currentIndex + virtualImageOffset;
+                
+                // Normalizar a distancia circular más corta
+                while (dist > totalImages / 2) dist -= totalImages;
+                while (dist < -totalImages / 2) dist += totalImages;
+                
+                const absDist = Math.abs(dist);
+                
+                if (absDist < minDistance) {
+                    minDistance = absDist;
+                    bestIndex = i;
+                }
             }
+            
+            // Actualizar al índice más cercano
+            currentIndex = bestIndex;
             
             // Resetear variables
             dragOffset = 0;
             virtualPosition = 0;
             velocity = 0;
             
-            // Actualizar a la posición final
+            // Restaurar transiciones y actualizar al estado final
+            cards.forEach(card => {
+                card.style.transition = 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), z-index 0s';
+            });
+            
+            // Actualizar a la posición final con animación
             updateCarousel();
         }
 
@@ -1110,6 +1198,9 @@
             }
         });
     </script>
+
+    <!-- Camera Refocus Effect -->
+    <script src="assets/js/camera-refocus.js"></script>
 </body>
 
 </html>

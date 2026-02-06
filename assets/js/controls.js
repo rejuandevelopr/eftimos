@@ -386,11 +386,14 @@ function initializeControls() {
             if (!whispersGain) return;
             // Si estamos en fade out, no tocar el volumen
             if (isFadingOut) return;
-            
+
             // Interpolación suave hacia el target (por si cambia por hover, etc)
             whispersCurrentVolume += (whispersTargetVolume - whispersCurrentVolume) * 0.08;
             let finalVol;
-            if (whispersModulationEnabled) {
+            // Si el target es 0, forzar el gain a 0 sin modulación
+            if (whispersTargetVolume === 0) {
+                finalVol = 0;
+            } else if (whispersModulationEnabled) {
                 // Oscilación suave y random
                 whispersModulationPhase += whispersModulationSpeed * (0.8 + Math.random() * 0.4);
                 // Suma de dos senos para hacerlo menos predecible
