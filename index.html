@@ -35,7 +35,8 @@
         <div class="preloader-content preloader-sober">
             <!-- Logo de la marca -->
             <div class="preloader-logo">
-                <img src="assets/images/logo.png" alt="Eaftimos Logo" id="sharedLogoPreloader" width="150" height="auto" draggable="false" style="display:block; max-width: 150px;" />
+                <img src="assets/images/logo.png" alt="Eaftimos Logo" id="sharedLogoPreloader" width="150" height="auto"
+                    draggable="false" style="display:block; max-width: 150px;" />
             </div>
             <div class="preloader-bar-container">
                 <div class="preloader-bar-bg hard-corner">
@@ -46,15 +47,19 @@
             <div class="preloader-toggles-bottom">
                 <div class="sidebar-control-buttons">
                     <button class="sidebar-control-btn" id="preloaderVisualToggle" title="Toggle Visual Effects">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                             <circle class="eye-open" cx="12" cy="12" r="3"></circle>
-                            <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" stroke-linecap="round"></line>
+                            <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23"
+                                stroke-linecap="round"></line>
                         </svg>
                     </button>
                     <button class="sidebar-control-btn" id="preloaderSoundToggle" title="Toggle Audio">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                            <path class="speaker-on" d="M3 9v6c0 1.105.895 2 2 2h4l5 5V4H9c-1.105 0-2 .895-2 2v3z"></path>
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path class="speaker-on" d="M3 9v6c0 1.105.895 2 2 2h4l5 5V4H9c-1.105 0-2 .895-2 2v3z">
+                            </path>
                             <path class="speaker-on" d="M17.5 3.5a4 4 0 0 1 0 5.66M19.07 4.93a8 8 0 0 1 0 11.31"></path>
                             <path class="speaker-off" style="display:none;" d="M11 5L6 9H2v6h4l5 5V5z"></path>
                             <line class="speaker-off" style="display:none;" x1="23" y1="9" x2="17" y2="15"></line>
@@ -64,7 +69,8 @@
                 </div>
                 <span class="control-status-message" id="preloaderNotification"></span>
             </div>
-            <button id="preloaderEnterBtn" class="preloader-enter-btn hard-corner" disabled style="display:none;">Enter</button>
+            <button id="preloaderEnterBtn" class="preloader-enter-btn hard-corner" disabled
+                style="display:none;">Enter</button>
         </div>
     </div>
     <!-- Grain Canvas -->
@@ -86,25 +92,29 @@
     <nav class="blending-item">
         <div class="nav-container">
             <!-- Menu Hamburguesa -->
-            <div class="menu-toggle" id="menuToggle" style="opacity:0; pointer-events:none; transition:opacity 0.7s cubic-bezier(.77,0,.18,1);">
+            <div class="menu-toggle" id="menuToggle"
+                style="opacity:0; pointer-events:none; transition:opacity 0.7s cubic-bezier(.77,0,.18,1);">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
             <!-- Logo compartido con preloader -->
             <a href="index.html" class="logo shared-logo" data-shape="circle">
-                <img src="assets/images/logo-white.png" alt="Eaftimos Logo" id="sharedLogo" width="150" height="auto" draggable="false">
+                <img src="assets/images/logo-white.png" alt="Eaftimos Logo" id="sharedLogo" width="150" height="auto"
+                    draggable="false">
             </a>
         </div>
-        
+
         <!-- Menú Desplegable -->
         <div class="dropdown-menu" id="dropdownMenu">
             <div class="menu-links">
-                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer" class="dropdown-link">SHOP</a>
-                <div class="dropdown-item-with-submenu">
+                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer"
+                    class="dropdown-link">SHOP</a>
+                <div class="dropdown-item-with-submenu" style="display:none;">
                     <button class="dropdown-link dropdown-toggle" id="collectionsToggle">
                         COLLECTIONS
-                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"
+                            stroke="currentColor" stroke-width="2">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </button>
@@ -115,23 +125,27 @@
                 </div>
                 <button class="dropdown-link" id="contactBtn">CONTACT</button>
             </div>
-            
+
             <!-- Control Icons in Sidebar -->
             <div class="sidebar-controls">
                 <div class="sidebar-control-buttons">
                     <button class="sidebar-control-btn" id="visualToggle" title="Toggle Visual Effects">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <!-- Icono de ojo abierto -->
                             <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                             <circle class="eye-open" cx="12" cy="12" r="3"></circle>
                             <!-- Icono de ojo cerrado (oculto inicialmente) -->
-                            <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" stroke-linecap="round"></line>
+                            <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23"
+                                stroke-linecap="round"></line>
                         </svg>
                     </button>
                     <button class="sidebar-control-btn" id="audioToggle" title="Toggle Audio">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <!-- Altavoz abierto -->
-                            <path class="speaker-on" d="M3 9v6c0 1.105.895 2 2 2h4l5 5V4H9c-1.105 0-2 .895-2 2v3z"></path>
+                            <path class="speaker-on" d="M3 9v6c0 1.105.895 2 2 2h4l5 5V4H9c-1.105 0-2 .895-2 2v3z">
+                            </path>
                             <path class="speaker-on" d="M17.5 3.5a4 4 0 0 1 0 5.66M19.07 4.93a8 8 0 0 1 0 11.31"></path>
                             <!-- Altavoz mudo (oculto inicialmente) -->
                             <path class="speaker-off" style="display:none;" d="M11 5L6 9H2v6h4l5 5V5z"></path>
@@ -158,6 +172,16 @@
                     <input type="email" id="email" name="email" placeholder="EMAIL" required>
                 </div>
                 <div class="form-group">
+                    <select id="queryType" name="queryType" required>
+                        <option value="" disabled selected>TIPO DE CONSULTA</option>
+                        <option value="Ropa a medida">Ropa a medida</option>
+                        <option value="Estilismo">Estilismo</option>
+                        <option value="Prensa">Prensa</option>
+                        <option value="Redes sociales">Redes sociales</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required></textarea>
                 </div>
                 <button type="submit" class="submit-btn">SEND</button>
@@ -171,31 +195,35 @@
         <!-- Todos los elementos del mapa llevan a clothes-view.html -->
         <div class="image-template initial-center">
             <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-6.webp" alt="Featured Fashion Collection" width="170" height="170">
-                <span class="tooltip">ATELIER</span>
+                <img src="assets/images/g-6.webp" alt="TEAM" width="170" height="170">
+                <span class="tooltip">TEAM</span>
             </a>
         </div>
         <div class="image-template">
             <a href="origin.html" class="image-link">
-                <img src="assets/images/origin-page/origin-n5.JPG" alt="Fashion Mountain Collection" loading="lazy" width="170" height="170">
+                <img src="assets/images/origin-page/origin-n5.JPG" alt="Fashion Mountain Collection" loading="lazy"
+                    width="170" height="170">
                 <span class="tooltip">ORIGIN</span>
             </a>
         </div>
         <div class="image-template">
             <a href="clothes-view.html" class="image-link">
-                <img src="assets/images/g-20.avif" alt="Fashion Collection Winter" loading="lazy" width="170" height="170">
-                <span class="tooltip">TEAM</span>
+                <img src="assets/images/g-5.webp" alt="Fashion Collection Winter" loading="lazy" width="170"
+                    height="170">
+                <span class="tooltip">ATELIER</span>
             </a>
         </div>
         <div class="image-template">
             <a href="gallery-view.html" class="image-link">
-                <img src="assets/images/g-2.webp" alt="Fashion Nature Collection" loading="lazy" width="170" height="170">
+                <img src="assets/images/g-2.webp" alt="Fashion Nature Collection" loading="lazy" width="170"
+                    height="170">
                 <span class="tooltip">RESiLiENCE AW24 COLLECTION</span>
             </a>
         </div>
         <div class="image-template">
             <a href="bts.html" class="image-link">
-                <img src="assets/images/bts-resiliance/eaftimosbts1499.jpg" alt="Behind The Scenes" loading="lazy" width="170" height="170">
+                <img src="assets/images/bts-resiliance/eaftimosbts1499.jpg" alt="Behind The Scenes" loading="lazy"
+                    width="170" height="170">
                 <span class="tooltip">RESiLiENCE AW24 BTS</span>
             </a>
         </div>
@@ -206,13 +234,15 @@
         </div>
         <div class="image-template">
             <a href="about-us.html" class="image-link">
-                <img src="assets/images/vision-page/vision-n3.jpg" alt="Fashion Winter Collection" loading="lazy" width="170" height="170">
+                <img src="assets/images/vision-page/vision-n3.jpg" alt="Fashion Winter Collection" loading="lazy"
+                    width="170" height="170">
                 <span class="tooltip">VISION</span>
             </a>
         </div>
-                <div class="image-template">
-            <a href="about-us.html" class="image-link">
-                <img src="assets/images/press-page/press.webp" alt="Fashion Winter Collection" loading="lazy" width="170" height="170">
+        <div class="image-template">
+            <a href="press.html" class="image-link">
+                <img src="assets/images/press-page/press.webp" alt="Fashion Winter Collection" loading="lazy"
+                    width="170" height="170">
                 <span class="tooltip">PRESS</span>
             </a>
         </div>
@@ -225,13 +255,14 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Sonidos -->
     <audio id="noiseSound" src="assets/sounds/white-noise.mp3" preload="auto" loop></audio>
     <audio id="whispersSound" src="assets/sounds/whispers.mp3" preload="auto" loop></audio>
     <audio id="lockedInSound" src="assets/sounds/locked-in-oneself.mp3" preload="auto"></audio>
 
     <!-- Load scripts with defer for better performance -->
+    <script defer src="assets/js/performance-monitor.js"></script>
     <script defer src="assets/js/ui-sounds.js"></script>
     <script defer src="assets/js/script.js"></script>
     <script defer src="assets/js/controls.js?v=20260205"></script>
@@ -239,241 +270,242 @@
     <script defer src="assets/js/cursor-effect.js"></script>
     <script defer src="assets/js/grain-effect.js?v=20260206"></script>
     <script defer src="assets/js/tooltip-nebula.js"></script>
+    <script defer src="assets/js/contact-nebula.js"></script>
     <script defer src="assets/js/perspective-distortion.js"></script>
     <script defer src="assets/js/reveal-text.js"></script>
 
     <script>
-    (function() {
-        // --- WHISPERS SOUND LOGIC ---
-        const whispersSound = document.getElementById('whispersSound');
-        if (whispersSound) {
-            const BASE_VOLUME = 0.04;
-            const HOVER_VOLUME = 0.10;
-            const TRANSITION_STEPS = 20;
-            let isPlaying = false;
-            let volumeTransitionInterval = null;
-            let volumeMonitorInterval = null;
-            let targetVolume = BASE_VOLUME;
-            let canPlayAudio = false; // No reproducir hasta que el preloader termine
-            
-            function smoothVolumeTransition(target, duration = 300) {
-                if (volumeTransitionInterval) {
-                    clearInterval(volumeTransitionInterval);
-                }
-                const startVolume = whispersSound.volume;
-                const volumeDiff = target - startVolume;
-                const stepDuration = duration / TRANSITION_STEPS;
-                let currentStep = 0;
-                volumeTransitionInterval = setInterval(() => {
-                    currentStep++;
-                    const progress = currentStep / TRANSITION_STEPS;
-                    const easeProgress = progress < 0.5 
-                        ? 2 * progress * progress 
-                        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-                    whispersSound.volume = startVolume + (volumeDiff * easeProgress);
-                    if (currentStep >= TRANSITION_STEPS) {
-                        clearInterval(volumeTransitionInterval);
-                        volumeTransitionInterval = null;
-                        whispersSound.volume = target;
-                        targetVolume = target;
-                    }
-                }, stepDuration);
-            }
-            function startWhispers() {
-                if (isPlaying || !canPlayAudio) return; // Solo si el preloader terminó
-                whispersSound.volume = BASE_VOLUME;
-                whispersSound.muted = false;
-                targetVolume = BASE_VOLUME;
-                whispersSound.play().then(() => {
-                    isPlaying = true;
-                    volumeMonitorInterval = setInterval(() => {
-                        if (isPlaying && !volumeTransitionInterval && whispersSound.volume !== targetVolume) {
-                            whispersSound.volume = targetVolume;
-                        }
-                    }, 100);
-                }).catch(() => {});
-            }
-            
-            // Escuchar cuando el preloader termine
-            window.addEventListener('preloaderFinished', () => {
-                canPlayAudio = true;
-                console.log('[AUDIO] Preloader finished');
-                // El audio ya fue iniciado en el click del botón Enter
-            });
-            
-            window.addEventListener('tooltipShown', () => {
-                if (canPlayAudio) smoothVolumeTransition(HOVER_VOLUME, 400);
-            });
-            window.addEventListener('tooltipHidden', () => {
-                if (canPlayAudio) smoothVolumeTransition(BASE_VOLUME, 500);
-            });
-            document.addEventListener('click', (e) => {
-                if (e.target.closest('.image-link') && isPlaying) {
-                    smoothVolumeTransition(0, 400);
-                }
-            });
-        }
+        (function () {
+            // --- WHISPERS SOUND LOGIC ---
+            const whispersSound = document.getElementById('whispersSound');
+            if (whispersSound) {
+                const BASE_VOLUME = 0.04;
+                const HOVER_VOLUME = 0.10;
+                const TRANSITION_STEPS = 20;
+                let isPlaying = false;
+                let volumeTransitionInterval = null;
+                let volumeMonitorInterval = null;
+                let targetVolume = BASE_VOLUME;
+                let canPlayAudio = false; // No reproducir hasta que el preloader termine
 
-        // --- AUDIO RELIABILITY SYSTEM ---
-        // El audio se inicia directamente en el click del botón Enter del preloader
-        // No se necesitan funciones adicionales de inicialización
-        
-        // --- PRELOADER FADE LOGIC ---
-        function showBackground() {
-            document.getElementById('videos-background').style.visibility = '';
-            document.getElementById('grainCanvas').style.visibility = '';
-        }
-        function fadeOutPreloader() {
-            const preloader = document.getElementById('preloader');
-            preloader.style.transition = 'opacity 0.4s cubic-bezier(0.4, 0, 1, 1)';
-            preloader.style.opacity = '0';
-            setTimeout(() => {
-                preloader.style.display = 'none';
-            }, 450);
-        }
-        // Mostrar fondo al cargar, pero mantener preloader visible
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                showBackground();
-                
-                // Verificar si el preloader ya fue mostrado antes
-                const preloaderShown = localStorage.getItem('eftimosPreloaderShown') === '1';
-                
-                if (preloaderShown) {
-                    // Si ya se mostró el preloader, marcar flag pero NO iniciar audio aún
-                    // El audio se iniciará con la primera interacción del usuario
-                    window.preloaderEnterPressed = true;
-                    console.log('[LOAD] Preloader already shown, audio will start on first interaction');
-                } else {
-                    // Mostrar el botón Enter cuando todo esté listo
-                    var enterBtn = document.getElementById('preloaderEnterBtn');
-                    if (enterBtn) {
-                        enterBtn.disabled = false;
-                        enterBtn.style.display = '';
-                        enterBtn.focus();
+                function smoothVolumeTransition(target, duration = 300) {
+                    if (volumeTransitionInterval) {
+                        clearInterval(volumeTransitionInterval);
                     }
+                    const startVolume = whispersSound.volume;
+                    const volumeDiff = target - startVolume;
+                    const stepDuration = duration / TRANSITION_STEPS;
+                    let currentStep = 0;
+                    volumeTransitionInterval = setInterval(() => {
+                        currentStep++;
+                        const progress = currentStep / TRANSITION_STEPS;
+                        const easeProgress = progress < 0.5
+                            ? 2 * progress * progress
+                            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                        whispersSound.volume = startVolume + (volumeDiff * easeProgress);
+                        if (currentStep >= TRANSITION_STEPS) {
+                            clearInterval(volumeTransitionInterval);
+                            volumeTransitionInterval = null;
+                            whispersSound.volume = target;
+                            targetVolume = target;
+                        }
+                    }, stepDuration);
                 }
-            }, 200);
-        });
-        
-        // Event listener del botón Enter con animación completa
-        var enterBtn = document.getElementById('preloaderEnterBtn');
-        if (enterBtn) {
-            enterBtn.addEventListener('click', function() {
-                // Establecer flag para permitir audio
-                window.preloaderEnterPressed = true;
-                
-                // Obtener el estado del toggle de audio del preloader
-                const soundEnabled = localStorage.getItem('audioEnabled') !== 'false';
-                
-                // Reproducir sonidos si está habilitado
-                if (soundEnabled) {
-                    console.log('[PRELOADER] Enter pressed, initializing audio...');
-                    
-                    // Asegurar que los filtros estén configurados
-                    if (typeof window.setupAudioFiltersExternal === 'function') {
-                        window.setupAudioFiltersExternal();
-                    }
-                    
-                    // Reproducir locked-in sound
-                    const lockedInSound = document.getElementById('lockedInSound');
-                    if (lockedInSound) {
-                        lockedInSound.muted = false;
-                        lockedInSound.volume = 0.3;
-                        lockedInSound.play().catch(() => {});
-                    }
-                    
-                    // Iniciar white-noise directamente
-                    const noiseSound = document.getElementById('noiseSound');
-                    if (noiseSound) {
-                        noiseSound.muted = false;
-                        noiseSound.loop = false;
-                        noiseSound.volume = 1; // Controlado por gain node
-                        
-                        noiseSound.play().then(() => {
-                            console.log('[PRELOADER] ✓ White-noise started');
-                            // Iniciar sistema de crossfade
-                            if (typeof window.startCrossfadeLoop === 'function' && window.noiseCrossfadeSystem) {
-                                window.startCrossfadeLoop(window.noiseCrossfadeSystem, noiseSound, true);
+                function startWhispers() {
+                    if (isPlaying || !canPlayAudio) return; // Solo si el preloader terminó
+                    whispersSound.volume = BASE_VOLUME;
+                    whispersSound.muted = false;
+                    targetVolume = BASE_VOLUME;
+                    whispersSound.play().then(() => {
+                        isPlaying = true;
+                        volumeMonitorInterval = setInterval(() => {
+                            if (isPlaying && !volumeTransitionInterval && whispersSound.volume !== targetVolume) {
+                                whispersSound.volume = targetVolume;
                             }
-                        }).catch(e => {
-                            console.error('[PRELOADER] ✗ White-noise failed:', e.message);
-                        });
-                    }
-                    
-                    // Iniciar whispers directamente
-                    const whispersSound = document.getElementById('whispersSound');
-                    if (whispersSound) {
-                        whispersSound.muted = false;
-                        whispersSound.loop = false;
-                        whispersSound.volume = 1; // Controlado por gain node
-                        
-                        whispersSound.play().then(() => {
-                            console.log('[PRELOADER] ✓ Whispers started');
-                            // Iniciar sistema de crossfade
-                            if (typeof window.startCrossfadeLoop === 'function' && window.whispersCrossfadeSystem) {
-                                window.startCrossfadeLoop(window.whispersCrossfadeSystem, whispersSound, false);
-                            }
-                        }).catch(e => {
-                            console.error('[PRELOADER] ✗ Whispers failed:', e.message);
-                        });
-                    }
+                        }, 100);
+                    }).catch(() => { });
                 }
-                
-                // Aplicar preferencias globales
-                window.soundEnabled = soundEnabled;
-                window.visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') !== 'false';
-                document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
-                
+
+                // Escuchar cuando el preloader termine
+                window.addEventListener('preloaderFinished', () => {
+                    canPlayAudio = true;
+                    console.log('[AUDIO] Preloader finished');
+                    // El audio ya fue iniciado en el click del botón Enter
+                });
+
+                window.addEventListener('tooltipShown', () => {
+                    if (canPlayAudio) smoothVolumeTransition(HOVER_VOLUME, 400);
+                });
+                window.addEventListener('tooltipHidden', () => {
+                    if (canPlayAudio) smoothVolumeTransition(BASE_VOLUME, 500);
+                });
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('.image-link') && isPlaying) {
+                        smoothVolumeTransition(0, 400);
+                    }
+                });
+            }
+
+            // --- AUDIO RELIABILITY SYSTEM ---
+            // El audio se inicia directamente en el click del botón Enter del preloader
+            // No se necesitan funciones adicionales de inicialización
+
+            // --- PRELOADER FADE LOGIC ---
+            function showBackground() {
+                document.getElementById('videos-background').style.visibility = '';
+                document.getElementById('grainCanvas').style.visibility = '';
+            }
+            function fadeOutPreloader() {
                 const preloader = document.getElementById('preloader');
-                
-                // Animar el logo y el preloader simultáneamente
-                var preloaderLogo = document.querySelector('.preloader-logo img');
-                if (preloaderLogo) {
-                    preloaderLogo.style.position = 'relative';
-                    preloaderLogo.style.zIndex = '10';
-                    preloaderLogo.style.animation = 'preloaderLogoAscend 0.8s cubic-bezier(.2,.9,.2,1) forwards';
-                }
-                
-                // Iniciar fade-out del preloader al mismo tiempo
-                preloader.style.transition = 'opacity 0.8s cubic-bezier(.77,0,.18,1)';
+                preloader.style.transition = 'opacity 0.4s cubic-bezier(0.4, 0, 1, 1)';
                 preloader.style.opacity = '0';
-                
-                // Mostrar hamburguesa y logo compartido
-                var menuToggle = document.getElementById('menuToggle');
-                var sharedLogo = document.getElementById('sharedLogo');
-                if (menuToggle) {
-                    menuToggle.style.opacity = '1';
-                    menuToggle.style.pointerEvents = 'auto';
-                }
-                if (sharedLogo) {
-                    sharedLogo.style.opacity = '1';
-                    sharedLogo.style.transition = 'opacity 0.7s cubic-bezier(.77,0,.18,1)';
-                }
-                
-                document.body.classList.remove('preloader-active');
-                
-                // Ocultar completamente después de que termine la animación
                 setTimeout(() => {
                     preloader.style.display = 'none';
-                    localStorage.setItem('eftimosPreloaderShown', '1');
-                    window.dispatchEvent(new Event('preloaderFinished'));
-                }, 900);
-            });
-        }
-        
-        // Permitir presionar Enter desde teclado
-        document.addEventListener('keydown', function(e) {
-            if ((e.key === 'Enter' || e.keyCode === 13) && document.getElementById('preloader').style.opacity !== '0') {
-                var btn = document.getElementById('preloaderEnterBtn');
-                if (btn && !btn.disabled && btn.style.display !== 'none') {
-                    btn.click();
-                }
+                }, 450);
             }
-        });
-    })();
+            // Mostrar fondo al cargar, pero mantener preloader visible
+            window.addEventListener('load', function () {
+                setTimeout(() => {
+                    showBackground();
+
+                    // Verificar si el preloader ya fue mostrado antes
+                    const preloaderShown = localStorage.getItem('eftimosPreloaderShown') === '1';
+
+                    if (preloaderShown) {
+                        // Si ya se mostró el preloader, marcar flag pero NO iniciar audio aún
+                        // El audio se iniciará con la primera interacción del usuario
+                        window.preloaderEnterPressed = true;
+                        console.log('[LOAD] Preloader already shown, audio will start on first interaction');
+                    } else {
+                        // Mostrar el botón Enter cuando todo esté listo
+                        var enterBtn = document.getElementById('preloaderEnterBtn');
+                        if (enterBtn) {
+                            enterBtn.disabled = false;
+                            enterBtn.style.display = '';
+                            enterBtn.focus();
+                        }
+                    }
+                }, 200);
+            });
+
+            // Event listener del botón Enter con animación completa
+            var enterBtn = document.getElementById('preloaderEnterBtn');
+            if (enterBtn) {
+                enterBtn.addEventListener('click', function () {
+                    // Establecer flag para permitir audio
+                    window.preloaderEnterPressed = true;
+
+                    // Obtener el estado del toggle de audio del preloader
+                    const soundEnabled = localStorage.getItem('audioEnabled') !== 'false';
+
+                    // Reproducir sonidos si está habilitado
+                    if (soundEnabled) {
+                        console.log('[PRELOADER] Enter pressed, initializing audio...');
+
+                        // Asegurar que los filtros estén configurados
+                        if (typeof window.setupAudioFiltersExternal === 'function') {
+                            window.setupAudioFiltersExternal();
+                        }
+
+                        // Reproducir locked-in sound
+                        const lockedInSound = document.getElementById('lockedInSound');
+                        if (lockedInSound) {
+                            lockedInSound.muted = false;
+                            lockedInSound.volume = 0.3;
+                            lockedInSound.play().catch(() => { });
+                        }
+
+                        // Iniciar white-noise directamente
+                        const noiseSound = document.getElementById('noiseSound');
+                        if (noiseSound) {
+                            noiseSound.muted = false;
+                            noiseSound.loop = false;
+                            noiseSound.volume = 1; // Controlado por gain node
+
+                            noiseSound.play().then(() => {
+                                console.log('[PRELOADER] ✓ White-noise started');
+                                // Iniciar sistema de crossfade
+                                if (typeof window.startCrossfadeLoop === 'function' && window.noiseCrossfadeSystem) {
+                                    window.startCrossfadeLoop(window.noiseCrossfadeSystem, noiseSound, true);
+                                }
+                            }).catch(e => {
+                                console.error('[PRELOADER] ✗ White-noise failed:', e.message);
+                            });
+                        }
+
+                        // Iniciar whispers directamente
+                        const whispersSound = document.getElementById('whispersSound');
+                        if (whispersSound) {
+                            whispersSound.muted = false;
+                            whispersSound.loop = false;
+                            whispersSound.volume = 1; // Controlado por gain node
+
+                            whispersSound.play().then(() => {
+                                console.log('[PRELOADER] ✓ Whispers started');
+                                // Iniciar sistema de crossfade
+                                if (typeof window.startCrossfadeLoop === 'function' && window.whispersCrossfadeSystem) {
+                                    window.startCrossfadeLoop(window.whispersCrossfadeSystem, whispersSound, false);
+                                }
+                            }).catch(e => {
+                                console.error('[PRELOADER] ✗ Whispers failed:', e.message);
+                            });
+                        }
+                    }
+
+                    // Aplicar preferencias globales
+                    window.soundEnabled = soundEnabled;
+                    window.visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') !== 'false';
+                    document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
+
+                    const preloader = document.getElementById('preloader');
+
+                    // Animar el logo y el preloader simultáneamente
+                    var preloaderLogo = document.querySelector('.preloader-logo img');
+                    if (preloaderLogo) {
+                        preloaderLogo.style.position = 'relative';
+                        preloaderLogo.style.zIndex = '10';
+                        preloaderLogo.style.animation = 'preloaderLogoAscend 0.8s cubic-bezier(.2,.9,.2,1) forwards';
+                    }
+
+                    // Iniciar fade-out del preloader al mismo tiempo
+                    preloader.style.transition = 'opacity 0.8s cubic-bezier(.77,0,.18,1)';
+                    preloader.style.opacity = '0';
+
+                    // Mostrar hamburguesa y logo compartido
+                    var menuToggle = document.getElementById('menuToggle');
+                    var sharedLogo = document.getElementById('sharedLogo');
+                    if (menuToggle) {
+                        menuToggle.style.opacity = '1';
+                        menuToggle.style.pointerEvents = 'auto';
+                    }
+                    if (sharedLogo) {
+                        sharedLogo.style.opacity = '1';
+                        sharedLogo.style.transition = 'opacity 0.7s cubic-bezier(.77,0,.18,1)';
+                    }
+
+                    document.body.classList.remove('preloader-active');
+
+                    // Ocultar completamente después de que termine la animación
+                    setTimeout(() => {
+                        preloader.style.display = 'none';
+                        localStorage.setItem('eftimosPreloaderShown', '1');
+                        window.dispatchEvent(new Event('preloaderFinished'));
+                    }, 900);
+                });
+            }
+
+            // Permitir presionar Enter desde teclado
+            document.addEventListener('keydown', function (e) {
+                if ((e.key === 'Enter' || e.keyCode === 13) && document.getElementById('preloader').style.opacity !== '0') {
+                    var btn = document.getElementById('preloaderEnterBtn');
+                    if (btn && !btn.disabled && btn.style.display !== 'none') {
+                        btn.click();
+                    }
+                }
+            });
+        })();
     </script>
-    
+
 </body>
 
 </html>

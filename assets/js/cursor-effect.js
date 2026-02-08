@@ -1,5 +1,5 @@
 // Limpieza suave del trail canvas al hacer zoom
-window.smoothClearTrail = function(duration = 400) {
+window.smoothClearTrail = function (duration = 400) {
   if (!window.trailCanvas || !window.trailCtx) return;
   const ctx = window.trailCtx;
   const canvas = window.trailCanvas;
@@ -22,8 +22,8 @@ window.smoothClearTrail = function(duration = 400) {
 
 // Detect if device is mobile/tablet
 function isMobileDevice() {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-    || window.innerWidth <= 1024 
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    || window.innerWidth <= 1024
     || ('ontouchstart' in window);
 }
 
@@ -156,37 +156,37 @@ class Particle {
       return;
     }
 
-  if (shapeMode === "normal") {
-    this.morphRadius += (this.nebulaBaseRadius - this.morphRadius) * 0.05;
-    this.morphAngle += this.nebulaSpeed;
+    if (shapeMode === "normal") {
+      this.morphRadius += (this.nebulaBaseRadius - this.morphRadius) * 0.05;
+      this.morphAngle += this.nebulaSpeed;
 
-    this.targetX += (baseNebulaX - this.targetX) * morphSpeed;
-    this.targetY += (baseNebulaY - this.targetY) * morphSpeed;
-  } else {
-    this.setShapeTarget();
+      this.targetX += (baseNebulaX - this.targetX) * morphSpeed;
+      this.targetY += (baseNebulaY - this.targetY) * morphSpeed;
+    } else {
+      this.setShapeTarget();
 
-    const organicRadius = 1.2;
-    const frequency = 3;
-    const offsetX = Math.cos(this.morphAngle * frequency + this.index) * organicRadius;
-    const offsetY = Math.sin(this.morphAngle * frequency + this.index) * organicRadius;
-    this.shapeTargetX += offsetX;
-    this.shapeTargetY += offsetY;
+      const organicRadius = 1.2;
+      const frequency = 3;
+      const offsetX = Math.cos(this.morphAngle * frequency + this.index) * organicRadius;
+      const offsetY = Math.sin(this.morphAngle * frequency + this.index) * organicRadius;
+      this.shapeTargetX += offsetX;
+      this.shapeTargetY += offsetY;
 
-    this.targetX += (this.shapeTargetX - this.targetX) * morphSpeed;
-    this.targetY += (this.shapeTargetY - this.targetY) * morphSpeed;
+      this.targetX += (this.shapeTargetX - this.targetX) * morphSpeed;
+      this.targetY += (this.shapeTargetY - this.targetY) * morphSpeed;
 
-    this.morphAngle += this.nebulaSpeed;
+      this.morphAngle += this.nebulaSpeed;
+    }
+
+    let dx = this.targetX - this.x;
+    let dy = this.targetY - this.y;
+    this.speedX += dx * 0.15;
+    this.speedY += dy * 0.15;
+    this.speedX *= 0.7;
+    this.speedY *= 0.7;
+    this.x += this.speedX;
+    this.y += this.speedY;
   }
-
-  let dx = this.targetX - this.x;
-  let dy = this.targetY - this.y;
-  this.speedX += dx * 0.15;
-  this.speedY += dy * 0.15;
-  this.speedX *= 0.7;
-  this.speedY *= 0.7;
-  this.x += this.speedX;
-  this.y += this.speedY;
-}
 
   setShapeTarget() {
     const idxRatio = this.index / particleCount;
@@ -265,16 +265,26 @@ function animateCursor() {
     cursorContainer.style.opacity = '1';
     document.body.classList.remove('show-default-cursor');
   }
-  
+
   const delayFactor = 0.3;
   smoothPos.x += (mouse.x - smoothPos.x) * delayFactor;
   smoothPos.y += (mouse.y - smoothPos.y) * delayFactor;
 
-// FPS máximo posible para el cursor
+  // FPS throttling for cursor animation (60 FPS max on desktop)
+  if (!window._lastCursorFrame) window._lastCursorFrame = 0;
+  const now = performance.now();
+  const CURSOR_FPS = 60;
+  const CURSOR_FRAME_INTERVAL = 1000 / CURSOR_FPS;
+
+  if (now - window._lastCursorFrame < CURSOR_FRAME_INTERVAL) {
+    requestAnimationFrame(animateCursor);
+    return;
+  }
+  window._lastCursorFrame = now;
   // Update center dot position
   centerDot.style.left = smoothPos.x + 'px';
   centerDot.style.top = smoothPos.y + 'px';
-  
+
   // Smooth scale animation for center dot
   let currentCenterDotScale = parseFloat(centerDot.style.scale) || 1;
   currentCenterDotScale += (targetCenterDotScale - currentCenterDotScale) * 0.15;
@@ -290,19 +300,19 @@ function animateCursor() {
     burstTimer--;
     if (burstTimer <= 0) clickBurst = false;
   }
-  
+
   // Calculate mouse speed
   const dx = mouse.x - prevMouse.x;
   const dy = mouse.y - prevMouse.y;
   const currentSpeed = Math.sqrt(dx * dx + dy * dy);
-  
+
   // Smooth the speed value
   mouseSpeed += (currentSpeed - mouseSpeed) * 0.3;
-  
+
   // Update previous mouse position
   prevMouse.x = mouse.x;
   prevMouse.y = mouse.y;
-  
+
   // Trail and ripple painting on canvas
   // Lógica original: trail normal y drag, pero el release es solo un fade out
   const dragActive = (isMouseDown && hasDragged) || (window._dragTrail && window._dragTrail.state === 'contract');
@@ -330,7 +340,7 @@ function animateCursor() {
       trailCtx.fillStyle = 'rgba(0, 0, 0, 0.035)';
       trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
     } else {
-      let exp = Math.pow(Math.max(0, (t-1.2)/1.3), 2.7);
+      let exp = Math.pow(Math.max(0, (t - 1.2) / 1.3), 2.7);
       let alpha = 0.035 + 0.32 * Math.min(1, exp);
       if (alpha > 0.38) alpha = 0.38;
       trailCtx.fillStyle = `rgba(0,0,0,${alpha})`;
@@ -504,7 +514,7 @@ function animateCursor() {
 window.addEventListener("mousemove", e => {
   mouse.x = e.pageX;  // Use pageX instead of clientX to account for scroll
   mouse.y = e.pageY;  // Use pageY instead of clientY to account for scroll
-  
+
   // If mouse is down and moving, it's a drag
   if (isMouseDown) {
     hasDragged = true;
@@ -519,31 +529,31 @@ document.querySelectorAll("a, button, .video-link, .cinema-close, .menu-toggle")
       currentLetter = el.dataset.letter.toUpperCase();
       letterPoints = generateLetterPoints(currentLetter);
     }
-    
+
     // Detect if hovering over a map item (inside #canvas)
     const isMapElement = el.closest('#canvas') !== null;
     if (isMapElement) {
       isHoveringMapItem = true;
-      
+
       // Capture the center position of the hovered item
       const rect = el.getBoundingClientRect();
       hoveredItemCenter.x = rect.left + rect.width / 2;
       hoveredItemCenter.y = rect.top + rect.height / 2;
     }
-    
+
     // Add focused class to parent image-container for visual focus effect
     const imageContainer = el.closest('.image-container');
     if (imageContainer) {
       imageContainer.classList.add('focused');
     }
-    
+
     // Enlarge center dot on hover
     targetCenterDotScale = 1.6;
     isHoveringElement = true;
-    
+
     // Check if element has a tooltip (image-link or video-link with tooltip)
     const hasTooltip = el.classList.contains('image-link') || el.classList.contains('video-link');
-    
+
     if (isMapElement) {
       // Dispatch custom event with focused element position for radial blur effect
       const rect = el.getBoundingClientRect();
@@ -555,7 +565,7 @@ document.querySelectorAll("a, button, .video-link, .cinema-close, .menu-toggle")
           height: rect.height
         }
       }));
-      
+
       // Dispatch tooltip hover event for audio volume increase
       if (hasTooltip) {
         window.dispatchEvent(new CustomEvent('tooltipShown'));
@@ -564,30 +574,30 @@ document.querySelectorAll("a, button, .video-link, .cinema-close, .menu-toggle")
   });
   el.addEventListener("mouseleave", () => {
     shapeMode = "normal";
-    
+
     // Reset map item hover state
     const isMapElement = el.closest('#canvas') !== null;
     if (isMapElement) {
       isHoveringMapItem = false;
     }
-    
+
     // Remove focused class from parent image-container
     const imageContainer = el.closest('.image-container');
     if (imageContainer) {
       imageContainer.classList.remove('focused');
     }
-    
+
     // Shrink center dot back to normal
     targetCenterDotScale = 1;
     isHoveringElement = false;
-    
+
     // Check if element had a tooltip
     const hasTooltip = el.classList.contains('image-link') || el.classList.contains('video-link');
-    
+
     if (isMapElement) {
       // Dispatch event to clear focused element
       window.dispatchEvent(new CustomEvent('elementUnfocused'));
-      
+
       // Dispatch tooltip hidden event for audio volume decrease
       if (hasTooltip) {
         window.dispatchEvent(new CustomEvent('tooltipHidden'));
@@ -602,14 +612,14 @@ document.querySelectorAll('.text-phrase').forEach(el => {
     const isMapElement = el.closest('#canvas') !== null;
     if (isMapElement) {
       isHoveringMapItem = true;
-      
+
       // Capture the center position of the hovered item
       const rect = el.getBoundingClientRect();
       hoveredItemCenter.x = rect.left + rect.width / 2;
       hoveredItemCenter.y = rect.top + rect.height / 2;
     }
   });
-  
+
   el.addEventListener('mouseleave', () => {
     const isMapElement = el.closest('#canvas') !== null;
     if (isMapElement) {
@@ -669,7 +679,7 @@ window.addEventListener("touchstart", e => {
   }
 });
 
-  // Eliminado: listeners de 'zoomIn' y 'zoomOut' para evitar fade redundante
+// Eliminado: listeners de 'zoomIn' y 'zoomOut' para evitar fade redundante
 
 // Start animation solo una vez al cargar el archivo
 if (typeof window._cursorAnimStarted === 'undefined') {

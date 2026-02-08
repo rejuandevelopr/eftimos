@@ -165,7 +165,7 @@ function lerp(start, end, t) {
 // ========================================
 let lastGrainFrame = 0;
 // FPS adaptativo: menor en móviles para mejor rendimiento
-const GRAIN_FPS = grainIsMobile ? 30 : 40;
+const GRAIN_FPS = grainIsMobile ? 15 : 40;
 
 function animateGrain(now) {
     if (!isAnimating) return;

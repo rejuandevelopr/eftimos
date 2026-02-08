@@ -6,7 +6,7 @@
 
 
 
-(function() {
+(function () {
     const mapGroup = document.getElementById('map-group');
     if (!mapGroup) {
         console.warn('[handheld-camera] #map-group no encontrado al inicializar.');
@@ -24,7 +24,7 @@
     let t = Math.random() * 1000;
     function lerp(a, b, n) { return a + (b - a) * n; }
     let lastX = 0, lastY = 0;
-    const shakeIntensity = 12;
+    const shakeIntensity = isMobile ? 6 : 12;
 
     function visualEffectsEnabled() {
         // window.visualEffectsEnabled puede ser undefined (default true)
@@ -65,9 +65,9 @@
         let stopped = false;
         let firstFrame = true;
         let lastFrameTime = 0;
-        const FPS_TARGET = 60;
+        const FPS_TARGET = isMobile ? 30 : 60;
         const FRAME_INTERVAL = 1000 / FPS_TARGET;
-        
+
         function step(timestamp) {
             // Throttle to 60 FPS
             if (timestamp - lastFrameTime < FRAME_INTERVAL) {
@@ -75,7 +75,7 @@
                 return;
             }
             lastFrameTime = timestamp;
-            
+
             // Interpolar suavemente la velocidad
             shakeSpeed = lerp(shakeSpeed, targetShakeSpeed, 0.08);
             if (!shakeActive || !visualEffectsEnabled()) {
@@ -139,7 +139,7 @@
 
     smoothShake();
 
-    window.setHandheldCameraShake = function(active) {
+    window.setHandheldCameraShake = function (active) {
         shakeActive = !!active;
         console.log('[handheld-camera] setHandheldCameraShake:', shakeActive);
         if (shakeActive) smoothShake();
@@ -147,7 +147,7 @@
     };
 
     // Exponer la posición actual de cámara en mano
-    window.getHandheldCameraOffset = function() {
+    window.getHandheldCameraOffset = function () {
         return { x: lastX, y: lastY };
     };
 })();
