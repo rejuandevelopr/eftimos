@@ -622,6 +622,68 @@ function initializeControls() {
         });
     }
 
+    // ========== MOBILE BACK BUTTON OVERRIDE (NON-INDEX) ==========
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const pathName = window.location.pathname || '';
+    const lastSegment = pathName.split('/').pop();
+    const isIndexPage = lastSegment === '' || (lastSegment || '').toLowerCase() === 'index.html';
+
+    function closeMenuAndContactIfOpen() {
+        let closedSomething = false;
+
+        if (contactModal && contactModal.classList.contains('active')) {
+            contactModal.classList.remove('active');
+            closedSomething = true;
+        }
+
+        if (dropdownMenu && dropdownMenu.classList.contains('active')) {
+            dropdownMenu.classList.remove('active');
+            if (menuToggle) menuToggle.classList.remove('active');
+            document.body.classList.remove('menu-open');
+            if (window.isMenuActive !== undefined) {
+                window.isMenuActive = false;
+            }
+            if (typeof window.restoreLowPassFilter === 'function') {
+                window.restoreLowPassFilter(500);
+            }
+            if (window.resetGrainMenuIntensity) window.resetGrainMenuIntensity();
+            closedSomething = true;
+        }
+
+        return closedSomething;
+    }
+
+    function triggerLogoTransitionToIndex() {
+        const logoLink = document.querySelector('a.logo');
+        if (logoLink) {
+            const evt = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+            logoLink.dispatchEvent(evt);
+            return;
+        }
+        window.location.href = 'index.html';
+    }
+
+    if (isMobile && !isIndexPage) {
+        const backTrapState = { eftimosBackTrap: true };
+        if (!history.state || !history.state.eftimosBackTrap) {
+            history.pushState(backTrapState, '', window.location.href);
+        }
+
+        let isHandlingBack = false;
+        window.addEventListener('popstate', () => {
+            if (isHandlingBack) return;
+            isHandlingBack = true;
+
+            if (closeMenuAndContactIfOpen()) {
+                history.pushState(backTrapState, '', window.location.href);
+                isHandlingBack = false;
+                return;
+            }
+
+            triggerLogoTransitionToIndex();
+        });
+    }
+
     // ========== VISUAL EFFECTS TOGGLE ==========
 
     const visualToggle = document.getElementById('visualToggle');
