@@ -400,6 +400,18 @@
 <body style="background-color: #000;">
     <!-- Fade-in overlay blanco -->
     <div id="entryWhiteOverlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:999999;pointer-events:none;transition:opacity 0.38s cubic-bezier(.77,0,.18,1);opacity:1;"></div>
+
+    <!-- Page loader para cargas lentas -->
+    <div id="pageLoader" class="page-loader" aria-live="polite" aria-busy="true">
+        <div class="page-loader-content preloader-content preloader-sober">
+            <div class="preloader-bar-container">
+                <div class="preloader-bar-bg hard-corner">
+                    <div class="preloader-bar hard-corner page-loader-bar"></div>
+                </div>
+                <span class="preloader-bar-text page-loader-text">Cargando</span>
+            </div>
+        </div>
+    </div>
     
     <!-- Grain Canvas -->
     <canvas id="grainCanvas" style="opacity: 0.005; pointer-events: none;"></canvas>
@@ -580,6 +592,40 @@
 
         let currentIndex = 0;
         const ITEMS_TO_SHOW = 5; // Mostrar 5 items: 2 a la izquierda, 1 centro, 2 a la derecha
+
+        let pageLoaderHidden = false;
+
+        function hidePageLoader() {
+            if (pageLoaderHidden) return;
+            const loader = document.getElementById('pageLoader');
+            if (!loader) return;
+            pageLoaderHidden = true;
+            loader.classList.add('hidden');
+            loader.setAttribute('aria-busy', 'false');
+            setTimeout(() => {
+                if (loader.parentNode) loader.parentNode.removeChild(loader);
+            }, 600);
+        }
+
+        function waitForGalleryImages() {
+            const images = Array.from(document.querySelectorAll('#galleryTrack img'));
+            if (!images.length) return Promise.resolve();
+
+            const promises = images.map((img) => {
+                if (img.complete) return Promise.resolve();
+                return new Promise((resolve) => {
+                    const done = () => {
+                        img.removeEventListener('load', done);
+                        img.removeEventListener('error', done);
+                        resolve();
+                    };
+                    img.addEventListener('load', done);
+                    img.addEventListener('error', done);
+                });
+            });
+
+            return Promise.all(promises);
+        }
 
         // Generar tarjetas de galería
         function initGallery() {
@@ -1123,6 +1169,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             initGallery();
             animateOverlayWords();
+            waitForGalleryImages().then(() => {
+                requestAnimationFrame(hidePageLoader);
+            });
+        });
+
+        // Fallback si alguna imagen tarda demasiado
+        window.addEventListener('load', () => {
+            setTimeout(hidePageLoader, 1500);
         });
 
         // Fade-in blanco al entrar

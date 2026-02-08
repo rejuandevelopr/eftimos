@@ -631,12 +631,17 @@ function initializeControls() {
     function closeMenuAndContactIfOpen() {
         let closedSomething = false;
 
-        if (contactModal && contactModal.classList.contains('active')) {
+        const bodyMenuOpen = document.body.classList.contains('menu-open');
+        const menuToggleActive = menuToggle && menuToggle.classList.contains('active');
+        const dropdownActive = dropdownMenu && dropdownMenu.classList.contains('active');
+        const contactActive = contactModal && (contactModal.classList.contains('active') || contactModal.style.display === 'block');
+
+        if (contactActive) {
             contactModal.classList.remove('active');
             closedSomething = true;
         }
 
-        if (dropdownMenu && dropdownMenu.classList.contains('active')) {
+        if (bodyMenuOpen || menuToggleActive || dropdownActive) {
             dropdownMenu.classList.remove('active');
             if (menuToggle) menuToggle.classList.remove('active');
             document.body.classList.remove('menu-open');

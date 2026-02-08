@@ -670,18 +670,18 @@
                         // Forzar render del estado inicial
                         window.getComputedStyle(targetElement).transform;
                         
-                        // Paso 1: Empezar a desvanecer el overlay PRIMERO
+                        // Paso 1: Empezar el zoom-out PRIMERO
                         requestAnimationFrame(() => {
-                            overlay.style.opacity = '0';
-                            console.log('[INTRO-ZOOM] overlay comenzando fade-out');
+                            console.log('[INTRO-ZOOM] iniciando zoom out a scale(1)');
+                            // Agregar la transition y cambiar a scale(1)
+                            targetElement.style.transition = `transform ${DURATION}ms ${EASING}`;
+                            targetElement.style.transform = 'scale(1)';
                             
-                            // Paso 2: Después de 200ms, empezar el zoom-out
+                            // Paso 2: Poco después, empezar a desvanecer el overlay
                             setTimeout(() => {
-                                console.log('[INTRO-ZOOM] iniciando zoom out a scale(1)');
-                                // AHORA SÍ agregar la transition y cambiar a scale(1)
-                                targetElement.style.transition = `transform ${DURATION}ms ${EASING}`;
-                                targetElement.style.transform = 'scale(1)';
-                            }, 200); // El zoom empieza 200ms después del overlay
+                                overlay.style.opacity = '0';
+                                console.log('[INTRO-ZOOM] overlay comenzando fade-out');
+                            }, 50); // El overlay empieza 50ms después del zoom
                         });
                     });
 

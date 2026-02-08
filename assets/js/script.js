@@ -786,25 +786,40 @@ function updateImagePositions() {
         let blur = 0;
 
         // --- MOBILE TOOLTIP & COLOR LOGIC ---
-        const isMobile = window.innerWidth <= 900 || /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
-        const imageLink = element.querySelector('.image-link');
-        const imgTag = imageLink ? imageLink.querySelector('img') : null;
+        const isTouchDevice = (
+            (window.matchMedia && (window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches)) ||
+            ('ontouchstart' in window) ||
+            (navigator.maxTouchPoints > 0)
+        );
+        const isMobile = isTouchDevice || window.innerWidth <= 900 || /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+        const linkElement = element.querySelector('.image-link, .video-link');
+        const imgTag = linkElement ? linkElement.querySelector('img') : null;
         const tooltip = element.querySelector('.tooltip');
 
-        if (isMobile && imageLink && imgTag && tooltip) {
+        if (isMobile && linkElement && tooltip) {
             if (isImageCentered(x, y, imageSizeScaled)) {
                 // Show tooltip and colorize image
                 tooltip.style.opacity = '1';
                 tooltip.style.visibility = 'visible';
-                imgTag.style.filter = 'none';
-                imgTag.style.webkitFilter = 'none';
-                imgTag.classList.add('focused-mobile');
+                tooltip.style.transform = 'translateX(-50%) scale(1)';
+                tooltip.style.display = 'inline-block';
+                element.classList.add('mobile-centered');
+                if (imgTag) {
+                    imgTag.style.filter = 'none';
+                    imgTag.style.webkitFilter = 'none';
+                    imgTag.classList.add('focused-mobile');
+                }
             } else {
                 tooltip.style.opacity = '';
                 tooltip.style.visibility = '';
-                imgTag.style.filter = 'grayscale(1)';
-                imgTag.style.webkitFilter = 'grayscale(1)';
-                imgTag.classList.remove('focused-mobile');
+                tooltip.style.transform = '';
+                tooltip.style.display = '';
+                element.classList.remove('mobile-centered');
+                if (imgTag) {
+                    imgTag.style.filter = 'grayscale(1)';
+                    imgTag.style.webkitFilter = 'grayscale(1)';
+                    imgTag.classList.remove('focused-mobile');
+                }
             }
         }
 
