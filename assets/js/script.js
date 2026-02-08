@@ -4,7 +4,7 @@ function clampOffset() {
     targetOffsetY = Math.max(minOffsetY, Math.min(maxOffsetY, targetOffsetY));
 }
 // --- PRELOADER LOGIC ---
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Referencias a los toggles del preloader
     const soundToggleBtn = document.getElementById('preloaderSoundToggle');
     const visualToggleBtn = document.getElementById('preloaderVisualToggle');
@@ -63,11 +63,14 @@ document.addEventListener('DOMContentLoaded', function() {
         window.soundEnabled = localStorage.getItem('audioEnabled') === 'false' ? false : true;
         window.visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') === 'false' ? false : true;
         document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
-        
+
         // Marcar que el preloader ya fue pasado para permitir funciones de audio
         window.preloaderEnterPressed = true;
         console.log('[AUDIO] Preloader already shown, audio will initialize on first interaction');
-        
+
+        // Trigger zoom-out animation when entering from another page
+        window.shouldAnimateMapEntry = true;
+
         return;
     } else {
         preloader.style.display = 'flex';
@@ -84,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'assets/images/g-14.avif',
         'assets/images/g-20.avif'
     ];
-    
+
     // Assets no críticos se cargarán después de mostrar el contenido
     const nonCriticalAssets = [
         'assets/vid/reels-mixed-vid.mp4',
@@ -180,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof window.updatePreloaderAudioIcon === 'function') window.updatePreloaderAudioIcon();
     }
 
-    soundToggleBtn.addEventListener('click', function(e) {
+    soundToggleBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         soundEnabled = !soundEnabled;
         window.audioEnabled = soundEnabled;
@@ -194,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof window.updateAudioIcon === 'function') window.updateAudioIcon();
         if (typeof window.updatePreloaderAudioIcon === 'function') window.updatePreloaderAudioIcon();
         syncMenuToggles();
-        
+
         // Si se activa el audio después de Enter, asegurar reproducción
         if (soundEnabled && window.preloaderEnterPressed) {
             console.log('[PRELOADER] Ensuring white-noise plays after toggle...');
@@ -205,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 100);
         }
     });
-    visualToggleBtn.addEventListener('click', function(e) {
+    visualToggleBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         visualEnabled = !visualEnabled;
         window.visualEffectsEnabled = visualEnabled;
@@ -219,11 +222,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Escuchar cambios desde el menú lateral y actualizar preloader
-    window.addEventListener('visualEffectsToggled', function() {
+    window.addEventListener('visualEffectsToggled', function () {
         visualEnabled = window.visualEffectsEnabled;
         syncMenuToggles();
     });
-    window.addEventListener('audioToggled', function() {
+    window.addEventListener('audioToggled', function () {
         soundEnabled = window.audioEnabled;
         syncMenuToggles();
     });
@@ -320,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
             img.onerror = assetLoaded;
         }
     });
-    
+
     // Lazy load de assets no críticos después de que el usuario entre
     function loadNonCriticalAssets() {
         nonCriticalAssets.forEach(src => {
@@ -440,7 +443,7 @@ if (!mapGroup) {
 // Responsive settings function
 function getResponsiveSettings() {
     const width = window.innerWidth;
-    
+
     // Mobile portrait
     if (width < 576) {
         return { gridSpacing: 350, imageSize: 150, blurRadius: 150, gridColumns: 2 };
@@ -578,20 +581,20 @@ window.addEventListener('elementFocused', (e) => {
 window.addEventListener('elementUnfocused', () => {
     focusedElementPos = null;
 
-// Background video opacity on focus
-const videosBackground = document.getElementById('videos-background');
+    // Background video opacity on focus
+    const videosBackground = document.getElementById('videos-background');
 
-window.addEventListener('elementFocused', () => {
-    if (videosBackground) {
-        videosBackground.classList.add('focused-active');
-    }
-});
+    window.addEventListener('elementFocused', () => {
+        if (videosBackground) {
+            videosBackground.classList.add('focused-active');
+        }
+    });
 
-window.addEventListener('elementUnfocused', () => {
-    if (videosBackground) {
-        videosBackground.classList.remove('focused-active');
-    }
-});
+    window.addEventListener('elementUnfocused', () => {
+        if (videosBackground) {
+            videosBackground.classList.remove('focused-active');
+        }
+    });
 });
 
 function seededRandom(seed) {
@@ -605,7 +608,7 @@ function getRandomOffset(gridX, gridY) {
     if (!randomOffsets.has(key)) {
         const seedX = gridX * 1000 + gridY;
         const seedY = gridX * 500 + gridY * 1500;
-        
+
         randomOffsets.set(key, {
             x: (seededRandom(seedX) - 0.5) * randomOffsetRange,
             y: (seededRandom(seedY) - 0.5) * randomOffsetRange
@@ -620,13 +623,13 @@ function createImageElement(imageIndex, gridX, gridY) {
 
     const template = imageTemplates[imageIndex];
     const clonedContent = template.cloneNode(true);
-    
+
     // Check if it's a reveal text template
     if (template.classList.contains('reveal-text-template')) {
         container.classList.add('reveal-text-template');
         container.dataset.text = template.dataset.text || 'HIDDEN TEXT';
     }
-    
+
     container.appendChild(clonedContent.firstElementChild);
 
     mapGroup.appendChild(container);
@@ -646,7 +649,7 @@ function createAllImages() {
         }
     });
     images = [];
-    
+
     let imageIndex = 0;
 
     for (let y = 0; y < gridRows; y++) {
@@ -718,7 +721,7 @@ function resistanceFunc(distance) {
     }
 }
 
-    function closeCinema() {
+function closeCinema() {
     targetOffsetX = Math.max(minOffsetX, Math.min(maxOffsetX, targetOffsetX));
     targetOffsetY = Math.max(minOffsetY, Math.min(maxOffsetY, targetOffsetY));
 }
@@ -730,11 +733,11 @@ function isImageCentered(x, y, imageSizeScaled) {
     const threshold = imageSizeScaled * 0.35; // 35% of image size
     const dx = x - centerX;
 
-        // --- NUEVO: Forzar reposicionamiento del mapa según cámara en mano ---
-        if (typeof window.setHandheldCameraShake === 'function') {
-            // Reactiva el efecto de cámara en mano para que el mapa/video se reposicione correctamente
-            window.setHandheldCameraShake(true);
-        }
+    // --- NUEVO: Forzar reposicionamiento del mapa según cámara en mano ---
+    if (typeof window.setHandheldCameraShake === 'function') {
+        // Reactiva el efecto de cámara en mano para que el mapa/video se reposicione correctamente
+        window.setHandheldCameraShake(true);
+    }
 
     const dy = y - centerY;
     return Math.abs(dx) < threshold && Math.abs(dy) < threshold;
@@ -745,19 +748,19 @@ function updateImagePositions() {
     if (isGridMode || gridModeTransitioning) {
         return;
     }
-    
+
     const offsetXScaled = offsetX * scale;
     const offsetYScaled = offsetY * scale;
     const imageSizeScaled = imageSize * scale;
     const imageSizeScaledHalf = imageSizeScaled / 2;
     const blurThreshold = blurRadiusScaled;
-    
+
     const len = images.length;
-        for (let i = 0; i < len; i++) {
-            // --- Fade out trail on zoom ---
-            if (window.fadeOutTrail) window.fadeOutTrail();
-            // Limpiar suavemente el trail solo si hay cambio de zoom
-            if (window.smoothClearTrail) window.smoothClearTrail();
+    for (let i = 0; i < len; i++) {
+        // --- Fade out trail on zoom ---
+        if (window.fadeOutTrail) window.fadeOutTrail();
+        // Limpiar suavemente el trail solo si hay cambio de zoom
+        if (window.smoothClearTrail) window.smoothClearTrail();
         const img = images[i];
         const randomOffset = getRandomOffset(img.gridX, img.gridY);
 
@@ -839,17 +842,17 @@ function animate() {
     // Keep global window references updated for audio intensification
     window.targetOffsetX = targetOffsetX;
     window.targetOffsetY = targetOffsetY;
-    
+
     if (!isDragging && !reboundAnimationActive) {
         const diffX = targetOffsetX - offsetX;
         const diffY = targetOffsetY - offsetY;
-        
+
         offsetX += diffX * smoothness;
         offsetY += diffY * smoothness;
 
         const absVelocityX = Math.abs(velocityX);
         const absVelocityY = Math.abs(velocityY);
-        
+
         if (absVelocityX > minVelocity || absVelocityY > minVelocity) {
             targetOffsetX += velocityX;
             targetOffsetY += velocityY;
@@ -862,11 +865,11 @@ function animate() {
     // Audio intensity is now handled by controls.js based on distance from bounds
 
     const diffScale = targetScale - scale;
-    
+
     // Only apply zoom and blur if visual effects are enabled
-        if (window.visualEffectsEnabled !== false) {
-            // --- Fade out trail on pinch zoom ---
-            if (window.fadeOutTrail) window.fadeOutTrail();
+    if (window.visualEffectsEnabled !== false) {
+        // --- Fade out trail on pinch zoom ---
+        if (window.fadeOutTrail) window.fadeOutTrail();
         scale += diffScale * zoomSmoothness;
     } else {
         // When visual effects are disabled, reset scale to 1
@@ -890,23 +893,23 @@ function animateReboundIfNeeded() {
     // Check if we're outside bounds
     if (targetOffsetX < minOffsetX || targetOffsetX > maxOffsetX ||
         targetOffsetY < minOffsetY || targetOffsetY > maxOffsetY) {
-        
+
         const fromX = targetOffsetX;
         const fromY = targetOffsetY;
         const toX = Math.max(minOffsetX, Math.min(maxOffsetX, targetOffsetX));
         const toY = Math.max(minOffsetY, Math.min(maxOffsetY, targetOffsetY));
-        
+
         animateRebound(fromX, toX, fromY, toY);
     }
 }
 
 function animateRebound(fromX, toX, fromY, toY) {
     if (reboundAnimationActive) return;
-    
+
     // Cancel any existing velocity
     velocityX = 0;
     velocityY = 0;
-    
+
     reboundAnimationActive = true;
     const duration = 400; // ms
     const startTime = performance.now();
@@ -920,7 +923,7 @@ function animateRebound(fromX, toX, fromY, toY) {
 
         targetOffsetX = fromX + (toX - fromX) * ease;
         targetOffsetY = fromY + (toY - fromY) * ease;
-        
+
         offsetX = targetOffsetX;
         offsetY = targetOffsetY;
 
@@ -934,7 +937,7 @@ function animateRebound(fromX, toX, fromY, toY) {
             reboundAnimationActive = false;
         }
     }
-    
+
     requestAnimationFrame(step);
 }
 
@@ -962,7 +965,7 @@ function getTouchMidpoint(touch1, touch2) {
 canvas.addEventListener('mousedown', (e) => {
     // Disable dragging in grid mode
     if (isGridMode) return;
-    
+
     isDragging = true;
     lastX = e.clientX;
     lastY = e.clientY;
@@ -972,18 +975,18 @@ canvas.addEventListener('mousedown', (e) => {
     velocityX = 0;
     velocityY = 0;
     canvas.classList.add('dragging');
-    
+
     // Inicializar audio si está habilitado y no se ha inicializado
     const audioEnabled = localStorage.getItem('audioEnabled') !== 'false';
     if (audioEnabled && typeof window.initializeAudio === 'function') {
         window.initializeAudio();
     }
-    
+
     // Verificar y asegurar reproducción de white-noise en cada drag
     if (typeof window.ensureWhiteNoisePlaying === 'function') {
         window.ensureWhiteNoisePlaying();
     }
-        // Desactiva la modulación de whispers con transición suave
+    // Desactiva la modulación de whispers con transición suave
     if (window.whispersModulationEnabled !== undefined) {
         // Suaviza el paso a modulación off
         if (typeof window.setWhispersModulationEnabled === 'function') {
@@ -1004,7 +1007,7 @@ canvas.addEventListener('mousemove', (e) => {
     const totalMoveY = Math.abs(e.clientY - dragStartY);
     if (totalMoveX > 5 || totalMoveY > 5) {
         hasMoved = true;
-        
+
         // Verificar audio cuando empieza el movimiento real
         if (typeof window.ensureWhiteNoisePlaying === 'function') {
             window.ensureWhiteNoisePlaying();
@@ -1012,11 +1015,11 @@ canvas.addEventListener('mousemove', (e) => {
     }
 
     const scaleInv = 1 / scale;
-    
+
     // Calculate resistance factor based on how far outside bounds we are
     let resistanceFactorX = 1.0;
     let resistanceFactorY = 1.0;
-    
+
     if (targetOffsetX < minOffsetX) {
         const distance = minOffsetX - targetOffsetX;
         resistanceFactorX = 1.0 / (1.0 + distance * 0.01); // Progressive resistance
@@ -1024,7 +1027,7 @@ canvas.addEventListener('mousemove', (e) => {
         const distance = targetOffsetX - maxOffsetX;
         resistanceFactorX = 1.0 / (1.0 + distance * 0.01);
     }
-    
+
     if (targetOffsetY < minOffsetY) {
         const distance = minOffsetY - targetOffsetY;
         resistanceFactorY = 1.0 / (1.0 + distance * 0.01);
@@ -1032,11 +1035,11 @@ canvas.addEventListener('mousemove', (e) => {
         const distance = targetOffsetY - maxOffsetY;
         resistanceFactorY = 1.0 / (1.0 + distance * 0.01);
     }
-    
+
     // Apply resistance to movement delta, not to position
     targetOffsetX += deltaX * scaleInv * resistanceFactorX;
     targetOffsetY += deltaY * scaleInv * resistanceFactorY;
-    
+
     // Suaviza el movimiento durante el drag, pero mantiene responsividad
     // offsetX/Y se acercan rápidamente a targetOffsetX/Y (lerp)
     const lerpFactor = 0.25; // Más suavidad (más bajo = más suave)
@@ -1139,7 +1142,7 @@ canvas.addEventListener('click', (e) => {
     if (typeof window.ensureWhiteNoisePlaying === 'function') {
         window.ensureWhiteNoisePlaying();
     }
-    
+
     // Detect image links (navigate) and inline video links (open cinema mode)
     let link = e.target.closest('.image-link');
     if (!link && e.target.classList.contains('image-container')) {
@@ -1178,22 +1181,23 @@ canvas.addEventListener('click', (e) => {
         const targetUrl = link.getAttribute('href');
 
         if (img && targetUrl) {
-            createMorphTransition(img, targetUrl);
+            const soundId = link.dataset ? link.dataset.sound : null;
+            createMorphTransition(img, targetUrl, soundId);
         }
     }
 
     hasMoved = false;
 });
 
-function createMorphTransition(originalImg, targetUrl) {
+function createMorphTransition(originalImg, targetUrl, soundId) {
     // FADE OUT INMEDIATO de sonidos ambientales (lo primero que ocurre)
     if (typeof window.fadeOutAmbientSounds === 'function') {
         window.fadeOutAmbientSounds(200); // 200ms fade out con pitch shift
     }
-    
+
     // Get the image's current position on screen
     const rect = originalImg.getBoundingClientRect();
-    
+
     // Store transition data for the next page
     const transitionData = {
         imageSrc: originalImg.src,
@@ -1207,9 +1211,9 @@ function createMorphTransition(originalImg, targetUrl) {
         canvasOffsetY: offsetY,
         canvasScale: scale
     };
-    
+
     sessionStorage.setItem('morphTransition', JSON.stringify(transitionData));
-    
+
     // Create a clone that will morph
     const clone = originalImg.cloneNode(true);
     clone.style.position = 'fixed';
@@ -1221,12 +1225,12 @@ function createMorphTransition(originalImg, targetUrl) {
     clone.style.objectFit = 'contain';
     clone.style.pointerEvents = 'none';
     clone.style.transition = 'none';
-    
+
     document.body.appendChild(clone);
-    
+
     // Fade out other content
     document.body.classList.add('morphing');
-    
+
     // Create and fade in a dark dim overlay immediately so background darkens
     let dim = document.getElementById('dimOverlay');
     if (!dim) {
@@ -1309,53 +1313,72 @@ function createMorphTransition(originalImg, targetUrl) {
         }
     }, 1200);
 
-    // Play locked-in sound (if available) SOONER and at 1.5x speed for transition
-    const locked = document.getElementById('lockedInSound');
-    if (locked) {
-        try {
-            locked.pause();
-            locked.currentTime = 0;
-            locked.playbackRate = 1.5;
-            // Start sound IMMEDIATELY, not after clone
-            const playPromise = locked.play();
-            playPromise.then(() => {
-                const onEnded = () => {
-                    soundDone = true;
-                    if (overlayStarted) {
-                        tryNavigateAfterReady();
-                    } else if (cloneDone) {
-                        startOverlayFade();
-                        tryNavigateAfterReady();
-                    }
-                };
-                locked.addEventListener('ended', onEnded, { once: true });
-                // Safety: max wait for ended
-                setTimeout(() => {
-                    if (!soundDone) {
+    // Play section-specific sound when available; fall back to locked-in sound
+    let playedSectionSound = false;
+    if (soundId && window.UISounds && typeof window.UISounds.play === 'function') {
+        const asmrKey = 'asmr' + soundId.split('-').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join('');
+        window.UISounds.play(asmrKey);
+        playedSectionSound = true;
+        
+        // ASMR sounds don't block navigation - mark sound as done immediately
+        soundDone = true;
+        // If clone already finished, proceed with navigation
+        if (cloneDone) {
+            startOverlayFade();
+            tryNavigateAfterReady();
+        }
+    }
+
+    if (!playedSectionSound) {
+        const locked = document.getElementById('lockedInSound');
+        if (locked) {
+            try {
+                locked.pause();
+                locked.currentTime = 0;
+                locked.playbackRate = 1.5;
+                // Start sound IMMEDIATELY, not after clone
+                const playPromise = locked.play();
+                playPromise.then(() => {
+                    const onEnded = () => {
                         soundDone = true;
-                        if (cloneDone) {
+                        if (overlayStarted) {
+                            tryNavigateAfterReady();
+                        } else if (cloneDone) {
                             startOverlayFade();
                             tryNavigateAfterReady();
                         }
+                    };
+                    locked.addEventListener('ended', onEnded, { once: true });
+                    // Safety: max wait for ended
+                    setTimeout(() => {
+                        if (!soundDone) {
+                            soundDone = true;
+                            if (cloneDone) {
+                                startOverlayFade();
+                                tryNavigateAfterReady();
+                            }
+                        }
+                    }, Math.max(2000, (locked.duration || 0) * 1000 / 1.5 + 200));
+                }).catch(() => {
+                    soundDone = true;
+                    if (cloneDone) {
+                        startOverlayFade();
+                        tryNavigateAfterReady();
                     }
-                }, Math.max(2000, (locked.duration || 0) * 1000 / 1.5 + 200));
-            }).catch(() => {
+                });
+            } catch (e) {
                 soundDone = true;
                 if (cloneDone) {
                     startOverlayFade();
                     tryNavigateAfterReady();
                 }
-            });
-        } catch (e) {
-            soundDone = true;
-            if (cloneDone) {
-                startOverlayFade();
-                tryNavigateAfterReady();
             }
+        } else {
+            // No sound -> navigate after clone completes and overlay fades
+            // onCloneTransitionEnd will start overlay and call tryNavigateAfterReady
         }
-    } else {
-        // No sound -> navigate after clone completes and overlay fades
-        // onCloneTransitionEnd will start overlay and call tryNavigateAfterReady
     }
 }
 
@@ -1505,7 +1528,7 @@ function createCinemaMode(originalVideo, container) {
     volumeSlider.addEventListener('input', (e) => {
         const volume = e.target.value / 100;
         clone.volume = volume;
-        
+
         // Update volume icon opacity
         if (volume === 0) {
             volumeIcon.style.opacity = '0.3';
@@ -1532,7 +1555,7 @@ function createCinemaMode(originalVideo, container) {
     // Fade in dim immediately, then expand video to full screen
     requestAnimationFrame(() => {
         cinemaDim.style.opacity = '0.78';
-        try { clone.play(); } catch (e) {}
+        try { clone.play(); } catch (e) { }
         clone.style.left = '0px';
         clone.style.top = '0px';
         clone.style.width = '100vw';
@@ -1560,44 +1583,44 @@ function createCinemaMode(originalVideo, container) {
             navBar.style.opacity = '1';
             navBar.style.pointerEvents = '';
         }
-            // Cerrar cine si se hace click fuera del video y controles
-            function onCinemaDimClick(e) {
-                const controls = document.getElementById('cinemaControls');
-                const clone = document.getElementById('cinemaClone');
-                if (controls && controls.contains(e.target)) return;
-                if (clone && clone.contains(e.target)) return;
-                closeCinema();
-            }
-            cinemaDim.addEventListener('mousedown', onCinemaDimClick);
-            // Limpiar listener al cerrar
-            const prevCloseCinema = closeCinema;
-            closeCinema = function() {
-                cinemaDim.removeEventListener('mousedown', onCinemaDimClick);
-                prevCloseCinema();
-            };
-        
+        // Cerrar cine si se hace click fuera del video y controles
+        function onCinemaDimClick(e) {
+            const controls = document.getElementById('cinemaControls');
+            const clone = document.getElementById('cinemaClone');
+            if (controls && controls.contains(e.target)) return;
+            if (clone && clone.contains(e.target)) return;
+            closeCinema();
+        }
+        cinemaDim.addEventListener('mousedown', onCinemaDimClick);
+        // Limpiar listener al cerrar
+        const prevCloseCinema = closeCinema;
+        closeCinema = function () {
+            cinemaDim.removeEventListener('mousedown', onCinemaDimClick);
+            prevCloseCinema();
+        };
+
         // Calculate blur for the video at its original position
         const videoCenterX = rect.left + rect.width / 2;
         const videoCenterY = rect.top + rect.height / 2;
-        
+
         const distX = videoCenterX - centerX;
         const distY = videoCenterY - centerY;
         const distance = Math.sqrt(distX * distX + distY * distY);
-        
+
         let videoBlur = (distance / blurRadiusScaled) * maxBlur;
         videoBlur = Math.max(0, Math.min(maxBlur, videoBlur));
-        
+
         // Check if focused element reduces blur
         if (focusedElementPos) {
             const focusDistX = videoCenterX - focusedElementPos.x;
             const focusDistY = videoCenterY - focusedElementPos.y;
             const focusDistance = Math.sqrt(focusDistX * focusDistX + focusDistY * focusDistY);
-            
+
             if (focusDistance < focusedElementRadius) {
                 videoBlur = 0;
             }
         }
-        
+
         // reverse animation: shrink clone back to original rect + cámara en mano
         let offset = { x: 0, y: 0 };
         if (typeof window.getHandheldCameraOffset === 'function') {
@@ -1617,7 +1640,7 @@ function createCinemaMode(originalVideo, container) {
         setTimeout(() => {
             // Restaurar solo la opacidad del video original, sin tocar posición ni tamaño
             originalVideo.style.opacity = '1';
-            try { clone.pause(); } catch (e) {}
+            try { clone.pause(); } catch (e) { }
             clone.remove();
             if (cinemaDim) cinemaDim.remove();
         }, 1000);
@@ -1639,11 +1662,11 @@ function createCinemaMode(originalVideo, container) {
 // ========================================
 function initializeMorphEntry() {
     const transitionData = sessionStorage.getItem('morphTransition');
-    
+
     if (transitionData) {
         const data = JSON.parse(transitionData);
         sessionStorage.removeItem('morphTransition');
-        
+
         const heroSection = document.querySelector('.hero');
         if (heroSection) {
             animateHeroEntry(heroSection, data);
@@ -1664,12 +1687,12 @@ function animateHeroEntry(heroSection, data) {
     overlay.style.backgroundPosition = 'center';
     overlay.style.zIndex = '99999';
     overlay.style.transition = 'none';
-    
+
     document.body.appendChild(overlay);
-    
+
     // Hide hero initially
     heroSection.style.opacity = '0';
-    
+
     // Animate overlay to full screen
     requestAnimationFrame(() => {
         overlay.style.transition = 'all 0.8s cubic-bezier(0.76, 0, 0.24, 1)';
@@ -1678,7 +1701,7 @@ function animateHeroEntry(heroSection, data) {
         overlay.style.width = '100vw';
         overlay.style.height = '100vh';
     });
-    
+
     // Remove overlay and reveal hero
     setTimeout(() => {
         heroSection.style.transition = 'opacity 0.3s ease';
@@ -1701,29 +1724,29 @@ canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         return;
     }
-    
+
     // Inicializar audio si está habilitado y no se ha inicializado
     const audioEnabled = localStorage.getItem('audioEnabled') !== 'false';
     if (audioEnabled && typeof window.initializeAudio === 'function') {
         window.initializeAudio();
     }
-    
+
     // Verificar y asegurar reproducción de white-noise en cada touch
     if (typeof window.ensureWhiteNoisePlaying === 'function') {
         window.ensureWhiteNoisePlaying();
     }
-    
+
     if (e.touches.length === 2) {
         // Two fingers - start pinch zoom
         isPinching = true;
         isDragging = false;
-        
+
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
-        
+
         initialPinchDistance = getTouchDistance(touch1, touch2);
         initialPinchScale = scale;
-        
+
         canvas.classList.remove('dragging');
         e.preventDefault();
     } else if (e.touches.length === 1 && !isPinching) {
@@ -1794,11 +1817,11 @@ canvas.addEventListener('touchmove', (e) => {
         }
 
         const scaleInv = 1 / scale;
-        
+
         // Calculate resistance factor based on how far outside bounds we are
         let resistanceFactorX = 1.0;
         let resistanceFactorY = 1.0;
-        
+
         if (targetOffsetX < minOffsetX) {
             const distance = minOffsetX - targetOffsetX;
             resistanceFactorX = 1.0 / (1.0 + distance * 0.01); // Progressive resistance
@@ -1806,7 +1829,7 @@ canvas.addEventListener('touchmove', (e) => {
             const distance = targetOffsetX - maxOffsetX;
             resistanceFactorX = 1.0 / (1.0 + distance * 0.01);
         }
-        
+
         if (targetOffsetY < minOffsetY) {
             const distance = minOffsetY - targetOffsetY;
             resistanceFactorY = 1.0 / (1.0 + distance * 0.01);
@@ -1814,11 +1837,11 @@ canvas.addEventListener('touchmove', (e) => {
             const distance = targetOffsetY - maxOffsetY;
             resistanceFactorY = 1.0 / (1.0 + distance * 0.01);
         }
-        
+
         // Apply resistance to movement delta, not to position
         targetOffsetX += deltaX * scaleInv * resistanceFactorX;
         targetOffsetY += deltaY * scaleInv * resistanceFactorY;
-        
+
         // Immediately update position for responsive dragging
         offsetX = targetOffsetX;
         offsetY = targetOffsetY;
@@ -1837,29 +1860,74 @@ canvas.addEventListener('touchend', (e) => {
         isPinching = false;
         initialPinchDistance = 0;
     }
-    
+
     if (e.touches.length === 0) {
         // Check if this was a tap (not a drag) on mobile
         if (!hasMoved && e.changedTouches && e.changedTouches.length > 0) {
             const touch = e.changedTouches[0];
             const element = document.elementFromPoint(touch.clientX, touch.clientY);
-            
+
+            console.log('[TOUCH] Tap detected at', touch.clientX, touch.clientY);
+            console.log('[TOUCH] Element:', element);
+
             if (element) {
-                const link = element.closest('.image-link');
-                
-                if (link) {
-                    // This was a tap on an image link - trigger navigation
+                // Try to find image-link or video-link
+                const imageLink = element.closest('.image-link');
+                const videoLink = element.closest('.video-link');
+                const container = element.closest('.image-container');
+
+                console.log('[TOUCH] imageLink:', imageLink, 'videoLink:', videoLink, 'container:', container);
+
+                // Handle video link
+                if (videoLink) {
                     e.preventDefault();
-                    const img = link.querySelector('img');
-                    const targetUrl = link.getAttribute('href');
-                    
+                    const vid = videoLink.querySelector('video');
+                    if (vid && container) {
+                        console.log('[TOUCH] Opening cinema mode for video');
+                        createCinemaMode(vid, container);
+                    }
+                }
+                // Handle image link
+                else if (imageLink) {
+                    e.preventDefault();
+                    const img = imageLink.querySelector('img');
+                    const targetUrl = imageLink.getAttribute('href');
+
+                    console.log('[TOUCH] Navigating to:', targetUrl);
+
                     if (img && targetUrl) {
-                        createMorphTransition(img, targetUrl);
+                        const soundId = imageLink.dataset ? imageLink.dataset.sound : null;
+                        createMorphTransition(img, targetUrl, soundId);
+                    }
+                }
+                // Fallback: if we found a container but no link, try to find link inside
+                else if (container) {
+                    const linkInside = container.querySelector('.image-link, .video-link');
+                    if (linkInside) {
+                        console.log('[TOUCH] Found link inside container:', linkInside);
+                        // Trigger the appropriate action
+                        if (linkInside.classList.contains('video-link')) {
+                            const vid = linkInside.querySelector('video');
+                            if (vid) {
+                                e.preventDefault();
+                                console.log('[TOUCH] Opening cinema mode for video (fallback)');
+                                createCinemaMode(vid, container);
+                            }
+                        } else if (linkInside.classList.contains('image-link')) {
+                            const img = linkInside.querySelector('img');
+                            const targetUrl = linkInside.getAttribute('href');
+                            if (img && targetUrl) {
+                                e.preventDefault();
+                                console.log('[TOUCH] Navigating to:', targetUrl, '(fallback)');
+                                const soundId = linkInside.dataset ? linkInside.dataset.sound : null;
+                                createMorphTransition(img, targetUrl, soundId);
+                            }
+                        }
                     }
                 }
             }
         }
-        
+
         isDragging = false;
         canvas.classList.remove('dragging');
         // Animate rebound when user releases drag
@@ -1874,7 +1942,7 @@ canvas.addEventListener('wheel', (e) => {
         e.preventDefault();
         return;
     }
-    
+
     e.preventDefault();
     // Limpiar suavemente el trail solo si hay cambio de zoom
     if (window.smoothClearTrail) window.smoothClearTrail();
@@ -1922,26 +1990,26 @@ window.addEventListener('resize', () => {
         blurRadius = settings.blurRadius;
         const oldColumns = gridColumns;
         gridColumns = settings.gridColumns;
-        
+
         windowWidth = window.innerWidth;
         windowHeight = window.innerHeight;
         centerX = windowWidth / 2;
         centerY = windowHeight / 2;
-        
+
         bufferX = windowWidth * bufferPercent;
         bufferY = windowHeight * bufferPercent;
-        
+
         gridRows = Math.ceil(totalImages / gridColumns);
         contentWidth = (gridColumns - 1) * gridSpacing;
         contentHeight = (gridRows - 1) * gridSpacing;
-        
+
         minOffsetX = -contentWidth - bufferX;
         maxOffsetX = bufferX;
         minOffsetY = -contentHeight - bufferY;
         maxOffsetY = bufferY;
-        
+
         blurRadiusScaled = blurRadius * scale;
-        
+
         if (oldColumns !== gridColumns) {
             createAllImages();
             const initialPosition = getInitialCenterPosition();
@@ -1950,7 +2018,7 @@ window.addEventListener('resize', () => {
             targetOffsetX = initialPosition.x;
             targetOffsetY = initialPosition.y;
         }
-        
+
         clampOffset();
         offsetX = targetOffsetX;
         offsetY = targetOffsetY;
@@ -1977,6 +2045,53 @@ if (transitionData) {
         scale = data.canvasScale;
         targetScale = data.canvasScale;
     }
+}
+
+// Animate zoom-out when entering from another page (without preloader)
+if (window.shouldAnimateMapEntry) {
+    console.log('[MAP-ENTRY] Starting zoom-out animation');
+
+    // Start from a zoomed-in state
+    const startScale = 1.5; // Start zoomed in
+    const endScale = window.scale; // End at the normal zoomed-out view
+
+    // Set initial zoomed-in state
+    scale = startScale;
+    targetScale = startScale;
+
+    // Animation parameters
+    const duration = 1200; // 1.2 seconds for smooth animation
+    const startTime = performance.now();
+
+    function animateZoomOut(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Ease out cubic for smooth deceleration
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        // Interpolate scale
+        const currentScale = startScale + (endScale - startScale) * eased;
+        scale = currentScale;
+        targetScale = currentScale;
+
+        if (progress < 1) {
+            requestAnimationFrame(animateZoomOut);
+        } else {
+            // Animation complete
+            scale = endScale;
+            targetScale = endScale;
+            console.log('[MAP-ENTRY] Zoom-out animation complete');
+        }
+    }
+
+    // Start animation after a brief delay to ensure everything is loaded
+    setTimeout(() => {
+        requestAnimationFrame(animateZoomOut);
+    }, 100);
+
+    // Clear flag
+    window.shouldAnimateMapEntry = false;
 }
 
 
@@ -2021,7 +2136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // window.addEventListener('custom-drag-start', () => { isCustomDragging = true; });
     // window.addEventListener('custom-drag-end', () => { isCustomDragging = false; });
     // Si tienes una variable global para drag, puedes usarla aquí
-    document.addEventListener('dragstart', function(e) {
+    document.addEventListener('dragstart', function (e) {
         if (isCustomDragging || document.body.classList.contains('dragging')) {
             e.preventDefault();
         }
@@ -2044,10 +2159,10 @@ function calculateGridLayout() {
     const cellWidth = 150; // Cell width
     const cellHeight = 225; // Cell height
     const minGap = 20; // Minimum gap between items
-    
+
     // Determine optimal grid dimensions based on orientation
     let cols, rows;
-    
+
     if (isPortrait) {
         // Portrait: prefer vertical layout (fewer columns, more rows)
         // Calculate columns based on screen width
@@ -2079,35 +2194,35 @@ function calculateGridLayout() {
         }
         cols = Math.ceil(totalItems / rows);
     }
-    
+
     // Calculate spacing ensuring no overlap
     const paddingX = Math.max(100, screenWidth * 0.1); // Horizontal padding for breathing room
     const navbarHeight = 80; // Approximate navbar height
     const paddingTop = Math.max(navbarHeight + 40, screenHeight * 0.08); // Extra space for navbar + margin
     const paddingBottom = Math.max(100, screenHeight * 0.1); // Bottom margin - increased for more breathing room
-    
+
     const availableWidth = screenWidth - (paddingX * 2);
     const availableHeight = screenHeight - paddingTop - paddingBottom;
-    
+
     // Calculate spacing: total width needed = (cols * cellWidth) + ((cols - 1) * gap)
     // Available = cols * cellWidth + (cols - 1) * gap
     // gap = (Available - cols * cellWidth) / (cols - 1)
     let spacingX, spacingY;
-    
+
     if (cols > 1) {
         const gapX = Math.max(minGap, (availableWidth - (cols * cellWidth)) / (cols - 1));
         spacingX = cellWidth + gapX;
     } else {
         spacingX = cellWidth;
     }
-    
+
     if (rows > 1) {
         const gapY = Math.max(minGap, (availableHeight - (rows * cellHeight)) / (rows - 1));
         spacingY = cellHeight + gapY;
     } else {
         spacingY = cellHeight;
     }
-    
+
     // Center the grid on screen
     // Total grid dimensions include all cells and gaps between them
     const gridWidth = cols > 1 ? ((cols - 1) * spacingX + cellWidth) : cellWidth;
@@ -2115,30 +2230,30 @@ function calculateGridLayout() {
     // Center horizontally within available width (respecting paddingX)
     const startX = paddingX + (availableWidth - gridWidth) / 2;
     const startY = paddingTop + (availableHeight - gridHeight) / 2;
-    
+
     console.log('[GRID-CALC] Cols:', cols, 'Rows:', rows, 'Total items:', totalItems);
     console.log('[GRID-CALC] Grid dimensions:', gridWidth, 'x', gridHeight);
     console.log('[GRID-CALC] Start position:', startX, ',', startY);
     console.log('[GRID-CALC] Cell dimensions:', cellWidth, 'x', cellHeight, '| Item size:', itemSize);
-    
+
     return { cols, rows, spacingX, spacingY, startX, startY, cellWidth, cellHeight, itemSize };
 }
 
 // Arrange map elements in grid layout
-window.arrangeMapInGrid = function() {
+window.arrangeMapInGrid = function () {
     if (isGridMode || gridModeTransitioning) return;
-    
+
     console.log('[GRID] Arranging map in grid layout');
     console.log('[GRID] Total images:', images.length);
     console.log('[GRID] Screen dimensions:', window.innerWidth, 'x', window.innerHeight);
-    
+
     isGridMode = true;
     gridModeTransitioning = true;
     gridModePositions = [];
-    
+
     // Filter out visual-only elements (reveal-text-template)
     const gridImages = images.filter(img => !img.isVisualEffect);
-    
+
     // Hide visual effect elements
     images.forEach(img => {
         if (img.isVisualEffect) {
@@ -2146,32 +2261,32 @@ window.arrangeMapInGrid = function() {
             img.element.style.pointerEvents = 'none';
         }
     });
-    
+
     const layout = calculateGridLayout();
     const { cols, rows, spacingX, spacingY, startX, startY, cellWidth, cellHeight, itemSize } = layout;
-    
+
     console.log('[GRID] Layout:', { cols, rows, spacingX, spacingY, startX, startY });
     console.log('[GRID] Filtered images (excluding visual effects):', gridImages.length);
-    
+
     // Calculate target positions for each image (excluding visual effects)
     // Each element is centered within its cell
     const offsetX = (cellWidth - itemSize) / 2; // Horizontal offset to center item in cell
     const offsetY = (cellHeight - itemSize) / 2; // Vertical offset to center item in cell
-    
+
     gridImages.forEach((img, index) => {
         const col = index % cols;
         const row = Math.floor(index / cols);
-        
+
         // Position at cell start, then offset to center the item
         const targetX = startX + (col * spacingX) + offsetX;
         const targetY = startY + (row * spacingY) + offsetY;
-        
+
         // Get current position from transform
         const transform = img.element.style.transform || '';
         const match = transform.match(/translate3d\(([^,]+)px,\s*([^,]+)px/);
         const startX_current = match ? parseFloat(match[1]) : 0;
         const startY_current = match ? parseFloat(match[2]) : 0;
-        
+
         gridModePositions.push({
             element: img.element,
             targetX,
@@ -2180,39 +2295,39 @@ window.arrangeMapInGrid = function() {
             startY: startY_current
         });
     });
-    
+
     // Animate to grid positions
     const duration = 250; // Very fast, snappy transition
     const startTime = performance.now();
-    
+
     function animateToGrid() {
         const elapsed = performance.now() - startTime;
         const progress = Math.min(1, elapsed / duration);
-        
+
         // Ease out expo for snappy, dynamic deceleration
         const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-        
+
         gridModePositions.forEach(pos => {
             const currentX = pos.startX + (pos.targetX - pos.startX) * eased;
             const currentY = pos.startY + (pos.targetY - pos.startY) * eased;
-            
+
             // Use fixed scale of 1 in grid mode, remove blur
             pos.element.style.transform = `translate3d(${currentX}px, ${currentY}px, 0) scale(1)`;
             pos.element.style.filter = 'blur(0px)';
-            
+
             // Remove grayscale from images in grid mode
             const imgTag = pos.element.querySelector('img');
             if (imgTag) {
                 imgTag.style.filter = 'grayscale(0)';
             }
         });
-        
+
         if (progress < 1) {
             requestAnimationFrame(animateToGrid);
         } else {
             gridModeTransitioning = false;
             console.log('[GRID] Grid arrangement complete');
-            
+
             // Show tooltips automatically on mobile/small screens in grid mode
             const isMobileOrSmallScreen = window.innerWidth <= 900;
             if (isMobileOrSmallScreen) {
@@ -2226,16 +2341,16 @@ window.arrangeMapInGrid = function() {
             }
         }
     }
-    
+
     animateToGrid();
 };
 
 // Restore normal map positioning
-window.restoreMapPositioning = function() {
+window.restoreMapPositioning = function () {
     if (!isGridMode) return;
-    
+
     console.log('[GRID] Restoring normal map positioning');
-    
+
     // Hide tooltips on mobile when exiting grid mode
     const isMobileOrSmallScreen = window.innerWidth <= 900;
     if (isMobileOrSmallScreen) {
@@ -2247,7 +2362,7 @@ window.restoreMapPositioning = function() {
             }
         });
     }
-    
+
     // Restore visibility of visual effect elements
     images.forEach(img => {
         if (img.isVisualEffect) {
@@ -2255,30 +2370,30 @@ window.restoreMapPositioning = function() {
             img.element.style.pointerEvents = '';
         }
     });
-    
+
     // Store current grid positions before switching mode
     const restorePositions = [];
-    
+
     images.forEach((img, index) => {
         // Get current grid position
         const transform = img.element.style.transform || '';
         const match = transform.match(/translate3d\(([^,]+)px,\s*([^,]+)px/);
         const startX_current = match ? parseFloat(match[1]) : 0;
         const startY_current = match ? parseFloat(match[2]) : 0;
-        
+
         // Calculate target normal position
         const randomOffset = getRandomOffset(img.gridX, img.gridY);
         const baseX = img.gridX * gridSpacing + randomOffset.x;
         const baseY = img.gridY * gridSpacing + randomOffset.y;
-        
+
         const offsetXScaled = offsetX * scale;
         const offsetYScaled = offsetY * scale;
         const imageSizeScaled = imageSize * scale;
         const imageSizeScaledHalf = imageSizeScaled / 2;
-        
+
         const targetX = baseX * scale + offsetXScaled + centerX - imageSizeScaledHalf;
         const targetY = baseY * scale + offsetYScaled + centerY - imageSizeScaledHalf;
-        
+
         restorePositions.push({
             element: img.element,
             startX: startX_current,
@@ -2288,36 +2403,36 @@ window.restoreMapPositioning = function() {
             img
         });
     });
-    
+
     // Switch mode flags
     isGridMode = false;
     gridModeTransitioning = true;
-    
+
     // Animate transition back to normal positions
     const duration = 600;
     const startTime = performance.now();
-    
+
     function animateRestore() {
         const elapsed = performance.now() - startTime;
         const progress = Math.min(1, elapsed / duration);
-        
+
         // Ease out cubic for smooth deceleration
         const eased = 1 - Math.pow(1 - progress, 3);
-        
+
         restorePositions.forEach(pos => {
             const currentX = pos.startX + (pos.targetX - pos.startX) * eased;
             const currentY = pos.startY + (pos.targetY - pos.startY) * eased;
-            
+
             // Animate back to normal scale
             pos.element.style.transform = `translate3d(${currentX}px, ${currentY}px, 0) scale(${scale})`;
-            
+
             // Restore grayscale filter
             const imgTag = pos.element.querySelector('img');
             if (imgTag) {
                 imgTag.style.filter = '';
             }
         });
-        
+
         if (progress < 1) {
             requestAnimationFrame(animateRestore);
         } else {
@@ -2325,7 +2440,7 @@ window.restoreMapPositioning = function() {
             console.log('[GRID] Normal positioning restored');
         }
     }
-    
+
     animateRestore();
 };
 

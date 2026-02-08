@@ -157,7 +157,7 @@ body:not(.preloader-active) nav.blending-item {
     min-width: 100vw;
     min-height: 100vh;
     background: #ffffff !important;
-    z-index: 300001 !important;
+    z-index: 50000 !important;
     display: flex;
     align-items: center;
     justify-content: center;

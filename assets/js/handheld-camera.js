@@ -146,6 +146,33 @@
         else if (!returningToCenter) animateToCenter();
     };
 
+    // Pausar inmediatamente sin animación de regreso
+    window.freezeHandheldCamera = function () {
+        console.log('[handheld-camera] Congelando cámara inmediatamente');
+        shakeActive = false;
+        targetShakeSpeed = 0;
+        shakeSpeed = 0;
+        animating = false;
+        returningToCenter = false;
+        if (requestId) {
+            cancelAnimationFrame(requestId);
+            requestId = null;
+        }
+        // NO aplicar transform, dejarlo como está
+    };
+
+    // Reanudar desde estado actual
+    window.resumeHandheldCamera = function () {
+        console.log('[handheld-camera] Reanudando cámara desde estado actual');
+        shakeActive = true;
+        targetShakeSpeed = BASE_SHAKE_SPEED;
+        shakeSpeed = BASE_SHAKE_SPEED;
+        animating = false;
+        returningToCenter = false;
+        if (requestId) cancelAnimationFrame(requestId);
+        smoothShake(true);
+    };
+
     // Exponer la posición actual de cámara en mano
     window.getHandheldCameraOffset = function () {
         return { x: lastX, y: lastY };

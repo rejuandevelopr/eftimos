@@ -194,60 +194,61 @@
     <div id="image-templates" style="display: none;">
         <!-- Todos los elementos del mapa llevan a clothes-view.html -->
         <div class="image-template initial-center">
-            <a href="clothes-view.html" class="image-link">
+            <a href="clothes-view.html" class="image-link" data-sound="team">
                 <img src="assets/images/g-6.webp" alt="TEAM" width="170" height="170">
                 <span class="tooltip">TEAM</span>
             </a>
         </div>
         <div class="image-template">
-            <a href="origin.html" class="image-link">
+            <a href="origin.html" class="image-link" data-sound="origin">
                 <img src="assets/images/origin-page/origin-n5.JPG" alt="Fashion Mountain Collection" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">ORIGIN</span>
             </a>
         </div>
         <div class="image-template">
-            <a href="clothes-view.html" class="image-link">
+            <a href="clothes-view.html" class="image-link" data-sound="atelier">
                 <img src="assets/images/g-5.webp" alt="Fashion Collection Winter" loading="lazy" width="170"
                     height="170">
                 <span class="tooltip">ATELIER</span>
             </a>
         </div>
         <div class="image-template">
-            <a href="gallery-view.html" class="image-link">
+            <a href="gallery-view.html" class="image-link" data-sound="resilience">
                 <img src="assets/images/g-2.webp" alt="Fashion Nature Collection" loading="lazy" width="170"
                     height="170">
                 <span class="tooltip">RESiLiENCE AW24 COLLECTION</span>
             </a>
         </div>
         <div class="image-template">
-            <a href="bts.html" class="image-link">
+            <a href="bts.html" class="image-link" data-sound="bts">
                 <img src="assets/images/bts-resiliance/eaftimosbts1499.jpg" alt="Behind The Scenes" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">RESiLiENCE AW24 BTS</span>
             </a>
         </div>
-        <div class="image-template reveal-text-template" data-text="DISCOVER THE SECRETS">
+        <div class="image-template reveal-text-template" data-text="DISCOVER THE SECRETS"
+            data-sound="locked-in-oneself">
             <div class="reveal-text-container">
                 <canvas class="reveal-text-canvas"></canvas>
             </div>
         </div>
         <div class="image-template">
-            <a href="about-us.html" class="image-link">
+            <a href="about-us.html" class="image-link" data-sound="vision">
                 <img src="assets/images/vision-page/vision-n3.jpg" alt="Fashion Winter Collection" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">VISION</span>
             </a>
         </div>
         <div class="image-template">
-            <a href="press.html" class="image-link">
+            <a href="press.html" class="image-link" data-sound="press">
                 <img src="assets/images/press-page/press.webp" alt="Fashion Winter Collection" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">PRESS</span>
             </a>
         </div>
         <div class="image-template">
-            <div class="video-link">
+            <div class="video-link" data-sound="locked-in-oneself">
                 <video autoplay muted loop playsinline width="180" height="320" preload="metadata">
                     <source src="assets/vid/reels-mixed-vid.mp4" type="video/mp4">
                 </video>
@@ -504,8 +505,269 @@
                 }
             });
         })();
+
+        (function () {
+            // Animación de zoom-out al volver desde otra página (estrategia con sessionStorage)
+            let isAnimating = false;
+            let lastAnimationTime = 0;
+            
+            // Detectar si es retorno: si ya visitaste index.html en esta sesión
+            const sessionKey = 'eftimos_indexVisited';
+            const isReturning = sessionStorage.getItem(sessionKey) === '1';
+            
+            console.log('[INTRO-ZOOM] isReturning:', isReturning, 'referrer:', document.referrer);
+
+            function shouldRunIntro(eventType) {
+                console.log('[INTRO-ZOOM] evento:', eventType);
+                
+                const now = Date.now();
+                if (now - lastAnimationTime < 2000) {
+                    console.log('[INTRO-ZOOM] animación muy reciente, abortando');
+                    return false;
+                }
+
+                const preloaderShown = localStorage.getItem('eftimosPreloaderShown') === '1';
+                const force = location.search.indexOf('introZoom=1') !== -1;
+                
+                if (!preloaderShown && !force) {
+                    console.log('[INTRO-ZOOM] preloader no mostrado y no forzado');
+                    return false;
+                }
+
+                // Si es un retorno (ya visitaste index.html en esta sesión), ejecutar SIEMPRE
+                if (isReturning) {
+                    console.log('[INTRO-ZOOM] detectado retorno a index.html, ejecutando animación');
+                    return true;
+                }
+
+                // Si no es retorno, verificar referrer en load
+                if (eventType === 'load' && (document.referrer || force)) {
+                    console.log('[INTRO-ZOOM] primera visita con referrer, ejecutando');
+                    return true;
+                }
+
+                console.log('[INTRO-ZOOM] condiciones no cumplidas');
+                return false;
+            }
+
+            function triggerIntroZoomFromReferrer(eventType = 'manual') {
+                if (isAnimating) {
+                    console.log('[INTRO-ZOOM] ya hay animación en curso');
+                    return;
+                }
+
+                if (!shouldRunIntro(eventType)) {
+                    return;
+                }
+
+                const canvas = document.getElementById('canvas');
+                if (!canvas) {
+                    console.log('[INTRO-ZOOM] #canvas no encontrado');
+                    return;
+                }
+
+                // Buscar el map-group dentro del canvas (donde realmente está el contenido)
+                const mapGroup = canvas.querySelector('#map-group');
+                const targetElement = mapGroup || canvas;
+                console.log('[INTRO-ZOOM] elemento objetivo:', targetElement.id || 'canvas');
+
+                // Asegurar que el preloader esté oculto
+                const preloader = document.getElementById('preloader');
+                if (preloader && preloader.style.display !== 'none') {
+                    console.log('[INTRO-ZOOM] preloader aún visible, esperando...');
+                    setTimeout(() => triggerIntroZoomFromReferrer(eventType), 200);
+                    return;
+                }
+
+                const DURATION = 2000; // Más lento para ver claramente
+                const INITIAL_SCALE = 1.5; // Mucho más zoom para ser obvio
+                const EASING = 'cubic-bezier(.22,.9,.12,1)';
+
+                function doAnim() {
+                    if (isAnimating) return;
+                    isAnimating = true;
+                    lastAnimationTime = Date.now();
+                    
+                    console.log('[INTRO-ZOOM] ✓ iniciando animación');
+                    console.log('[INTRO-ZOOM] targetElement:', {
+                        id: targetElement.id,
+                        children: targetElement.children.length,
+                        transform: targetElement.style.transform,
+                        transition: targetElement.style.transition
+                    });
+
+                    // CONGELAR handheld-camera inmediatamente (sin animación de regreso)
+                    const wasHandheldActive = typeof window.freezeHandheldCamera === 'function';
+                    if (wasHandheldActive) {
+                        window.freezeHandheldCamera();
+                        console.log('[INTRO-ZOOM] handheld-camera congelado');
+                    }
+
+                    // Overlay blanco - empieza semi-transparente para ver el zoom
+                    const overlay = document.createElement('div');
+                    Object.assign(overlay.style, {
+                        position: 'fixed',
+                        inset: '0',
+                        background: '#fff',
+                        zIndex: '2147483646',
+                        pointerEvents: 'none',
+                        opacity: '0.85', // Iniciar semi-transparente para que se vea el mapa
+                        transition: `opacity ${DURATION}ms ${EASING}`
+                    });
+                    document.body.appendChild(overlay);
+                    console.log('[INTRO-ZOOM] overlay creado con opacity 0.85');
+
+                    // Detectar origen desde referrer  
+                    let originX = '50%', originY = '50%';
+                    try {
+                        if (document.referrer) {
+                            const refUrl = new URL(document.referrer);
+                            const file = refUrl.pathname.split('/').pop();
+                            if (file) {
+                                const selector = `a[href$="${file}"], .image-link[href$="${file}"]`;
+                                const target = canvas.querySelector(selector);
+                                if (target) {
+                                    const elemRect = targetElement.getBoundingClientRect();
+                                    const tRect = target.getBoundingClientRect();
+                                    const cx = ((tRect.left + tRect.width / 2) - elemRect.left) / elemRect.width * 100;
+                                    const cy = ((tRect.top + tRect.height / 2) - elemRect.top) / elemRect.height * 100;
+                                    originX = `${Math.min(Math.max(cx, 0), 100)}%`;
+                                    originY = `${Math.min(Math.max(cy, 0), 100)}%`;
+                                    console.log('[INTRO-ZOOM] origen calculado:', originX, originY);
+                                }
+                            }
+                        }
+                    } catch (e) { 
+                        console.log('[INTRO-ZOOM] error calculando origen:', e);
+                    }
+
+                    // Guardar estilos originales
+                    const originalTransition = targetElement.style.transition;
+                    const originalTransform = targetElement.style.transform;
+                    const originalZIndex = targetElement.style.zIndex;
+                    
+                    // Reset transform y transition
+                    targetElement.style.transform = '';
+                    targetElement.style.transition = 'none';
+                    // Z-index MUY ALTO para estar sobre el overlay blanco y que se vea el zoom
+                    targetElement.style.zIndex = '2147483647';
+                    
+                    console.log('[INTRO-ZOOM] estilos preparados');
+                    
+                    // Forzar reflow
+                    window.getComputedStyle(targetElement).transform;
+                    
+                    requestAnimationFrame(() => {
+                        targetElement.style.transformOrigin = `${originX} ${originY}`;
+                        targetElement.style.willChange = 'transform';
+                        // NO aplicar transition aún - queremos que el estado inicial sea instantáneo
+                        targetElement.style.transition = 'none';
+                        // Aplicar scale inicial (zoom in) SIN TRANSICIÓN
+                        targetElement.style.transform = `scale(${INITIAL_SCALE})`;
+                        
+                        console.log('[INTRO-ZOOM] transform inicial aplicado (sin transition):', targetElement.style.transform);
+
+                        // Forzar render del estado inicial
+                        window.getComputedStyle(targetElement).transform;
+                        
+                        // Paso 1: Empezar a desvanecer el overlay PRIMERO
+                        requestAnimationFrame(() => {
+                            overlay.style.opacity = '0';
+                            console.log('[INTRO-ZOOM] overlay comenzando fade-out');
+                            
+                            // Paso 2: Después de 200ms, empezar el zoom-out
+                            setTimeout(() => {
+                                console.log('[INTRO-ZOOM] iniciando zoom out a scale(1)');
+                                // AHORA SÍ agregar la transition y cambiar a scale(1)
+                                targetElement.style.transition = `transform ${DURATION}ms ${EASING}`;
+                                targetElement.style.transform = 'scale(1)';
+                            }, 200); // El zoom empieza 200ms después del overlay
+                        });
+                    });
+
+                    // Limpieza y blend con handheld-camera - comenzar antes para solapar
+                    setTimeout(() => {
+                        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                        targetElement.style.willChange = 'auto';
+                        
+                        // Transición más larga y suave de vuelta al estado original
+                        targetElement.style.transition = `transform 800ms cubic-bezier(.22,.61,.36,1), z-index 0ms 800ms`;
+                        targetElement.style.transform = originalTransform || 'none';
+                        targetElement.style.zIndex = originalZIndex;
+                        
+                        // REACTIVAR handheld-camera inmediatamente para blendear
+                        setTimeout(() => {
+                            if (wasHandheldActive) {
+                                window.resumeHandheldCamera();
+                                console.log('[INTRO-ZOOM] handheld-camera reactivado con blend');
+                            }
+                            
+                            // Restaurar transition original después
+                            setTimeout(() => {
+                                targetElement.style.transition = originalTransition;
+                            }, 850);
+                        }, 50);
+                        
+                        isAnimating = false;
+                        console.log('[INTRO-ZOOM] ✓ animación finalizada y limpieza completada');
+                    }, DURATION - 650); // Comenzar 650ms antes del final para mayor solapamiento
+                }
+
+                // Esperar a que el canvas tenga contenido
+                if (canvas.children.length > 0 || (mapGroup && mapGroup.children.length > 0)) {
+                    console.log('[INTRO-ZOOM] contenido encontrado, ejecutando inmediatamente');
+                    doAnim();
+                } else {
+                    console.log('[INTRO-ZOOM] esperando contenido en canvas...');
+                    const mo = new MutationObserver((muts, obs) => {
+                        if (canvas.children.length > 0) {
+                            console.log('[INTRO-ZOOM] contenido detectado via observer');
+                            obs.disconnect();
+                            doAnim();
+                        }
+                    });
+                    mo.observe(canvas, { childList: true, subtree: true });
+                    setTimeout(() => {
+                        try { mo.disconnect(); } catch (e) { }
+                        console.log('[INTRO-ZOOM] timeout alcanzado, ejecutando de todas formas');
+                        doAnim();
+                    }, 2000);
+                }
+            }
+
+            // Múltiples disparadores para asegurar que funcione
+            window.addEventListener('load', () => {
+                console.log('[INTRO-ZOOM] evento load disparado');
+                triggerIntroZoomFromReferrer('load');
+                // Marcar que ya visitaste index.html en esta sesión
+                setTimeout(() => {
+                    sessionStorage.setItem(sessionKey, '1');
+                    console.log('[INTRO-ZOOM] marcado como visitado en sesión');
+                }, 500);
+            });
+            
+            // Solo escuchar pageshow si es un retorno (no en el primer load)
+            window.addEventListener('pageshow', (e) => {
+                console.log('[INTRO-ZOOM] pageshow, persisted:', e.persisted, 'isReturning:', isReturning);
+                // Solo ejecutar si NO es la carga inicial (evitar doblar con load)
+                if (isReturning) {
+                    setTimeout(() => triggerIntroZoomFromReferrer('pageshow'), 150);
+                }
+            });
+
+            window.addEventListener('popstate', () => {
+                console.log('[INTRO-ZOOM] popstate detectado');
+                if (isReturning) {
+                    setTimeout(() => triggerIntroZoomFromReferrer('popstate'), 150);
+                }
+            });
+
+            // Exponer para debugging - forzar con window.triggerIntroZoomFromReferrer()
+            window.triggerIntroZoomFromReferrer = () => {
+                console.log('[INTRO-ZOOM] disparado manualmente desde consola');
+                triggerIntroZoomFromReferrer('manual');
+            };
+        })();
     </script>
-
 </body>
-
 </html>
