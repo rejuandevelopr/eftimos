@@ -284,6 +284,34 @@
     <script defer src="assets/js/performance-monitor.js"></script>
     <script defer src="assets/js/ui-sounds.js"></script>
     <script defer src="assets/js/script.js"></script>
+
+    <!-- Darken video on map item hover -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('canvas');
+            const videosBackground = document.getElementById('videos-background');
+            if (!canvas || !videosBackground) return;
+
+            canvas.addEventListener('mouseenter', function(e) {
+                const mapItem = e.target.closest('.image-link, .video-link');
+                if (mapItem) videosBackground.classList.add('map-item-hovered');
+            }, true);
+
+            canvas.addEventListener('mouseleave', function(e) {
+                const mapItem = e.target.closest('.image-link, .video-link');
+                if (mapItem) videosBackground.classList.remove('map-item-hovered');
+            }, true);
+
+            canvas.addEventListener('mouseover', function(e) {
+                const mapItem = e.target.closest('.image-link, .video-link');
+                if (mapItem) {
+                    videosBackground.classList.add('map-item-hovered');
+                } else {
+                    videosBackground.classList.remove('map-item-hovered');
+                }
+            });
+        });
+    </script>
     <script defer src="assets/js/controls.js?v=20260205"></script>
     <script defer src="assets/js/handheld-camera.js"></script>
     <script defer src="assets/js/cursor-effect.js"></script>
