@@ -425,8 +425,7 @@ class Particle {
   }
 
   draw() {
-    this.element.style.left = this.x + 'px';
-    this.element.style.top = this.y + 'px';
+    this.element.style.transform = 'translate(' + (this.x - 1) + 'px,' + (this.y - 1) + 'px)';
   }
 }
 
@@ -466,14 +465,11 @@ function animateCursor() {
     return;
   }
   window._lastCursorFrame = now;
-  // Update center dot position
-  centerDot.style.left = smoothPos.x + 'px';
-  centerDot.style.top = smoothPos.y + 'px';
-
-  // Smooth scale animation for center dot
-  let currentCenterDotScale = parseFloat(centerDot.style.scale) || 1;
-  currentCenterDotScale += (targetCenterDotScale - currentCenterDotScale) * 0.15;
-  centerDot.style.scale = currentCenterDotScale;
+  // Update center dot position + scale via single transform (avoids layout thrash)
+  var _cdScale = (window._cdScale || 1);
+  _cdScale += (targetCenterDotScale - _cdScale) * 0.15;
+  window._cdScale = _cdScale;
+  centerDot.style.transform = 'translate(' + (smoothPos.x - 6) + 'px,' + (smoothPos.y - 6) + 'px) scale(' + _cdScale + ')';
 
   particles.forEach(p => {
     p.update();
@@ -701,7 +697,6 @@ function animateCursor() {
   requestAnimationFrame(animateCursor);
 }
 
-// Track mouse movement
 window.addEventListener("mousemove", e => {
   mouse.x = e.pageX;  // Use pageX instead of clientX to account for scroll
   mouse.y = e.pageY;  // Use pageY instead of clientY to account for scroll
@@ -873,7 +868,17 @@ window.addEventListener("touchstart", e => {
 // Eliminado: listeners de 'zoomIn' y 'zoomOut' para evitar fade redundante
 
 // Start animation solo una vez al cargar el archivo
+var _cursorRafId = null;
 if (typeof window._cursorAnimStarted === 'undefined') {
   window._cursorAnimStarted = true;
-  animateCursor();
+  _cursorRafId = requestAnimationFrame(animateCursor);
 }
+
+// Pause cursor animation when tab is hidden
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) {
+    if (_cursorRafId) { cancelAnimationFrame(_cursorRafId); _cursorRafId = null; }
+  } else if (window._cursorAnimStarted) {
+    _cursorRafId = requestAnimationFrame(animateCursor);
+  }
+});

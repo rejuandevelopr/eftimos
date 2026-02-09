@@ -756,11 +756,11 @@ function updateImagePositions() {
     const blurThreshold = blurRadiusScaled;
 
     const len = images.length;
+    // Fade out trail once per frame (not per image)
+    if (window.fadeOutTrail) window.fadeOutTrail();
+    if (window.smoothClearTrail) window.smoothClearTrail();
+
     for (let i = 0; i < len; i++) {
-        // --- Fade out trail on zoom ---
-        if (window.fadeOutTrail) window.fadeOutTrail();
-        // Limpiar suavemente el trail solo si hay cambio de zoom
-        if (window.smoothClearTrail) window.smoothClearTrail();
         const img = images[i];
         const randomOffset = getRandomOffset(img.gridX, img.gridY);
 

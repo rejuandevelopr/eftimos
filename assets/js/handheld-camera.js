@@ -139,6 +139,16 @@
 
     smoothShake();
 
+    // Pause when tab is hidden to save CPU
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+            if (requestId) { cancelAnimationFrame(requestId); requestId = null; }
+            animating = false;
+        } else if (shakeActive) {
+            smoothShake();
+        }
+    });
+
     window.setHandheldCameraShake = function (active) {
         shakeActive = !!active;
         console.log('[handheld-camera] setHandheldCameraShake:', shakeActive);

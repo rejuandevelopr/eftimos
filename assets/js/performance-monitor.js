@@ -3,6 +3,8 @@
 // ========================================
 // Lightweight performance monitoring for automatic quality adjustment
 
+// Silenciar logs de debug en producción (mantiene warn/error para diagnosis)
+(function() { var _noop = function(){}; console.log = _noop; })();
 (function () {
     'use strict';
 
@@ -176,15 +178,25 @@
     };
 
     // Initialize on load
+    var _perfRafId = null;
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
             initializePerformanceMode();
-            requestAnimationFrame(measureFPS);
+            _perfRafId = requestAnimationFrame(measureFPS);
         });
     } else {
         initializePerformanceMode();
-        requestAnimationFrame(measureFPS);
+        _perfRafId = requestAnimationFrame(measureFPS);
     }
+
+    // Pause FPS measurement when tab is hidden
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+            if (_perfRafId) { cancelAnimationFrame(_perfRafId); _perfRafId = null; }
+        } else if (perfMonitor.enabled) {
+            _perfRafId = requestAnimationFrame(measureFPS);
+        }
+    });
 
     // Log performance stats periodically (only in development)
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {

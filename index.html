@@ -22,11 +22,33 @@
     <!-- Preload critical fonts -->
     <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
 
-    <!-- Preload critical CSS -->
-    <link rel="stylesheet" href="assets/css/style.css?v=20260208">
+    <!-- Google Fonts (non-blocking, moved from CSS @import) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luxurious+Script&family=Herr+Von+Muellerhoff&family=Romanesco&family=Tangerine:wght@400;700&family=Ballet&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luxurious+Script&family=Herr+Von+Muellerhoff&family=Romanesco&family=Tangerine:wght@400;700&family=Ballet&display=swap"></noscript>
 
-    <!-- DNS prefetch for faster resource loading -->
-    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <!-- Critical CSS (inline for instant preloader render) -->
+    <style>
+        @font-face{font-family:'Helvetica Neue Condensed Bold';src:url('assets/fonts/Helvetica-Neue-Condensed-Bold.ttf') format('truetype');font-display:swap}
+        @font-face{font-family:'Helvetica';src:url('assets/fonts/Helvetica.ttf') format('truetype');font-weight:400;font-display:swap}
+        *{margin:0;padding:0;box-sizing:border-box}
+        html,body{width:100%;height:100%;overflow:hidden;overscroll-behavior:none}
+        body{background:#F0F0F0;font-family:'Helvetica Neue Condensed Bold','Helvetica',sans-serif;overflow:hidden;position:relative}
+        .preloader{position:fixed;inset:0;width:100vw;height:100vh;min-width:100vw;min-height:100vh;background:#fff!important;z-index:50000!important;display:flex;align-items:center;justify-content:center;opacity:1}
+        .preloader-content{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:400px;padding:0 20px}
+        .preloader-logo{display:flex;justify-content:center;align-items:center}
+        .preloader-logo img{width:280px;height:auto;opacity:0;animation:logoFadeIn 1.2s ease forwards}
+        @keyframes logoFadeIn{0%{opacity:0;transform:scale(0.95)}100%{opacity:1;transform:scale(1)}}
+        .preloader-sober{background:transparent!important;padding:40px 30px;max-width:500px}
+        .preloader-sober .preloader-logo img{filter:brightness(0);opacity:0}
+        .preloader-enter-btn{opacity:0;pointer-events:none;font-family:'Helvetica Neue Condensed Bold',sans-serif;font-size:13px;letter-spacing:6px;text-transform:uppercase;padding:14px 45px;border:1px solid #000;background:transparent;color:#000;cursor:pointer;position:relative;overflow:hidden;transition:opacity .6s,color .3s,transform .2s}
+        .preloader-enter-btn.show{opacity:1;pointer-events:auto}
+        body.preloader-active nav.blending-item{opacity:0!important;pointer-events:none!important;visibility:hidden!important}
+    </style>
+    <!-- Full CSS (async, non-render-blocking) -->
+    <link rel="stylesheet" href="assets/css/style.css?v=20260210" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/style.css?v=20260210"></noscript>
 </head>
 
 <body class="canvas-body index-page">
@@ -79,7 +101,7 @@
     <!-- Background Video TOP -->
     <div id="videos-background" style="visibility:hidden;">
         <!-- Video de fondo principal -->
-        <video autoplay muted loop playsinline preload="auto">
+        <video autoplay muted loop playsinline preload="metadata">
             <source src="assets/vid/reels-mixed-vid.mp4" type="video/mp4">
         </video>
 
@@ -219,7 +241,7 @@
         </div>
         <div class="image-template">
             <a href="origin.html" class="image-link" data-sound="origin" data-shape="circle">
-                <img src="assets/images/origin-page/origin-n5.JPG" alt="Fashion Mountain Collection" loading="lazy"
+                <img src="assets/images/origin-page/origin-n5-thumb.jpg" alt="Fashion Mountain Collection" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">ORIGIN</span>
             </a>
@@ -240,7 +262,7 @@
         </div>
         <div class="image-template">
             <a href="bts.html" class="image-link" data-sound="bts" data-shape="circle">
-                <img src="assets/images/bts-resiliance/eaftimosbts1499.jpg" alt="Behind The Scenes" loading="lazy"
+                <img src="assets/images/bts-resiliance/eaftimosbts1499-thumb.jpg" alt="Behind The Scenes" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">RESiLiENCE AW24 BTS</span>
             </a>
@@ -253,14 +275,14 @@
         </div>
         <div class="image-template">
             <a href="about-us.html" class="image-link" data-sound="vision" data-shape="circle">
-                <img src="assets/images/vision-page/vision-n3.jpg" alt="Fashion Winter Collection" loading="lazy"
+                <img src="assets/images/vision-page/vision-n3-thumb.jpg" alt="Fashion Winter Collection" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">VISION</span>
             </a>
         </div>
         <div class="image-template">
             <a href="press.html" class="image-link" data-sound="press" data-shape="circle">
-                <img src="assets/images/press-page/press-gallery-5.jpeg" alt="Fashion Winter Collection" loading="lazy"
+                <img src="assets/images/press-page/press-gallery-5-thumb.jpeg" alt="Fashion Winter Collection" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">PRESS</span>
             </a>
@@ -276,759 +298,24 @@
     </div>
 
     <!-- Sonidos -->
-    <audio id="noiseSound" src="assets/sounds/white-noise.mp3" preload="auto" loop></audio>
-    <audio id="whispersSound" src="assets/sounds/whispers.mp3" preload="auto" loop></audio>
-    <audio id="lockedInSound" src="assets/sounds/locked-in-oneself.mp3" preload="auto"></audio>
+    <audio id="noiseSound" src="assets/sounds/white-noise.mp3" preload="none" loop></audio>
+    <audio id="whispersSound" src="assets/sounds/whispers.mp3" preload="none" loop></audio>
+    <audio id="lockedInSound" src="assets/sounds/locked-in-oneself.mp3" preload="none"></audio>
 
     <!-- Load scripts with defer for better performance -->
     <script defer src="assets/js/performance-monitor.js"></script>
     <script defer src="assets/js/ui-sounds.js"></script>
     <script defer src="assets/js/script.js"></script>
 
-    <!-- Darken background on map item hover -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const canvas = document.getElementById('canvas');
-            const videosBackground = document.getElementById('videos-background');
-            if (!canvas || !videosBackground) return;
-
-            // Use mouseover (bubbles) for reliable delegation on dynamic elements
-            canvas.addEventListener('mouseover', function(e) {
-                const mapItem = e.target.closest('.image-link, .video-link');
-                if (mapItem) {
-                    canvas.classList.add('has-hover');
-                    videosBackground.classList.add('map-item-hovered');
-                    // Mark the specific container as hovered
-                    var container = mapItem.closest('.image-container');
-                    // Remove is-hovered from any previously hovered container
-                    var prev = canvas.querySelector('.image-container.is-hovered');
-                    if (prev && prev !== container) prev.classList.remove('is-hovered');
-                    if (container) container.classList.add('is-hovered');
-                } else {
-                    canvas.classList.remove('has-hover');
-                    videosBackground.classList.remove('map-item-hovered');
-                    var prev = canvas.querySelector('.image-container.is-hovered');
-                    if (prev) prev.classList.remove('is-hovered');
-                }
-            });
-
-            // Clean up when mouse leaves the canvas entirely
-            canvas.addEventListener('mouseleave', function() {
-                canvas.classList.remove('has-hover');
-                videosBackground.classList.remove('map-item-hovered');
-                var prev = canvas.querySelector('.image-container.is-hovered');
-                if (prev) prev.classList.remove('is-hovered');
-            });
-        });
-    </script>
+    <!-- Darken background on map item hover + preloader + bfcache + intro-zoom -->
+    <script defer src="assets/js/index-page.js?v=20260210"></script>
     <script defer src="assets/js/controls.js?v=20260205"></script>
     <script defer src="assets/js/handheld-camera.js"></script>
     <script defer src="assets/js/cursor-effect.js"></script>
     <script defer src="assets/js/grain-effect.js?v=20260206"></script>
     <script defer src="assets/js/tooltip-nebula.js"></script>
     <script defer src="assets/js/contact-nebula.js"></script>
-    <script defer src="assets/js/perspective-distortion.js"></script>
     <script defer src="assets/js/reveal-text.js"></script>
 
-    <script>
-        (function () {
-            // --- WHISPERS SOUND LOGIC ---
-            const whispersSound = document.getElementById('whispersSound');
-            if (whispersSound) {
-                const BASE_VOLUME = 0.04;
-                const HOVER_VOLUME = 0.10;
-                const TRANSITION_STEPS = 20;
-                let isPlaying = false;
-                let volumeTransitionInterval = null;
-                let volumeMonitorInterval = null;
-                let targetVolume = BASE_VOLUME;
-                let canPlayAudio = false; // No reproducir hasta que el preloader termine
-
-                function smoothVolumeTransition(target, duration = 300) {
-                    if (volumeTransitionInterval) {
-                        clearInterval(volumeTransitionInterval);
-                    }
-                    const startVolume = whispersSound.volume;
-                    const volumeDiff = target - startVolume;
-                    const stepDuration = duration / TRANSITION_STEPS;
-                    let currentStep = 0;
-                    volumeTransitionInterval = setInterval(() => {
-                        currentStep++;
-                        const progress = currentStep / TRANSITION_STEPS;
-                        const easeProgress = progress < 0.5
-                            ? 2 * progress * progress
-                            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-                        whispersSound.volume = startVolume + (volumeDiff * easeProgress);
-                        if (currentStep >= TRANSITION_STEPS) {
-                            clearInterval(volumeTransitionInterval);
-                            volumeTransitionInterval = null;
-                            whispersSound.volume = target;
-                            targetVolume = target;
-                        }
-                    }, stepDuration);
-                }
-                function startWhispers() {
-                    if (isPlaying || !canPlayAudio) return; // Solo si el preloader terminó
-                    whispersSound.volume = BASE_VOLUME;
-                    whispersSound.muted = false;
-                    targetVolume = BASE_VOLUME;
-                    whispersSound.play().then(() => {
-                        isPlaying = true;
-                        volumeMonitorInterval = setInterval(() => {
-                            if (isPlaying && !volumeTransitionInterval && whispersSound.volume !== targetVolume) {
-                                whispersSound.volume = targetVolume;
-                            }
-                        }, 100);
-                    }).catch(() => { });
-                }
-
-                // Escuchar cuando el preloader termine
-                window.addEventListener('preloaderFinished', () => {
-                    canPlayAudio = true;
-                    console.log('[AUDIO] Preloader finished');
-                    // El audio ya fue iniciado en el click del botón Enter
-                });
-
-                window.addEventListener('tooltipShown', () => {
-                    if (canPlayAudio) smoothVolumeTransition(HOVER_VOLUME, 400);
-                });
-                window.addEventListener('tooltipHidden', () => {
-                    if (canPlayAudio) smoothVolumeTransition(BASE_VOLUME, 500);
-                });
-                document.addEventListener('click', (e) => {
-                    if (e.target.closest('.image-link') && isPlaying) {
-                        smoothVolumeTransition(0, 400);
-                    }
-                });
-            }
-
-            // --- AUDIO RELIABILITY SYSTEM ---
-            // El audio se inicia directamente en el click del botón Enter del preloader
-            // No se necesitan funciones adicionales de inicialización
-
-            // --- BFCACHE / BACK BUTTON RESTORATION ---
-            // iOS Safari restaura la página desde bfcache al pulsar Back (swipe gesture).
-            // En ese momento 'load' y 'DOMContentLoaded' NO se disparan, solo 'pageshow'.
-            // Hay que limpiar TODOS los estados de transición que quedaron congelados y
-            // reproducir el fade blanco (overlay de opacity 1→0 en vez de reiniciar la
-            // animación CSS del body, que falla en iOS Safari con bfcache).
-            
-            // Flag que se activa al salir de la página; persiste en bfcache
-            var _eftimosPageHidden = false;
-            window.addEventListener('pagehide', function () { _eftimosPageHidden = true; });
-
-            window.addEventListener('pageshow', function (e) {
-                var needsRestore = e.persisted || _eftimosPageHidden;
-                
-                // Detectar estado roto por si acaso los flags no bastaron
-                if (!needsRestore) {
-                    try {
-                        var comp = window.getComputedStyle(document.body).opacity;
-                        if (comp === '0') needsRestore = true;
-                    } catch(ex) {}
-                    if (document.body.classList.contains('unloading') ||
-                        document.body.classList.contains('morphing')) {
-                        needsRestore = true;
-                    }
-                }
-
-                if (!needsRestore) return;
-                _eftimosPageHidden = false;
-
-                console.log('[PAGESHOW] Restaurando página (persisted:', e.persisted, ')');
-
-                try {
-                    // ====== 1. LIMPIAR TODO INSTANTÁNEAMENTE ======
-
-                    // Clases que ocultan contenido
-                    document.body.classList.remove('unloading', 'morphing', 'preloader-active');
-
-                    // Body: visible inmediatamente, sin transición ni animación
-                    document.body.style.transition = 'none';
-                    document.body.style.animation  = 'none';
-                    document.body.style.opacity     = '1';
-
-                    // #transitionOverlay (blanco de morph z-index:250000)
-                    var transOv = document.getElementById('transitionOverlay');
-                    if (transOv) {
-                        transOv.style.cssText = 'opacity:0;pointer-events:none;display:none;z-index:-1;';
-                    }
-
-                    // #dimOverlay (oscuro de morph)
-                    var dimOv = document.getElementById('dimOverlay');
-                    if (dimOv) {
-                        dimOv.style.cssText = 'opacity:0;pointer-events:none;display:none;';
-                    }
-
-                    // Clones de morph transition (img position:fixed)
-                    document.querySelectorAll('body > img[style*="position"]').forEach(function(el) {
-                        if (el.style.position === 'fixed') el.remove();
-                    });
-
-                    // Overlays huérfanos de intro-zoom (div fixed z-index alto sin id)
-                    document.querySelectorAll('body > div').forEach(function(el) {
-                        if (el.style.position === 'fixed' && !el.id && parseInt(el.style.zIndex||0,10) > 100000) {
-                            el.remove();
-                        }
-                    });
-
-                    // Fondo visible
-                    var vidBg = document.getElementById('videos-background');
-                    var grain = document.getElementById('grainCanvas');
-                    if (vidBg) vidBg.style.visibility = '';
-                    if (grain) { grain.style.visibility = ''; grain.style.opacity = ''; }
-
-                    // Canvas (mapa) visible
-                    var cvs = document.getElementById('canvas');
-                    if (cvs) { cvs.style.transition='none'; cvs.style.opacity='1'; cvs.style.visibility=''; }
-
-                    // Nav visible
-                    var nav = document.querySelector('nav.blending-item');
-                    if (nav) { nav.style.transition='none'; nav.style.opacity='1'; nav.style.pointerEvents='auto'; }
-
-                    // Preloader oculto
-                    if (localStorage.getItem('eftimosPreloaderShown') === '1') {
-                        var pl = document.getElementById('preloader');
-                        if (pl) { pl.style.display='none'; pl.style.visibility='hidden'; pl.style.opacity='0'; pl.style.pointerEvents='none'; }
-                    }
-
-                    // Hamburguesa + logo
-                    var mt = document.getElementById('menuToggle');
-                    var sl = document.getElementById('sharedLogo');
-                    if (mt) { mt.style.opacity='1'; mt.style.pointerEvents='auto'; }
-                    if (sl) { sl.style.opacity='1'; }
-
-                    // Forzar reflow para que iOS Safari aplique todos los cambios
-                    void document.body.offsetHeight;
-
-                    // ====== 2. FADE BLANCO (overlay nuevo que se desvanece) ======
-                    // Más fiable que reiniciar la animación CSS del body en iOS Safari
-                    var fadeOverlay = document.createElement('div');
-                    fadeOverlay.setAttribute('id', 'bfcacheFadeOverlay');
-                    fadeOverlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:999999;opacity:1;pointer-events:none;transition:opacity 1.2s ease;';
-                    document.body.appendChild(fadeOverlay);
-                    // Forzar reflow para registrar opacity:1 antes de animar
-                    void fadeOverlay.offsetHeight;
-                    fadeOverlay.style.opacity = '0';
-                    // Eliminar overlay al terminar
-                    fadeOverlay.addEventListener('transitionend', function() { fadeOverlay.remove(); });
-                    // Safety: eliminar aunque transitionend no dispare (iOS quirk)
-                    setTimeout(function() {
-                        var fo = document.getElementById('bfcacheFadeOverlay');
-                        if (fo) fo.remove();
-                    }, 2000);
-
-                    // ====== 3. RESTAURAR ESTADO NORMAL ======
-                    requestAnimationFrame(function() {
-                        // Devolver transiciones CSS normales
-                        document.body.style.transition = '';
-                        document.body.style.animation  = '';
-                        if (cvs) cvs.style.transition = '';
-                        if (nav) nav.style.transition = '';
-                    });
-
-                    // Reanudar videos (iOS los pausa en bfcache)
-                    if (vidBg) {
-                        vidBg.querySelectorAll('video').forEach(function(v) {
-                            if (v.paused) v.play().catch(function(){});
-                        });
-                    }
-
-                    // Reanudar grano
-                    if (localStorage.getItem('visualEffectsEnabled') !== 'false' &&
-                        typeof window.startGrainAnimation === 'function') {
-                        window.startGrainAnimation();
-                    }
-
-                    // Limpiar morph data
-                    try { sessionStorage.removeItem('morphTransition'); } catch(ex) {}
-
-                } catch (err) {
-                    // Último recurso: si algo falla, al menos hacer la página visible
-                    console.error('[PAGESHOW] Error en restauración:', err);
-                    document.body.style.cssText = 'opacity:1 !important;';
-                    document.body.classList.remove('unloading', 'morphing');
-                }
-            });
-
-            // --- PRELOADER FADE LOGIC ---
-            function showBackground() {
-                document.getElementById('videos-background').style.visibility = '';
-                document.getElementById('grainCanvas').style.visibility = '';
-            }
-            function fadeOutPreloader() {
-                const preloader = document.getElementById('preloader');
-                preloader.style.transition = 'opacity 0.4s cubic-bezier(0.4, 0, 1, 1)';
-                preloader.style.opacity = '0';
-                setTimeout(() => {
-                    preloader.style.display = 'none';
-                }, 450);
-            }
-            // Mostrar fondo al cargar, pero mantener preloader visible
-            window.addEventListener('load', function () {
-                setTimeout(() => {
-                    showBackground();
-
-                    // Verificar si el preloader ya fue mostrado antes
-                    const preloaderShown = localStorage.getItem('eftimosPreloaderShown') === '1';
-
-                    if (preloaderShown) {
-                        // Si ya se mostró el preloader, marcar flag pero NO iniciar audio aún
-                        // El audio se iniciará con la primera interacción del usuario
-                        window.preloaderEnterPressed = true;
-                        console.log('[LOAD] Preloader already shown, audio will start on first interaction');
-                    } else {
-                        // Mostrar el botón Enter cuando todo esté listo
-                        var enterBtn = document.getElementById('preloaderEnterBtn');
-                        if (enterBtn) {
-                            enterBtn.disabled = false;
-                            enterBtn.style.display = '';
-                            enterBtn.focus();
-                        }
-                    }
-                }, 200);
-            });
-
-            // === Función para forzar ocultación completa del preloader ===
-            function forceHidePreloader(preloader) {
-                if (!preloader || preloader.getAttribute('data-hidden') === '1') return;
-                preloader.setAttribute('data-hidden', '1');
-                preloader.style.setProperty('display', 'none', 'important');
-                preloader.style.setProperty('visibility', 'hidden', 'important');
-                preloader.style.setProperty('opacity', '0', 'important');
-                preloader.style.setProperty('pointer-events', 'none', 'important');
-                preloader.style.setProperty('z-index', '-1', 'important');
-                localStorage.setItem('eftimosPreloaderShown', '1');
-                try { window.dispatchEvent(new Event('preloaderFinished')); } catch(e) {}
-                console.log('[PRELOADER] ✓ Preloader hidden');
-            }
-
-            // Event listener del botón Enter con animación completa
-            var enterBtn = document.getElementById('preloaderEnterBtn');
-            if (enterBtn) {
-                function handleEnterPress() {
-                    // Evitar doble ejecución
-                    if (window._preloaderDismissed) return;
-                    window._preloaderDismissed = true;
-
-                    try {
-                        window.preloaderEnterPressed = true;
-                        var preloader = document.getElementById('preloader');
-                        if (!preloader) return;
-
-                        // === PASO 1: Desactivar interacción inmediatamente ===
-                        preloader.style.pointerEvents = 'none';
-                        enterBtn.disabled = true;
-
-                        // === PASO 2: Audio (try-catch aislado) ===
-                        try {
-                            var soundEnabled = localStorage.getItem('audioEnabled') !== 'false';
-                            if (soundEnabled) {
-                                console.log('[PRELOADER] Enter pressed, initializing audio...');
-                                if (typeof window.setupAudioFiltersExternal === 'function') {
-                                    window.setupAudioFiltersExternal();
-                                }
-                                var lockedInSound = document.getElementById('lockedInSound');
-                                if (lockedInSound) {
-                                    lockedInSound.muted = false;
-                                    lockedInSound.volume = 0.3;
-                                    lockedInSound.play().catch(function() {});
-                                }
-                                var noiseSound = document.getElementById('noiseSound');
-                                if (noiseSound) {
-                                    noiseSound.muted = false;
-                                    noiseSound.loop = false;
-                                    noiseSound.volume = 1;
-                                    noiseSound.play().then(function() {
-                                        console.log('[PRELOADER] ✓ White-noise started');
-                                        if (typeof window.startCrossfadeLoop === 'function' && window.noiseCrossfadeSystem) {
-                                            window.startCrossfadeLoop(window.noiseCrossfadeSystem, noiseSound, true);
-                                        }
-                                    }).catch(function(e) {
-                                        console.error('[PRELOADER] ✗ White-noise failed:', e.message);
-                                    });
-                                }
-                                var whispersSound = document.getElementById('whispersSound');
-                                if (whispersSound) {
-                                    whispersSound.muted = false;
-                                    whispersSound.loop = false;
-                                    whispersSound.volume = 1;
-                                    whispersSound.play().then(function() {
-                                        console.log('[PRELOADER] ✓ Whispers started');
-                                        if (typeof window.startCrossfadeLoop === 'function' && window.whispersCrossfadeSystem) {
-                                            window.startCrossfadeLoop(window.whispersCrossfadeSystem, whispersSound, false);
-                                        }
-                                    }).catch(function(e) {
-                                        console.error('[PRELOADER] ✗ Whispers failed:', e.message);
-                                    });
-                                }
-                            }
-                        } catch (audioErr) {
-                            console.warn('[PRELOADER] Audio init failed (non-blocking):', audioErr);
-                        }
-
-                        // === PASO 3: Preferencias globales ===
-                        window.soundEnabled = typeof soundEnabled !== 'undefined' ? soundEnabled : (localStorage.getItem('audioEnabled') !== 'false');
-                        window.visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') !== 'false';
-                        document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
-
-                        // === PASO 4: CRÍTICO iOS - Eliminar capa compositing del backdrop-filter ===
-                        // En iOS Safari, backdrop-filter + will-change crea una capa GPU
-                        // que NO responde a opacity:0. Debemos eliminar la clase 'loaded'
-                        // (que contiene will-change y backdrop-filter) ANTES de animar.
-                        preloader.classList.remove('loaded');
-                        preloader.style.backdropFilter = 'none';
-                        preloader.style.webkitBackdropFilter = 'none';
-                        preloader.style.willChange = 'auto';
-                        preloader.style.background = 'transparent';
-                        // También limpiar las transitions CSS que incluyen backdrop-filter
-                        preloader.style.transition = 'none';
-
-                        // === PASO 5: Forzar reflow para que iOS procese los cambios ===
-                        // Sin esto, iOS Safari puede agrupar los cambios con la animación
-                        // de opacity y mantener la capa compositing activa
-                        void preloader.offsetHeight;
-
-                        // === PASO 6: Animar en el siguiente frame (después del reflow) ===
-                        requestAnimationFrame(function() {
-                            // Animar logo
-                            var preloaderLogo = document.querySelector('.preloader-logo img');
-                            if (preloaderLogo) {
-                                preloaderLogo.style.position = 'relative';
-                                preloaderLogo.style.zIndex = '10';
-                                preloaderLogo.style.animation = 'preloaderLogoAscend 0.8s cubic-bezier(.2,.9,.2,1) forwards';
-                            }
-
-                            // Ahora sí: fade-out del preloader
-                            preloader.classList.add('preloader-hide');
-                            preloader.style.transition = 'opacity 0.7s cubic-bezier(.77,0,.18,1)';
-                            preloader.style.opacity = '0';
-
-                            // Mostrar hamburguesa y logo
-                            var menuToggle = document.getElementById('menuToggle');
-                            var sharedLogo = document.getElementById('sharedLogo');
-                            if (menuToggle) {
-                                menuToggle.style.opacity = '1';
-                                menuToggle.style.pointerEvents = 'auto';
-                            }
-                            if (sharedLogo) {
-                                sharedLogo.style.opacity = '1';
-                                sharedLogo.style.transition = 'opacity 0.7s cubic-bezier(.77,0,.18,1)';
-                            }
-
-                            document.body.classList.remove('preloader-active');
-                        });
-
-                        // === PASO 7: Ocultar en transitionend (más fiable que setTimeout) ===
-                        preloader.addEventListener('transitionend', function onTransEnd(e) {
-                            if (e.propertyName === 'opacity' || e.target === preloader) {
-                                preloader.removeEventListener('transitionend', onTransEnd);
-                                forceHidePreloader(preloader);
-                            }
-                        });
-
-                        // === PASO 8: setTimeout como respaldo ===
-                        setTimeout(function() { forceHidePreloader(preloader); }, 900);
-
-                        // === PASO 9: Fallback agresivo - si NADA funciona, forzar ===
-                        setTimeout(function() {
-                            var p = document.getElementById('preloader');
-                            if (p && p.getAttribute('data-hidden') !== '1') {
-                                console.warn('[PRELOADER] Fallback 2s: forcing hide');
-                                forceHidePreloader(p);
-                            }
-                        }, 2000);
-
-                    } catch (criticalErr) {
-                        // Si CUALQUIER cosa falla, forzar ocultación incondicional
-                        console.error('[PRELOADER] Critical error, forcing hide:', criticalErr);
-                        var p = document.getElementById('preloader');
-                        if (p) forceHidePreloader(p);
-                        document.body.classList.remove('preloader-active');
-                    }
-                }
-
-                enterBtn.addEventListener('click', handleEnterPress);
-                // En iOS, touchend es más fiable que click para input inmediato
-                enterBtn.addEventListener('touchend', function(e) {
-                    e.preventDefault(); // Evitar que dispare click después
-                    handleEnterPress();
-                });
-            }
-
-            // Permitir presionar Enter desde teclado
-            document.addEventListener('keydown', function (e) {
-                if ((e.key === 'Enter' || e.keyCode === 13) && document.getElementById('preloader').style.opacity !== '0') {
-                    var btn = document.getElementById('preloaderEnterBtn');
-                    if (btn && !btn.disabled && btn.style.display !== 'none') {
-                        btn.click();
-                    }
-                }
-            });
-        })();
-
-        (function () {
-            // Animación de zoom-out al volver desde otra página (estrategia con sessionStorage)
-            let isAnimating = false;
-            let lastAnimationTime = 0;
-            
-            // Detectar si es retorno: si ya visitaste index.html en esta sesión
-            const sessionKey = 'eftimos_indexVisited';
-            const isReturning = sessionStorage.getItem(sessionKey) === '1';
-            
-            console.log('[INTRO-ZOOM] isReturning:', isReturning, 'referrer:', document.referrer);
-
-            function shouldRunIntro(eventType) {
-                console.log('[INTRO-ZOOM] evento:', eventType);
-                
-                const now = Date.now();
-                if (now - lastAnimationTime < 2000) {
-                    console.log('[INTRO-ZOOM] animación muy reciente, abortando');
-                    return false;
-                }
-
-                const preloaderShown = localStorage.getItem('eftimosPreloaderShown') === '1';
-                const force = location.search.indexOf('introZoom=1') !== -1;
-                
-                if (!preloaderShown && !force) {
-                    console.log('[INTRO-ZOOM] preloader no mostrado y no forzado');
-                    return false;
-                }
-
-                // Si es un retorno (ya visitaste index.html en esta sesión), ejecutar SIEMPRE
-                if (isReturning) {
-                    console.log('[INTRO-ZOOM] detectado retorno a index.html, ejecutando animación');
-                    return true;
-                }
-
-                // Si no es retorno, verificar referrer en load
-                if (eventType === 'load' && (document.referrer || force)) {
-                    console.log('[INTRO-ZOOM] primera visita con referrer, ejecutando');
-                    return true;
-                }
-
-                console.log('[INTRO-ZOOM] condiciones no cumplidas');
-                return false;
-            }
-
-            function triggerIntroZoomFromReferrer(eventType = 'manual') {
-                if (isAnimating) {
-                    console.log('[INTRO-ZOOM] ya hay animación en curso');
-                    return;
-                }
-
-                if (!shouldRunIntro(eventType)) {
-                    return;
-                }
-
-                const canvas = document.getElementById('canvas');
-                if (!canvas) {
-                    console.log('[INTRO-ZOOM] #canvas no encontrado');
-                    return;
-                }
-
-                // Buscar el map-group dentro del canvas (donde realmente está el contenido)
-                const mapGroup = canvas.querySelector('#map-group');
-                const targetElement = mapGroup || canvas;
-                console.log('[INTRO-ZOOM] elemento objetivo:', targetElement.id || 'canvas');
-
-                // Asegurar que el preloader esté oculto
-                const preloader = document.getElementById('preloader');
-                if (preloader && preloader.style.display !== 'none') {
-                    console.log('[INTRO-ZOOM] preloader aún visible, esperando...');
-                    setTimeout(() => triggerIntroZoomFromReferrer(eventType), 200);
-                    return;
-                }
-
-                const DURATION = 2000; // Más lento para ver claramente
-                const INITIAL_SCALE = 1.5; // Mucho más zoom para ser obvio
-                const EASING = 'cubic-bezier(.22,.9,.12,1)';
-
-                function doAnim() {
-                    if (isAnimating) return;
-                    isAnimating = true;
-                    lastAnimationTime = Date.now();
-                    
-                    console.log('[INTRO-ZOOM] ✓ iniciando animación');
-                    console.log('[INTRO-ZOOM] targetElement:', {
-                        id: targetElement.id,
-                        children: targetElement.children.length,
-                        transform: targetElement.style.transform,
-                        transition: targetElement.style.transition
-                    });
-
-                    // CONGELAR handheld-camera inmediatamente (sin animación de regreso)
-                    const wasHandheldActive = typeof window.freezeHandheldCamera === 'function';
-                    if (wasHandheldActive) {
-                        window.freezeHandheldCamera();
-                        console.log('[INTRO-ZOOM] handheld-camera congelado');
-                    }
-
-                    // Overlay blanco - empieza semi-transparente para ver el zoom
-                    const overlay = document.createElement('div');
-                    Object.assign(overlay.style, {
-                        position: 'fixed',
-                        inset: '0',
-                        background: '#fff',
-                        zIndex: '2147483646',
-                        pointerEvents: 'none',
-                        opacity: '0.85', // Iniciar semi-transparente para que se vea el mapa
-                        transition: `opacity ${DURATION}ms ${EASING}`
-                    });
-                    document.body.appendChild(overlay);
-                    console.log('[INTRO-ZOOM] overlay creado con opacity 0.85');
-
-                    // Detectar origen desde referrer  
-                    let originX = '50%', originY = '50%';
-                    try {
-                        if (document.referrer) {
-                            const refUrl = new URL(document.referrer);
-                            const file = refUrl.pathname.split('/').pop();
-                            if (file) {
-                                const selector = `a[href$="${file}"], .image-link[href$="${file}"]`;
-                                const target = canvas.querySelector(selector);
-                                if (target) {
-                                    const elemRect = targetElement.getBoundingClientRect();
-                                    const tRect = target.getBoundingClientRect();
-                                    const cx = ((tRect.left + tRect.width / 2) - elemRect.left) / elemRect.width * 100;
-                                    const cy = ((tRect.top + tRect.height / 2) - elemRect.top) / elemRect.height * 100;
-                                    originX = `${Math.min(Math.max(cx, 0), 100)}%`;
-                                    originY = `${Math.min(Math.max(cy, 0), 100)}%`;
-                                    console.log('[INTRO-ZOOM] origen calculado:', originX, originY);
-                                }
-                            }
-                        }
-                    } catch (e) { 
-                        console.log('[INTRO-ZOOM] error calculando origen:', e);
-                    }
-
-                    // Guardar estilos originales
-                    const originalTransition = targetElement.style.transition;
-                    const originalTransform = targetElement.style.transform;
-                    const originalZIndex = targetElement.style.zIndex;
-                    
-                    // Reset transform y transition
-                    targetElement.style.transform = '';
-                    targetElement.style.transition = 'none';
-                    // Z-index MUY ALTO para estar sobre el overlay blanco y que se vea el zoom
-                    targetElement.style.zIndex = '2147483647';
-                    
-                    console.log('[INTRO-ZOOM] estilos preparados');
-                    
-                    // Forzar reflow
-                    window.getComputedStyle(targetElement).transform;
-                    
-                    requestAnimationFrame(() => {
-                        targetElement.style.transformOrigin = `${originX} ${originY}`;
-                        targetElement.style.willChange = 'transform';
-                        // NO aplicar transition aún - queremos que el estado inicial sea instantáneo
-                        targetElement.style.transition = 'none';
-                        // Aplicar scale inicial (zoom in) SIN TRANSICIÓN
-                        targetElement.style.transform = `scale(${INITIAL_SCALE})`;
-                        
-                        console.log('[INTRO-ZOOM] transform inicial aplicado (sin transition):', targetElement.style.transform);
-
-                        // Forzar render del estado inicial
-                        window.getComputedStyle(targetElement).transform;
-                        
-                        // Paso 1: Empezar el zoom-out PRIMERO
-                        requestAnimationFrame(() => {
-                            console.log('[INTRO-ZOOM] iniciando zoom out a scale(1)');
-                            // Agregar la transition y cambiar a scale(1)
-                            targetElement.style.transition = `transform ${DURATION}ms ${EASING}`;
-                            targetElement.style.transform = 'scale(1)';
-                            
-                            // Paso 2: Poco después, empezar a desvanecer el overlay
-                            setTimeout(() => {
-                                overlay.style.opacity = '0';
-                                console.log('[INTRO-ZOOM] overlay comenzando fade-out');
-                            }, 50); // El overlay empieza 50ms después del zoom
-                        });
-                    });
-
-                    // Limpieza y blend con handheld-camera - comenzar antes para solapar
-                    setTimeout(() => {
-                        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-                        targetElement.style.willChange = 'auto';
-                        
-                        // Transición más larga y suave de vuelta al estado original
-                        targetElement.style.transition = `transform 800ms cubic-bezier(.22,.61,.36,1), z-index 0ms 800ms`;
-                        targetElement.style.transform = originalTransform || 'none';
-                        targetElement.style.zIndex = originalZIndex;
-                        
-                        // REACTIVAR handheld-camera inmediatamente para blendear
-                        setTimeout(() => {
-                            if (wasHandheldActive) {
-                                window.resumeHandheldCamera();
-                                console.log('[INTRO-ZOOM] handheld-camera reactivado con blend');
-                            }
-                            
-                            // Restaurar transition original después
-                            setTimeout(() => {
-                                targetElement.style.transition = originalTransition;
-                            }, 850);
-                        }, 50);
-                        
-                        isAnimating = false;
-                        console.log('[INTRO-ZOOM] ✓ animación finalizada y limpieza completada');
-                    }, DURATION - 650); // Comenzar 650ms antes del final para mayor solapamiento
-                }
-
-                // Esperar a que el canvas tenga contenido
-                if (canvas.children.length > 0 || (mapGroup && mapGroup.children.length > 0)) {
-                    console.log('[INTRO-ZOOM] contenido encontrado, ejecutando inmediatamente');
-                    doAnim();
-                } else {
-                    console.log('[INTRO-ZOOM] esperando contenido en canvas...');
-                    const mo = new MutationObserver((muts, obs) => {
-                        if (canvas.children.length > 0) {
-                            console.log('[INTRO-ZOOM] contenido detectado via observer');
-                            obs.disconnect();
-                            doAnim();
-                        }
-                    });
-                    mo.observe(canvas, { childList: true, subtree: true });
-                    setTimeout(() => {
-                        try { mo.disconnect(); } catch (e) { }
-                        console.log('[INTRO-ZOOM] timeout alcanzado, ejecutando de todas formas');
-                        doAnim();
-                    }, 2000);
-                }
-            }
-
-            // Múltiples disparadores para asegurar que funcione
-            window.addEventListener('load', () => {
-                console.log('[INTRO-ZOOM] evento load disparado');
-                triggerIntroZoomFromReferrer('load');
-                // Marcar que ya visitaste index.html en esta sesión
-                setTimeout(() => {
-                    sessionStorage.setItem(sessionKey, '1');
-                    console.log('[INTRO-ZOOM] marcado como visitado en sesión');
-                }, 500);
-            });
-            
-            // Solo escuchar pageshow si es un retorno (no en el primer load)
-            window.addEventListener('pageshow', (e) => {
-                console.log('[INTRO-ZOOM] pageshow, persisted:', e.persisted, 'isReturning:', isReturning);
-                // Solo ejecutar si NO es la carga inicial (evitar doblar con load)
-                if (isReturning) {
-                    setTimeout(() => triggerIntroZoomFromReferrer('pageshow'), 150);
-                }
-            });
-
-            window.addEventListener('popstate', () => {
-                console.log('[INTRO-ZOOM] popstate detectado');
-                if (isReturning) {
-                    setTimeout(() => triggerIntroZoomFromReferrer('popstate'), 150);
-                }
-            });
-
-            // Exponer para debugging - forzar con window.triggerIntroZoomFromReferrer()
-            window.triggerIntroZoomFromReferrer = () => {
-                console.log('[INTRO-ZOOM] disparado manualmente desde consola');
-                triggerIntroZoomFromReferrer('manual');
-            };
-        })();
-    </script>
 </body>
 </html>

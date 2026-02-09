@@ -150,8 +150,11 @@ function initializeControls() {
                             
                             // Pausar y limpiar la instancia anterior
                             if (system.currentInstance) {
-                                system.currentInstance.pause();
-                                system.currentInstance.currentTime = 0;
+                                var _old = system.currentInstance;
+                                _old.pause();
+                                _old.currentTime = 0;
+                                // Liberar recurso para evitar memory leak
+                                try { _old.src = ''; _old.load(); } catch(e) {}
                             }
                             
                             // La siguiente instancia se convierte en la actual
@@ -175,8 +178,8 @@ function initializeControls() {
             }
         }
         
-        // Verificar cada 100ms
-        system.checkInterval = setInterval(checkAndPrepareNext, 100);
+        // Verificar cada 500ms (3s threshold no necesita alta frecuencia)
+        system.checkInterval = setInterval(checkAndPrepareNext, 500);
     }
 
     function stopCrossfadeLoop(system, isNoise) {
@@ -192,10 +195,12 @@ function initializeControls() {
         
         if (system.currentInstance) {
             system.currentInstance.pause();
+            // No liberar currentInstance con src='' aquí porque es el <audio> original del DOM
         }
         
         if (system.nextInstance) {
             system.nextInstance.pause();
+            try { system.nextInstance.src = ''; system.nextInstance.load(); } catch(e) {}
             system.nextInstance = null;
         }
     }
@@ -407,8 +412,9 @@ function initializeControls() {
             whispersGain.gain.value = finalVol;
         }
 
-        // Llama a la modulación ~60fps
-        setInterval(updateWhispersVolumeModulation, 16);
+        // Llama a la modulación ~60fps — almacenar para poder limpiar
+        if (whispersModulationTimer) clearInterval(whispersModulationTimer);
+        whispersModulationTimer = setInterval(updateWhispersVolumeModulation, 16);
     }
 
     // Inicializar filtros de audio al cargar la página para evitar poppeo
@@ -987,11 +993,18 @@ function initializeControls() {
             if (lockedInSound) {
                 lockedInSound.muted = false;
             }
+            // Reiniciar timer de volumen de ruido si fue limpiado
+            if (!noiseVolumeTimer) {
+                noiseVolumeTimer = setInterval(updateNoiseVolume, 16);
+            }
         } else {
             // Mute basic audio (keep videos unmuted)
             // Detener sistemas de crossfade
             stopCrossfadeLoop(noiseCrossfadeSystem, true);
             stopCrossfadeLoop(whispersCrossfadeSystem, false);
+            // Limpiar timers de modulación de volumen
+            if (whispersModulationTimer) { clearInterval(whispersModulationTimer); whispersModulationTimer = null; }
+            if (noiseVolumeTimer) { clearInterval(noiseVolumeTimer); noiseVolumeTimer = null; }
             if (noiseSound) {
                 noiseSound.muted = true;
                 noiseSound.pause();
@@ -1022,8 +1035,8 @@ function initializeControls() {
         }
     };
 
-    // Update volume smoothly every frame
-    const volumeUpdateInterval = setInterval(updateNoiseVolume, 16); // ~60fps
+    // Update volume smoothly every frame — almacenar para poder limpiar
+    var noiseVolumeTimer = setInterval(updateNoiseVolume, 16); // ~60fps
 
     // Initialize audio state - muted by default
     updateAudio();

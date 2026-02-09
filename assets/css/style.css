@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Luxurious+Script&family=Herr+Von+Muellerhoff&family=Romanesco&family=Tangerine:wght@400;700&family=Ballet&display=swap');
+/* Google Fonts loaded via <link> in HTML <head> for non-blocking CSS parse */
 
 /* --- ANIMACIÓN ASCENSO Y FADE DEL LOGO DEL PRELOADER --- */
 .preloader-logo-ascend {
@@ -461,6 +461,7 @@ body.motion-blur-enabled #trailCanvas {
     src: url('../fonts/Helvetica.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
@@ -468,12 +469,14 @@ body.motion-blur-enabled #trailCanvas {
     src: url('../fonts/Helvetica-Bold.ttf') format('truetype');
     font-weight: 700;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
     font-family: 'Helvetica Neue Condensed Bold';
     src: url('../fonts/Helvetica-Neue-Condensed-Bold.ttf') format('truetype');
     font-style: normal;
+    font-display: swap;
 }
 
 * {
@@ -608,20 +611,24 @@ body.visual-effects-disabled nav .logo img {
 
 .cursor-particle {
     position: absolute;
+    left: 0;
+    top: 0;
     width: 2px;
     height: 2px;
     background-color: #ffffff;
     border-radius: 50%;
-    transform: translate(-50%, -50%);
+    will-change: transform;
 }
 
 .cursor-center-dot {
     position: absolute;
+    left: 0;
+    top: 0;
     width: 12px;
     height: 12px;
     background-color: #ffffff;
     border-radius: 50%;
-    transform: translate(-50%, -50%);
+    will-change: transform;
 }
 
 body {

@@ -128,32 +128,40 @@ window.startGrainEffect = function() {
     }
 };
 
-function updateGrain() {
-    const imageData = grainCtx.createImageData(grainCanvas.width, grainCanvas.height);
-    const centerX = grainCanvas.width / 2;
-    const centerY = grainCanvas.height / 2;
-    const maxDist = Math.sqrt(centerX**2 + centerY**2);
+// Pre-allocate reusable ImageData and alpha map to avoid per-frame allocations
+let _grainImageData = null;
+let _grainAlphaMap = null;
+let _grainBuf32 = null;
 
-    for (let y = 0; y < grainCanvas.height; y++) {
-        for (let x = 0; x < grainCanvas.width; x++) {
-            const i = (y * grainCanvas.width + x) * 4;
-            const val = Math.random() * 255;
+function prepareGrainBuffers() {
+    var w = grainCanvas.width, h = grainCanvas.height;
+    _grainImageData = grainCtx.createImageData(w, h);
+    _grainAlphaMap = new Uint8Array(w * h);
+    _grainBuf32 = new Uint32Array(_grainImageData.data.buffer);
 
-            // Distance from center (0 at center, 1 at edges)
-            const dx = x - centerX;
-            const dy = y - centerY;
-            const dist = Math.sqrt(dx*dx + dy*dy) / maxDist;
-
-            const alpha = lerp(0, 100, dist);
-
-            imageData.data[i] = val;      // R
-            imageData.data[i + 1] = val;  // G
-            imageData.data[i + 2] = val;  // B
-            imageData.data[i + 3] = alpha; // A
+    // Precompute alpha (vignette) — only changes on resize
+    var centerX = w / 2, centerY = h / 2;
+    var maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
+    for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+            var dx = x - centerX, dy = y - centerY;
+            var dist = Math.sqrt(dx * dx + dy * dy) / maxDist;
+            _grainAlphaMap[y * w + x] = (dist * 100) | 0; // lerp(0,100,dist)
         }
     }
+}
+prepareGrainBuffers();
 
-    grainCtx.putImageData(imageData, 0, 0);
+function updateGrain() {
+    var len = _grainBuf32.length;
+    var alphaMap = _grainAlphaMap;
+    // Fill using Uint32Array — one write per pixel instead of 4
+    // RGBA packed as 0xAABBGGRR (little-endian)
+    for (var i = 0; i < len; i++) {
+        var val = (Math.random() * 255) | 0;
+        _grainBuf32[i] = (alphaMap[i] << 24) | (val << 16) | (val << 8) | val;
+    }
+    grainCtx.putImageData(_grainImageData, 0, 0);
 }
 
 function lerp(start, end, t) {
@@ -243,7 +251,7 @@ window.addEventListener("resize", () => {
             grainCanvas.width = newResolution.width;
             grainCanvas.height = newResolution.height;
             grainResolution = newResolution;
-            console.log(`[GRAIN] Resolution updated: ${grainResolution.width}x${grainResolution.height}`);
+            prepareGrainBuffers(); // Rebuild alpha map + ImageData for new size
         }
     }, 250);
 });

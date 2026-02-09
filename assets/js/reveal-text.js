@@ -283,6 +283,15 @@
         }
     });
 
+    // Pause when tab is hidden
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            if (animationFrame) { cancelAnimationFrame(animationFrame); animationFrame = null; }
+        } else {
+            if (!animationFrame) drawRevealText();
+        }
+    });
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {

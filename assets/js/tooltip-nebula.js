@@ -29,6 +29,17 @@ class TooltipNebula {
         // Start animation loop
         this.animate();
 
+        // Pause/resume on tab visibility
+        const self = this;
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                if (self.animationId) { cancelAnimationFrame(self.animationId); self.animationId = null; }
+                self._paused = true;
+            } else {
+                self.resumeIfNeeded();
+            }
+        });
+
         // Observe for new tooltips (if dynamically added)
         this.observeTooltips();
     }
@@ -49,6 +60,8 @@ class TooltipNebula {
                 if (container) {
                     container.classList.add('is-hovered');
                 }
+                // Resume nebula animation if it was paused
+                this.resumeIfNeeded();
             });
             
             link.addEventListener('mouseleave', () => {
@@ -179,7 +192,7 @@ class TooltipNebula {
     }
 
     animate() {
-        this.time += 0.06; // velocidad moderada para movimiento agresivo pero controlado
+        this.time += 0.06;
         
         let hasVisibleTooltip = false;
         
@@ -194,8 +207,22 @@ class TooltipNebula {
             }
         });
 
-        // Continue animation loop
+        // Only continue loop if there are visible tooltips or page is visible
+        if (document.hidden) return;
+        if (!hasVisibleTooltip) {
+            this._paused = true;
+            return;
+        }
+        this._paused = false;
         this.animationId = requestAnimationFrame(() => this.animate());
+    }
+
+    // Resume animation loop when a tooltip becomes visible
+    resumeIfNeeded() {
+        if (this._paused && !document.hidden) {
+            this._paused = false;
+            this.animationId = requestAnimationFrame(() => this.animate());
+        }
     }
 
     renderNebula(tooltipData) {

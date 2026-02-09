@@ -92,6 +92,19 @@
     canvas.addEventListener('touchmove', updateTouch, { passive: false });
     canvas.addEventListener('touchstart', updateTouch, { passive: false });
     if (isMobile) requestGyroPermission();
+
+    // Pause when tab is hidden or preloader is gone
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+            if (animationFrame) { cancelAnimationFrame(animationFrame); animationFrame = null; }
+        } else {
+            var preloader = document.getElementById('preloader');
+            if (preloader && preloader.style.display !== 'none' && !animationFrame) {
+                drawRevealLogo();
+            }
+        }
+    });
+
     // Wait for image to load before drawing
     if (logoImg.complete) {
         drawRevealLogo();
