@@ -164,7 +164,7 @@ body:not(.preloader-active) nav.blending-item {
     align-items: center;
     justify-content: center;
     opacity: 1;
-    transition: opacity 0.6s cubic-bezier(.77, 0, .18, 1), background 0.8s cubic-bezier(.77, 0, .18, 1) 0.2s, backdrop-filter 0.8s cubic-bezier(.77, 0, .18, 1) 0.2s;
+    transition: opacity 0.6s cubic-bezier(.77, 0, .18, 1), background 0.8s cubic-bezier(.77, 0, .18, 1) 0.2s;
 }
 
 /* Cuando está cargado al 100%, fondo translúcido con blur */
@@ -172,8 +172,9 @@ body:not(.preloader-active) nav.blending-item {
     background: rgba(255, 255, 255, 0.65) !important;
     backdrop-filter: blur(20px) brightness(1.1);
     -webkit-backdrop-filter: blur(20px) brightness(1.1);
-    transition: background 0.8s cubic-bezier(.77, 0, .18, 1), backdrop-filter 0.8s cubic-bezier(.77, 0, .18, 1);
-    will-change: backdrop-filter, background;
+    transition: background 0.8s cubic-bezier(.77, 0, .18, 1);
+    /* NO usar will-change con backdrop-filter: causa bug de compositing en iOS Safari
+       donde la capa GPU persiste y no responde a opacity: 0 */
 }
 
 .preloader-content {

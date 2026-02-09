@@ -498,138 +498,170 @@
                 }, 200);
             });
 
+            // === Función para forzar ocultación completa del preloader ===
+            function forceHidePreloader(preloader) {
+                if (!preloader || preloader.getAttribute('data-hidden') === '1') return;
+                preloader.setAttribute('data-hidden', '1');
+                preloader.style.setProperty('display', 'none', 'important');
+                preloader.style.setProperty('visibility', 'hidden', 'important');
+                preloader.style.setProperty('opacity', '0', 'important');
+                preloader.style.setProperty('pointer-events', 'none', 'important');
+                preloader.style.setProperty('z-index', '-1', 'important');
+                localStorage.setItem('eftimosPreloaderShown', '1');
+                try { window.dispatchEvent(new Event('preloaderFinished')); } catch(e) {}
+                console.log('[PRELOADER] ✓ Preloader hidden');
+            }
+
             // Event listener del botón Enter con animación completa
             var enterBtn = document.getElementById('preloaderEnterBtn');
             if (enterBtn) {
-                enterBtn.addEventListener('click', function () {
-                    // Establecer flag para permitir audio
-                    window.preloaderEnterPressed = true;
+                function handleEnterPress() {
+                    // Evitar doble ejecución
+                    if (window._preloaderDismissed) return;
+                    window._preloaderDismissed = true;
 
-                    const preloader = document.getElementById('preloader');
-
-                    // === PASO 1: Desactivar interacción inmediatamente ===
-                    // Previene que el preloader capture eventos aunque la animación falle
-                    preloader.style.pointerEvents = 'none';
-                    enterBtn.disabled = true;
-
-                    // === PASO 2: Intentar inicializar audio (protegido con try-catch) ===
                     try {
-                        var soundEnabled = localStorage.getItem('audioEnabled') !== 'false';
+                        window.preloaderEnterPressed = true;
+                        var preloader = document.getElementById('preloader');
+                        if (!preloader) return;
 
-                        if (soundEnabled) {
-                            console.log('[PRELOADER] Enter pressed, initializing audio...');
+                        // === PASO 1: Desactivar interacción inmediatamente ===
+                        preloader.style.pointerEvents = 'none';
+                        enterBtn.disabled = true;
 
-                            if (typeof window.setupAudioFiltersExternal === 'function') {
-                                window.setupAudioFiltersExternal();
+                        // === PASO 2: Audio (try-catch aislado) ===
+                        try {
+                            var soundEnabled = localStorage.getItem('audioEnabled') !== 'false';
+                            if (soundEnabled) {
+                                console.log('[PRELOADER] Enter pressed, initializing audio...');
+                                if (typeof window.setupAudioFiltersExternal === 'function') {
+                                    window.setupAudioFiltersExternal();
+                                }
+                                var lockedInSound = document.getElementById('lockedInSound');
+                                if (lockedInSound) {
+                                    lockedInSound.muted = false;
+                                    lockedInSound.volume = 0.3;
+                                    lockedInSound.play().catch(function() {});
+                                }
+                                var noiseSound = document.getElementById('noiseSound');
+                                if (noiseSound) {
+                                    noiseSound.muted = false;
+                                    noiseSound.loop = false;
+                                    noiseSound.volume = 1;
+                                    noiseSound.play().then(function() {
+                                        console.log('[PRELOADER] ✓ White-noise started');
+                                        if (typeof window.startCrossfadeLoop === 'function' && window.noiseCrossfadeSystem) {
+                                            window.startCrossfadeLoop(window.noiseCrossfadeSystem, noiseSound, true);
+                                        }
+                                    }).catch(function(e) {
+                                        console.error('[PRELOADER] ✗ White-noise failed:', e.message);
+                                    });
+                                }
+                                var whispersSound = document.getElementById('whispersSound');
+                                if (whispersSound) {
+                                    whispersSound.muted = false;
+                                    whispersSound.loop = false;
+                                    whispersSound.volume = 1;
+                                    whispersSound.play().then(function() {
+                                        console.log('[PRELOADER] ✓ Whispers started');
+                                        if (typeof window.startCrossfadeLoop === 'function' && window.whispersCrossfadeSystem) {
+                                            window.startCrossfadeLoop(window.whispersCrossfadeSystem, whispersSound, false);
+                                        }
+                                    }).catch(function(e) {
+                                        console.error('[PRELOADER] ✗ Whispers failed:', e.message);
+                                    });
+                                }
                             }
-
-                            var lockedInSound = document.getElementById('lockedInSound');
-                            if (lockedInSound) {
-                                lockedInSound.muted = false;
-                                lockedInSound.volume = 0.3;
-                                lockedInSound.play().catch(function() { });
-                            }
-
-                            var noiseSound = document.getElementById('noiseSound');
-                            if (noiseSound) {
-                                noiseSound.muted = false;
-                                noiseSound.loop = false;
-                                noiseSound.volume = 1;
-
-                                noiseSound.play().then(function() {
-                                    console.log('[PRELOADER] ✓ White-noise started');
-                                    if (typeof window.startCrossfadeLoop === 'function' && window.noiseCrossfadeSystem) {
-                                        window.startCrossfadeLoop(window.noiseCrossfadeSystem, noiseSound, true);
-                                    }
-                                }).catch(function(e) {
-                                    console.error('[PRELOADER] ✗ White-noise failed:', e.message);
-                                });
-                            }
-
-                            var whispersSound = document.getElementById('whispersSound');
-                            if (whispersSound) {
-                                whispersSound.muted = false;
-                                whispersSound.loop = false;
-                                whispersSound.volume = 1;
-
-                                whispersSound.play().then(function() {
-                                    console.log('[PRELOADER] ✓ Whispers started');
-                                    if (typeof window.startCrossfadeLoop === 'function' && window.whispersCrossfadeSystem) {
-                                        window.startCrossfadeLoop(window.whispersCrossfadeSystem, whispersSound, false);
-                                    }
-                                }).catch(function(e) {
-                                    console.error('[PRELOADER] ✗ Whispers failed:', e.message);
-                                });
-                            }
+                        } catch (audioErr) {
+                            console.warn('[PRELOADER] Audio init failed (non-blocking):', audioErr);
                         }
-                    } catch (audioErr) {
-                        console.warn('[PRELOADER] Audio initialization failed (non-blocking):', audioErr);
-                    }
 
-                    // === PASO 3: Aplicar preferencias globales ===
-                    window.soundEnabled = typeof soundEnabled !== 'undefined' ? soundEnabled : (localStorage.getItem('audioEnabled') !== 'false');
-                    window.visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') !== 'false';
-                    document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
+                        // === PASO 3: Preferencias globales ===
+                        window.soundEnabled = typeof soundEnabled !== 'undefined' ? soundEnabled : (localStorage.getItem('audioEnabled') !== 'false');
+                        window.visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') !== 'false';
+                        document.body.classList.toggle('visual-effects-disabled', !window.visualEffectsEnabled);
 
-                    // === PASO 4: Eliminar backdrop-filter ANTES de animar opacity ===
-                    // En algunos dispositivos iOS/Safari, backdrop-filter crea una capa GPU
-                    // que no responde correctamente a opacity: 0
-                    preloader.style.backdropFilter = 'none';
-                    preloader.style.webkitBackdropFilter = 'none';
-                    preloader.style.willChange = 'opacity';
+                        // === PASO 4: CRÍTICO iOS - Eliminar capa compositing del backdrop-filter ===
+                        // En iOS Safari, backdrop-filter + will-change crea una capa GPU
+                        // que NO responde a opacity:0. Debemos eliminar la clase 'loaded'
+                        // (que contiene will-change y backdrop-filter) ANTES de animar.
+                        preloader.classList.remove('loaded');
+                        preloader.style.backdropFilter = 'none';
+                        preloader.style.webkitBackdropFilter = 'none';
+                        preloader.style.willChange = 'auto';
+                        preloader.style.background = 'transparent';
+                        // También limpiar las transitions CSS que incluyen backdrop-filter
+                        preloader.style.transition = 'none';
 
-                    // Animar el logo y el preloader simultáneamente
-                    var preloaderLogo = document.querySelector('.preloader-logo img');
-                    if (preloaderLogo) {
-                        preloaderLogo.style.position = 'relative';
-                        preloaderLogo.style.zIndex = '10';
-                        preloaderLogo.style.animation = 'preloaderLogoAscend 0.8s cubic-bezier(.2,.9,.2,1) forwards';
-                    }
+                        // === PASO 5: Forzar reflow para que iOS procese los cambios ===
+                        // Sin esto, iOS Safari puede agrupar los cambios con la animación
+                        // de opacity y mantener la capa compositing activa
+                        void preloader.offsetHeight;
 
-                    // Iniciar fade-out usando clase CSS con !important para máxima compatibilidad
-                    preloader.classList.add('preloader-hide');
-                    // También inline como respaldo
-                    preloader.style.transition = 'opacity 0.8s cubic-bezier(.77,0,.18,1)';
-                    preloader.style.opacity = '0';
+                        // === PASO 6: Animar en el siguiente frame (después del reflow) ===
+                        requestAnimationFrame(function() {
+                            // Animar logo
+                            var preloaderLogo = document.querySelector('.preloader-logo img');
+                            if (preloaderLogo) {
+                                preloaderLogo.style.position = 'relative';
+                                preloaderLogo.style.zIndex = '10';
+                                preloaderLogo.style.animation = 'preloaderLogoAscend 0.8s cubic-bezier(.2,.9,.2,1) forwards';
+                            }
 
-                    // Mostrar hamburguesa y logo compartido
-                    var menuToggle = document.getElementById('menuToggle');
-                    var sharedLogo = document.getElementById('sharedLogo');
-                    if (menuToggle) {
-                        menuToggle.style.opacity = '1';
-                        menuToggle.style.pointerEvents = 'auto';
-                    }
-                    if (sharedLogo) {
-                        sharedLogo.style.opacity = '1';
-                        sharedLogo.style.transition = 'opacity 0.7s cubic-bezier(.77,0,.18,1)';
-                    }
+                            // Ahora sí: fade-out del preloader
+                            preloader.classList.add('preloader-hide');
+                            preloader.style.transition = 'opacity 0.7s cubic-bezier(.77,0,.18,1)';
+                            preloader.style.opacity = '0';
 
-                    document.body.classList.remove('preloader-active');
+                            // Mostrar hamburguesa y logo
+                            var menuToggle = document.getElementById('menuToggle');
+                            var sharedLogo = document.getElementById('sharedLogo');
+                            if (menuToggle) {
+                                menuToggle.style.opacity = '1';
+                                menuToggle.style.pointerEvents = 'auto';
+                            }
+                            if (sharedLogo) {
+                                sharedLogo.style.opacity = '1';
+                                sharedLogo.style.transition = 'opacity 0.7s cubic-bezier(.77,0,.18,1)';
+                            }
 
-                    // === PASO 5: Ocultar completamente después de la animación ===
-                    setTimeout(function() {
-                        preloader.style.display = 'none';
-                        preloader.style.visibility = 'hidden';
-                        localStorage.setItem('eftimosPreloaderShown', '1');
-                        window.dispatchEvent(new Event('preloaderFinished'));
-                    }, 900);
+                            document.body.classList.remove('preloader-active');
+                        });
 
-                    // === PASO 6: Fallback de seguridad ===
-                    // Si por algún motivo el preloader sigue visible después de 2s, forzar ocultación
-                    setTimeout(function() {
+                        // === PASO 7: Ocultar en transitionend (más fiable que setTimeout) ===
+                        preloader.addEventListener('transitionend', function onTransEnd(e) {
+                            if (e.propertyName === 'opacity' || e.target === preloader) {
+                                preloader.removeEventListener('transitionend', onTransEnd);
+                                forceHidePreloader(preloader);
+                            }
+                        });
+
+                        // === PASO 8: setTimeout como respaldo ===
+                        setTimeout(function() { forceHidePreloader(preloader); }, 900);
+
+                        // === PASO 9: Fallback agresivo - si NADA funciona, forzar ===
+                        setTimeout(function() {
+                            var p = document.getElementById('preloader');
+                            if (p && p.getAttribute('data-hidden') !== '1') {
+                                console.warn('[PRELOADER] Fallback 2s: forcing hide');
+                                forceHidePreloader(p);
+                            }
+                        }, 2000);
+
+                    } catch (criticalErr) {
+                        // Si CUALQUIER cosa falla, forzar ocultación incondicional
+                        console.error('[PRELOADER] Critical error, forcing hide:', criticalErr);
                         var p = document.getElementById('preloader');
-                        if (p && p.style.display !== 'none') {
-                            console.warn('[PRELOADER] Fallback: forcing preloader hide');
-                            p.style.display = 'none';
-                            p.style.visibility = 'hidden';
-                            p.style.opacity = '0';
-                            p.style.pointerEvents = 'none';
-                            if (!localStorage.getItem('eftimosPreloaderShown')) {
-                                localStorage.setItem('eftimosPreloaderShown', '1');
-                                window.dispatchEvent(new Event('preloaderFinished'));
-                            }
-                        }
-                    }, 2000);
+                        if (p) forceHidePreloader(p);
+                        document.body.classList.remove('preloader-active');
+                    }
+                }
+
+                enterBtn.addEventListener('click', handleEnterPress);
+                // En iOS, touchend es más fiable que click para input inmediato
+                enterBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault(); // Evitar que dispare click después
+                    handleEnterPress();
                 });
             }
 
