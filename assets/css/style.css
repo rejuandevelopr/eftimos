@@ -686,6 +686,21 @@ main,
     z-index: 11;
 }
 
+/* Darkening overlay behind map items on hover */
+#canvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.4s ease;
+    pointer-events: none;
+    z-index: -1;
+}
+
+#canvas.has-hover::before {
+    background: rgba(0, 0, 0, 0.35);
+}
+
 #canvas.dragging {
     cursor: grabbing;
 }
@@ -921,7 +936,7 @@ body.visual-effects-disabled .image-container video {
 }
 
 #videos-background.map-item-hovered::after {
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(0, 0, 0, 0.35);
 }
 
 /* Increased opacity and inverted colors when element is focused */

@@ -1217,7 +1217,6 @@ canvas.addEventListener('click', (e) => {
         const targetUrl = link.getAttribute('href');
 
         if (img && targetUrl) {
-            playMapInteractionSound(link);
             const soundId = link.dataset ? link.dataset.sound : null;
             createMorphTransition(img, targetUrl, soundId);
         }
@@ -1227,195 +1226,284 @@ canvas.addEventListener('click', (e) => {
 });
 
 function createMorphTransition(originalImg, targetUrl, soundId) {
-    // FADE OUT INMEDIATO de sonidos ambientales (lo primero que ocurre)
-    if (typeof window.fadeOutAmbientSounds === 'function') {
-        window.fadeOutAmbientSounds(200); // 200ms fade out con pitch shift
+    // ============ PREVENT DOUBLE-CLICK / REPEATED TRIGGERS ============
+    if (window._morphTransitionActive) {
+        console.log('[MORPH] Transition already active, ignoring');
+        return;
+    }
+    window._morphTransitionActive = true;
+    console.log('[MORPH] Starting morph transition to:', targetUrl, 'sound:', soundId);
+
+    // ============ NAVIGATION STATE ============
+    var navigated = false;
+
+    function doNavigate() {
+        if (navigated) return;
+        navigated = true;
+        clearTimeout(globalSafetyTimer);
+        console.log('[MORPH] Navigating to:', targetUrl);
+        // Stop any remaining audio before leaving
+        try {
+            var locked = document.getElementById('lockedInSound');
+            if (locked && !locked.paused) { locked.pause(); locked.currentTime = 0; }
+        } catch(e) {}
+        try {
+            if (window.UISounds && typeof window.UISounds.stopAll === 'function') {
+                window.UISounds.stopAll();
+            }
+        } catch(e) {}
+        window._morphTransitionActive = false;
+        window.location.href = targetUrl;
     }
 
-    // Get the image's current position on screen
-    const rect = originalImg.getBoundingClientRect();
+    // ============ GLOBAL SAFETY TIMEOUT ============
+    // If EVERYTHING fails (sounds hang, animations don't fire, overlays stuck),
+    // force navigation after 5 seconds so the user is never stuck.
+    var globalSafetyTimer = setTimeout(function() {
+        if (!navigated) {
+            console.warn('[MORPH] SAFETY: Global timeout (5s) reached, forcing navigation');
+            doNavigate();
+        }
+    }, 5000);
 
-    // Store transition data for the next page
-    const transitionData = {
-        imageSrc: originalImg.src,
-        startX: rect.left,
-        startY: rect.top,
-        startWidth: rect.width,
-        startHeight: rect.height,
-        targetUrl: targetUrl,
-        // Store canvas position to restore later
-        canvasOffsetX: offsetX,
-        canvasOffsetY: offsetY,
-        canvasScale: scale
-    };
-
-    sessionStorage.setItem('morphTransition', JSON.stringify(transitionData));
-
-    // Create a clone that will morph
-    const clone = originalImg.cloneNode(true);
-    clone.style.position = 'fixed';
-    clone.style.left = rect.left + 'px';
-    clone.style.top = rect.top + 'px';
-    clone.style.width = rect.width + 'px';
-    clone.style.height = rect.height + 'px';
-    clone.style.zIndex = '99999';
-    clone.style.objectFit = 'contain';
-    clone.style.pointerEvents = 'none';
-    clone.style.transition = 'none';
-
-    document.body.appendChild(clone);
-
-    // Fade out other content
-    document.body.classList.add('morphing');
-
-    // Create and fade in a dark dim overlay immediately so background darkens
-    let dim = document.getElementById('dimOverlay');
-    if (!dim) {
-        dim = document.createElement('div');
-        dim.id = 'dimOverlay';
-        document.body.appendChild(dim);
+    // ============ STEP 1: FADE OUT AMBIENT SOUNDS ============
+    try {
+        if (typeof window.fadeOutAmbientSounds === 'function') {
+            window.fadeOutAmbientSounds(200);
+        }
+    } catch(e) {
+        console.warn('[MORPH] Ambient fade-out failed (non-blocking):', e);
     }
-    dim.style.position = 'fixed';
-    dim.style.inset = '0';
-    dim.style.background = 'rgba(0,0,0,1)';
-    dim.style.opacity = '0';
-    dim.style.pointerEvents = 'none';
-    dim.style.transition = 'opacity 0.28s ease';
-    dim.style.zIndex = '99998';
 
-    // Fade dim overlay in to darken everything except the cloned image
-    requestAnimationFrame(() => {
-        dim.style.opacity = '0.65';
-    });
+    // ============ STEP 2: SET UP VISUAL TRANSITION ============
+    var clone, dim, overlay;
+    try {
+        var rect = originalImg.getBoundingClientRect();
 
-    // Trigger the morph animation of the clone
-    requestAnimationFrame(() => {
-        clone.style.transition = 'all 0.8s cubic-bezier(0.76, 0, 0.24, 1)';
-        clone.style.left = '0px';
-        clone.style.top = '0px';
-        clone.style.width = '100vw';
-        clone.style.height = '100vh';
-    });
+        // Store transition data for the next page
+        var transitionData = {
+            imageSrc: originalImg.src,
+            startX: rect.left,
+            startY: rect.top,
+            startWidth: rect.width,
+            startHeight: rect.height,
+            targetUrl: targetUrl,
+            canvasOffsetX: offsetX,
+            canvasOffsetY: offsetY,
+            canvasScale: scale
+        };
+        sessionStorage.setItem('morphTransition', JSON.stringify(transitionData));
 
-    // Prepare black overlay (not white) for fade
-    let overlay = document.getElementById('transitionOverlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'transitionOverlay';
-        document.body.appendChild(overlay);
+        // Create a clone that will morph
+        clone = originalImg.cloneNode(true);
+        clone.style.position = 'fixed';
+        clone.style.left = rect.left + 'px';
+        clone.style.top = rect.top + 'px';
+        clone.style.width = rect.width + 'px';
+        clone.style.height = rect.height + 'px';
+        clone.style.zIndex = '99999';
+        clone.style.objectFit = 'contain';
+        clone.style.pointerEvents = 'none';
+        clone.style.transition = 'none';
+        document.body.appendChild(clone);
+
+        // Fade out other content
+        document.body.classList.add('morphing');
+
+        // Create and fade in a dark dim overlay immediately
+        dim = document.getElementById('dimOverlay');
+        if (!dim) {
+            dim = document.createElement('div');
+            dim.id = 'dimOverlay';
+            document.body.appendChild(dim);
+        }
+        dim.style.position = 'fixed';
+        dim.style.inset = '0';
+        dim.style.background = 'rgba(0,0,0,1)';
+        dim.style.opacity = '0';
+        dim.style.pointerEvents = 'none';
+        dim.style.transition = 'opacity 0.28s ease';
+        dim.style.zIndex = '99998';
+
+        requestAnimationFrame(function() {
+            if (dim) dim.style.opacity = '0.65';
+        });
+
+        // Trigger the morph animation of the clone
+        requestAnimationFrame(function() {
+            if (clone) {
+                clone.style.transition = 'all 0.8s cubic-bezier(0.76, 0, 0.24, 1)';
+                clone.style.left = '0px';
+                clone.style.top = '0px';
+                clone.style.width = '100vw';
+                clone.style.height = '100vh';
+            }
+        });
+
+        // Prepare white overlay for final fade
+        overlay = document.getElementById('transitionOverlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'transitionOverlay';
+            document.body.appendChild(overlay);
+        }
+        overlay.style.zIndex = '250000';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.transition = 'opacity 0.45s ease';
+        overlay.style.opacity = '0';
+        overlay.style.background = '#fff';
+    } catch(e) {
+        console.error('[MORPH] Visual setup failed, forcing navigation:', e);
+        doNavigate();
+        return;
     }
-    overlay.style.zIndex = '250000'; // Asegura que cubre la upper bar y todo el contenido
-    overlay.style.pointerEvents = 'none';
-    overlay.style.transition = 'opacity 0.45s ease';
-    overlay.style.opacity = '0';
-    overlay.style.background = '#fff'; // Cambia a blanco sólido
 
-    const overlayFadeDuration = 120; // ms, aún más rápido
-
-    let cloneDone = false;
-    let soundDone = false;
-    let overlayStarted = false;
+    // ============ STEP 3: TRACK ANIMATION + SOUND COMPLETION ============
+    var cloneDone = false;
+    var soundDone = false;
+    var overlayStarted = false;
+    var overlayFadeDuration = 120;
 
     function startOverlayFade() {
-        if (overlayStarted) return;
+        if (overlayStarted || navigated) return;
         overlayStarted = true;
-        requestAnimationFrame(() => {
-            overlay.style.opacity = '1';
+        console.log('[MORPH] Starting overlay fade to white');
+        requestAnimationFrame(function() {
+            if (overlay) overlay.style.opacity = '1';
         });
     }
 
-    // When both clone animation and sound have completed, navigate after overlay fade completes
-    function tryNavigateAfterReady() {
-        if (!overlayStarted) return; // wait until overlay becomes visible
-        // wait for overlay fade to finish then navigate (aún más rápido)
-        setTimeout(() => {
-            window.location.href = targetUrl;
-        }, Math.max(overlayFadeDuration - 60, 40));
-    }
+    // Called when BOTH animation and sound are done
+    function tryFinalNavigate() {
+        if (navigated) return;
+        if (!cloneDone || !soundDone) return;
 
-    // Listen for clone transition end to start overlay fade
-    const onCloneTransitionEnd = () => {
-        cloneDone = true;
+        console.log('[MORPH] Both animation and sound complete');
         startOverlayFade();
-        // If sound already finished, navigate after overlay completes
-        if (soundDone) tryNavigateAfterReady();
-    };
-    clone.addEventListener('transitionend', onCloneTransitionEnd, { once: true });
 
-    // Safety: if transitionend doesn't fire within expected time, force overlay start
-    setTimeout(() => {
-        if (!cloneDone) {
-            cloneDone = true;
-            startOverlayFade();
-        }
-    }, 1200);
-
-    // Play section-specific sound when available; fall back to locked-in sound
-    let playedSectionSound = false;
-    if (soundId && window.UISounds && typeof window.UISounds.play === 'function') {
-        const asmrKey = 'asmr' + soundId.split('-').map(word =>
-            word.charAt(0).toUpperCase() + word.slice(1)
-        ).join('');
-        window.UISounds.play(asmrKey);
-        playedSectionSound = true;
-        
-        // ASMR sounds don't block navigation - mark sound as done immediately
-        soundDone = true;
-        // If clone already finished, proceed with navigation
-        if (cloneDone) {
-            startOverlayFade();
-            tryNavigateAfterReady();
-        }
+        // Wait for overlay fade to become visible, then navigate
+        setTimeout(function() {
+            doNavigate();
+        }, Math.max(overlayFadeDuration, 80));
     }
 
-    if (!playedSectionSound) {
-        const locked = document.getElementById('lockedInSound');
-        if (locked) {
-            try {
-                locked.pause();
-                locked.currentTime = 0;
-                locked.playbackRate = 1.5;
-                // Start sound IMMEDIATELY, not after clone
-                const playPromise = locked.play();
-                playPromise.then(() => {
-                    const onEnded = () => {
-                        soundDone = true;
-                        if (overlayStarted) {
-                            tryNavigateAfterReady();
-                        } else if (cloneDone) {
-                            startOverlayFade();
-                            tryNavigateAfterReady();
-                        }
-                    };
-                    locked.addEventListener('ended', onEnded, { once: true });
-                    // Safety: max wait for ended
-                    setTimeout(() => {
-                        if (!soundDone) {
-                            soundDone = true;
-                            if (cloneDone) {
-                                startOverlayFade();
-                                tryNavigateAfterReady();
-                            }
-                        }
-                    }, Math.max(2000, (locked.duration || 0) * 1000 / 1.5 + 200));
-                }).catch(() => {
-                    soundDone = true;
-                    if (cloneDone) {
-                        startOverlayFade();
-                        tryNavigateAfterReady();
-                    }
-                });
-            } catch (e) {
-                soundDone = true;
-                if (cloneDone) {
-                    startOverlayFade();
-                    tryNavigateAfterReady();
-                }
+    // --- Clone animation tracking ---
+    if (clone) {
+        var cloneEndHandler = function() {
+            if (cloneDone) return;
+            cloneDone = true;
+            console.log('[MORPH] Clone animation completed');
+            tryFinalNavigate();
+        };
+        clone.addEventListener('transitionend', cloneEndHandler, { once: true });
+
+        // Safety: if transitionend doesn't fire (can happen on some browsers)
+        setTimeout(function() {
+            if (!cloneDone) {
+                console.warn('[MORPH] SAFETY: Clone transitionend not fired after 1.2s, forcing');
+                cloneEndHandler();
             }
+        }, 1200);
+    } else {
+        cloneDone = true;
+    }
+
+    // --- Sound tracking ---
+    try {
+        if (soundId && window.UISounds && typeof window.UISounds.playAndWait === 'function') {
+            // ---- ASMR section sound path (waits for sound to finish) ----
+            var asmrKey = 'asmr' + soundId.split('-').map(function(word) {
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join('');
+
+            console.log('[MORPH] Playing ASMR sound (with wait):', asmrKey);
+            window.UISounds.playAndWait(asmrKey, 4000).then(function() {
+                soundDone = true;
+                console.log('[MORPH] ASMR sound completed or timed out');
+                tryFinalNavigate();
+            }).catch(function(e) {
+                console.warn('[MORPH] ASMR playAndWait rejected (non-blocking):', e);
+                soundDone = true;
+                tryFinalNavigate();
+            });
+        } else if (soundId && window.UISounds && typeof window.UISounds.play === 'function') {
+            // ---- Fallback: playAndWait not available, fire-and-forget ----
+            console.warn('[MORPH] playAndWait not available, using fire-and-forget for ASMR');
+            var asmrKeyFallback = 'asmr' + soundId.split('-').map(function(word) {
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join('');
+            window.UISounds.play(asmrKeyFallback);
+            soundDone = true;
+            tryFinalNavigate();
         } else {
-            // No sound -> navigate after clone completes and overlay fades
-            // onCloneTransitionEnd will start overlay and call tryNavigateAfterReady
+            // ---- Locked-in sound fallback (no section-specific sound) ----
+            var locked = document.getElementById('lockedInSound');
+            if (locked) {
+                try {
+                    locked.pause();
+                    locked.currentTime = 0;
+                    locked.playbackRate = 1.5;
+
+                    // Safety timeout based on audio duration
+                    var lockedMaxWait = Math.max(3000, (locked.duration || 3) * 1000 / 1.5 + 500);
+                    var lockedSafetyTimer = setTimeout(function() {
+                        if (!soundDone) {
+                            console.warn('[MORPH] SAFETY: Locked-in sound timeout after ' + lockedMaxWait + 'ms');
+                            soundDone = true;
+                            tryFinalNavigate();
+                        }
+                    }, lockedMaxWait);
+
+                    var playPromise = locked.play();
+                    if (playPromise && typeof playPromise.then === 'function') {
+                        playPromise.then(function() {
+                            locked.addEventListener('ended', function() {
+                                if (!soundDone) {
+                                    clearTimeout(lockedSafetyTimer);
+                                    soundDone = true;
+                                    console.log('[MORPH] Locked-in sound ended naturally');
+                                    tryFinalNavigate();
+                                }
+                            }, { once: true });
+
+                            // Also listen for error on the audio element
+                            locked.addEventListener('error', function() {
+                                if (!soundDone) {
+                                    clearTimeout(lockedSafetyTimer);
+                                    console.warn('[MORPH] Locked-in sound error event');
+                                    soundDone = true;
+                                    tryFinalNavigate();
+                                }
+                            }, { once: true });
+                        }).catch(function(e) {
+                            clearTimeout(lockedSafetyTimer);
+                            console.warn('[MORPH] Locked-in play() rejected:', e);
+                            soundDone = true;
+                            tryFinalNavigate();
+                        });
+                    } else {
+                        // play() didn't return a promise (very old browser)
+                        clearTimeout(lockedSafetyTimer);
+                        console.warn('[MORPH] play() did not return a promise');
+                        soundDone = true;
+                        tryFinalNavigate();
+                    }
+                } catch(e) {
+                    console.warn('[MORPH] Locked-in setup error:', e);
+                    soundDone = true;
+                    tryFinalNavigate();
+                }
+            } else {
+                // No sound element exists at all
+                console.log('[MORPH] No sound element found, proceeding without sound');
+                soundDone = true;
+                tryFinalNavigate();
+            }
         }
+    } catch(e) {
+        console.error('[MORPH] Sound tracking setup failed entirely:', e);
+        soundDone = true;
+        tryFinalNavigate();
     }
 }
 

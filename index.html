@@ -285,30 +285,39 @@
     <script defer src="assets/js/ui-sounds.js"></script>
     <script defer src="assets/js/script.js"></script>
 
-    <!-- Darken video on map item hover -->
+    <!-- Darken background on map item hover -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const canvas = document.getElementById('canvas');
             const videosBackground = document.getElementById('videos-background');
             if (!canvas || !videosBackground) return;
 
-            canvas.addEventListener('mouseenter', function(e) {
-                const mapItem = e.target.closest('.image-link, .video-link');
-                if (mapItem) videosBackground.classList.add('map-item-hovered');
-            }, true);
-
-            canvas.addEventListener('mouseleave', function(e) {
-                const mapItem = e.target.closest('.image-link, .video-link');
-                if (mapItem) videosBackground.classList.remove('map-item-hovered');
-            }, true);
-
+            // Use mouseover (bubbles) for reliable delegation on dynamic elements
             canvas.addEventListener('mouseover', function(e) {
                 const mapItem = e.target.closest('.image-link, .video-link');
                 if (mapItem) {
+                    canvas.classList.add('has-hover');
                     videosBackground.classList.add('map-item-hovered');
+                    // Mark the specific container as hovered
+                    var container = mapItem.closest('.image-container');
+                    // Remove is-hovered from any previously hovered container
+                    var prev = canvas.querySelector('.image-container.is-hovered');
+                    if (prev && prev !== container) prev.classList.remove('is-hovered');
+                    if (container) container.classList.add('is-hovered');
                 } else {
+                    canvas.classList.remove('has-hover');
                     videosBackground.classList.remove('map-item-hovered');
+                    var prev = canvas.querySelector('.image-container.is-hovered');
+                    if (prev) prev.classList.remove('is-hovered');
                 }
+            });
+
+            // Clean up when mouse leaves the canvas entirely
+            canvas.addEventListener('mouseleave', function() {
+                canvas.classList.remove('has-hover');
+                videosBackground.classList.remove('map-item-hovered');
+                var prev = canvas.querySelector('.image-container.is-hovered');
+                if (prev) prev.classList.remove('is-hovered');
             });
         });
     </script>
@@ -400,161 +409,146 @@
             // --- BFCACHE / BACK BUTTON RESTORATION ---
             // iOS Safari restaura la página desde bfcache al pulsar Back (swipe gesture).
             // En ese momento 'load' y 'DOMContentLoaded' NO se disparan, solo 'pageshow'.
-            // Hay que limpiar TODOS los estados de transición que quedaron congelados:
-            //  - body.unloading  (opacity:0 en body via CSS)
-            //  - body.morphing   (#canvas, nav, #grainCanvas con opacity:0 via CSS)
-            //  - #transitionOverlay (blanco sólido z-index:250000)
-            //  - #dimOverlay     (oscuro semi-transparente)
-            //  - Clones de morph transition (img fixed z-index:99999)
-            //  - Overlays de intro-zoom (div fixed z-index máximo)
-            window.addEventListener('pageshow', function (e) {
-                // Detectar si la página necesita restauración
-                var hasUnloading = document.body.classList.contains('unloading');
-                var hasMorphing  = document.body.classList.contains('morphing');
-                
-                var transitionOverlay = document.getElementById('transitionOverlay');
-                var dimOverlay = document.getElementById('dimOverlay');
-                var hasOverlay = (transitionOverlay && (transitionOverlay.style.opacity === '1' || transitionOverlay.style.zIndex === '250000'))
-                    || (dimOverlay && parseFloat(dimOverlay.style.opacity) > 0);
-                
-                // También detectar si el body está invisible (computed opacity 0)
-                var bodyInvisible = false;
-                try {
-                    bodyInvisible = window.getComputedStyle(document.body).opacity === '0';
-                } catch(ex) {}
+            // Hay que limpiar TODOS los estados de transición que quedaron congelados y
+            // reproducir el fade blanco (overlay de opacity 1→0 en vez de reiniciar la
+            // animación CSS del body, que falla en iOS Safari con bfcache).
+            
+            // Flag que se activa al salir de la página; persiste en bfcache
+            var _eftimosPageHidden = false;
+            window.addEventListener('pagehide', function () { _eftimosPageHidden = true; });
 
-                var needsRestore = e.persisted || hasUnloading || hasMorphing || hasOverlay || bodyInvisible;
+            window.addEventListener('pageshow', function (e) {
+                var needsRestore = e.persisted || _eftimosPageHidden;
+                
+                // Detectar estado roto por si acaso los flags no bastaron
+                if (!needsRestore) {
+                    try {
+                        var comp = window.getComputedStyle(document.body).opacity;
+                        if (comp === '0') needsRestore = true;
+                    } catch(ex) {}
+                    if (document.body.classList.contains('unloading') ||
+                        document.body.classList.contains('morphing')) {
+                        needsRestore = true;
+                    }
+                }
 
                 if (!needsRestore) return;
+                _eftimosPageHidden = false;
 
-                console.log('[PAGESHOW] Restaurando página (persisted:' + e.persisted + 
-                    ' unloading:' + hasUnloading + ' morphing:' + hasMorphing + 
-                    ' overlay:' + hasOverlay + ' bodyInvisible:' + bodyInvisible + ')');
-                
-                // ============ RESTAURACIÓN INMEDIATA ============
-                
-                // 1. Deshabilitar TODAS las transiciones CSS para que la limpieza sea instantánea
-                document.body.style.transition = 'none';
-                
-                // 2. Limpiar TODAS las clases de transición del body
-                document.body.classList.remove('unloading', 'morphing', 'preloader-active');
-                
-                // 3. Preparar body para el fade-in: empezar invisible, limpiar animación vieja
-                document.body.style.animation = 'none';
-                document.body.style.opacity = '0';
-                
-                // 4. Eliminar #transitionOverlay (overlay blanco de morph)
-                if (transitionOverlay) {
-                    transitionOverlay.style.transition = 'none';
-                    transitionOverlay.style.opacity = '0';
-                    transitionOverlay.style.pointerEvents = 'none';
-                    transitionOverlay.style.zIndex = '-1';
-                    transitionOverlay.style.display = 'none';
-                }
-                
-                // 5. Eliminar #dimOverlay (overlay oscuro de morph)
-                if (dimOverlay) {
-                    dimOverlay.style.transition = 'none';
-                    dimOverlay.style.opacity = '0';
-                    dimOverlay.style.display = 'none';
-                }
-                
-                // 6. Eliminar clones de morph transition (img fijados por createMorphTransition)
-                document.querySelectorAll('body > img[style*="position: fixed"]').forEach(function(el) {
-                    el.remove();
-                });
-                
-                // 7. Eliminar overlays huérfanos de intro-zoom y cualquier div fixed de z-index alto
-                document.querySelectorAll('body > div[style*="position: fixed"]').forEach(function(el) {
-                    // Solo eliminar divs que parecen overlays (z-index alto, no son elementos del DOM original)
-                    var zIndex = parseInt(el.style.zIndex || '0', 10);
-                    if (zIndex > 100000 && !el.id) {
-                        el.remove();
+                console.log('[PAGESHOW] Restaurando página (persisted:', e.persisted, ')');
+
+                try {
+                    // ====== 1. LIMPIAR TODO INSTANTÁNEAMENTE ======
+
+                    // Clases que ocultan contenido
+                    document.body.classList.remove('unloading', 'morphing', 'preloader-active');
+
+                    // Body: visible inmediatamente, sin transición ni animación
+                    document.body.style.transition = 'none';
+                    document.body.style.animation  = 'none';
+                    document.body.style.opacity     = '1';
+
+                    // #transitionOverlay (blanco de morph z-index:250000)
+                    var transOv = document.getElementById('transitionOverlay');
+                    if (transOv) {
+                        transOv.style.cssText = 'opacity:0;pointer-events:none;display:none;z-index:-1;';
                     }
-                });
-                
-                // 8. Restaurar visibilidad del fondo
-                var videosBackground = document.getElementById('videos-background');
-                var grainCanvas = document.getElementById('grainCanvas');
-                if (videosBackground) videosBackground.style.visibility = '';
-                if (grainCanvas) {
-                    grainCanvas.style.visibility = '';
-                    grainCanvas.style.opacity = '';
-                }
-                
-                // 9. Asegurar que #canvas (el mapa) sea visible
-                var canvas = document.getElementById('canvas');
-                if (canvas) {
-                    canvas.style.transition = 'none';
-                    canvas.style.opacity = '1';
-                    canvas.style.visibility = '';
-                }
-                
-                // 10. Restaurar nav visible
-                var nav = document.querySelector('nav.blending-item');
-                if (nav) {
-                    nav.style.transition = 'none';
-                    nav.style.opacity = '1';
-                    nav.style.pointerEvents = 'auto';
-                }
-                
-                // 11. Ocultar preloader si ya fue mostrado
-                if (localStorage.getItem('eftimosPreloaderShown') === '1') {
-                    var preloaderEl = document.getElementById('preloader');
-                    if (preloaderEl) {
-                        preloaderEl.style.display = 'none';
-                        preloaderEl.style.visibility = 'hidden';
-                        preloaderEl.style.opacity = '0';
-                        preloaderEl.style.pointerEvents = 'none';
+
+                    // #dimOverlay (oscuro de morph)
+                    var dimOv = document.getElementById('dimOverlay');
+                    if (dimOv) {
+                        dimOv.style.cssText = 'opacity:0;pointer-events:none;display:none;';
                     }
-                }
-                
-                // 12. Hamburguesa y logo visibles
-                var menuToggle = document.getElementById('menuToggle');
-                var sharedLogo = document.getElementById('sharedLogo');
-                if (menuToggle) {
-                    menuToggle.style.opacity = '1';
-                    menuToggle.style.pointerEvents = 'auto';
-                }
-                if (sharedLogo) {
-                    sharedLogo.style.opacity = '1';
-                }
-                
-                // 13. Forzar reflow para que iOS Safari aplique toda la limpieza
-                void document.body.offsetHeight;
-                
-                // 14. Re-disparar el fade-in blanco (opacity 0→1)
-                //     Limpiamos los inline styles para que la animación CSS tome el control
-                document.body.style.transition = '';
-                document.body.style.animation = '';
-                document.body.style.opacity = '';
-                // Forzar que el navegador reconozca el reinicio de la animación
-                void document.body.offsetHeight;
-                // Re-aplicar la animación explícitamente por si iOS no la re-evalúa
-                document.body.style.animation = 'fadeIn 1.5s ease forwards';
-                
-                // 15. Restaurar transiciones de canvas y nav para uso normal
-                requestAnimationFrame(function() {
-                    if (canvas) canvas.style.transition = '';
-                    if (nav) nav.style.transition = '';
-                });
-                
-                // 15. Reanudar videos de fondo (iOS los pausa en bfcache)
-                if (videosBackground) {
-                    var bgVideos = videosBackground.querySelectorAll('video');
-                    bgVideos.forEach(function(v) {
-                        if (v.paused) v.play().catch(function() {});
+
+                    // Clones de morph transition (img position:fixed)
+                    document.querySelectorAll('body > img[style*="position"]').forEach(function(el) {
+                        if (el.style.position === 'fixed') el.remove();
                     });
+
+                    // Overlays huérfanos de intro-zoom (div fixed z-index alto sin id)
+                    document.querySelectorAll('body > div').forEach(function(el) {
+                        if (el.style.position === 'fixed' && !el.id && parseInt(el.style.zIndex||0,10) > 100000) {
+                            el.remove();
+                        }
+                    });
+
+                    // Fondo visible
+                    var vidBg = document.getElementById('videos-background');
+                    var grain = document.getElementById('grainCanvas');
+                    if (vidBg) vidBg.style.visibility = '';
+                    if (grain) { grain.style.visibility = ''; grain.style.opacity = ''; }
+
+                    // Canvas (mapa) visible
+                    var cvs = document.getElementById('canvas');
+                    if (cvs) { cvs.style.transition='none'; cvs.style.opacity='1'; cvs.style.visibility=''; }
+
+                    // Nav visible
+                    var nav = document.querySelector('nav.blending-item');
+                    if (nav) { nav.style.transition='none'; nav.style.opacity='1'; nav.style.pointerEvents='auto'; }
+
+                    // Preloader oculto
+                    if (localStorage.getItem('eftimosPreloaderShown') === '1') {
+                        var pl = document.getElementById('preloader');
+                        if (pl) { pl.style.display='none'; pl.style.visibility='hidden'; pl.style.opacity='0'; pl.style.pointerEvents='none'; }
+                    }
+
+                    // Hamburguesa + logo
+                    var mt = document.getElementById('menuToggle');
+                    var sl = document.getElementById('sharedLogo');
+                    if (mt) { mt.style.opacity='1'; mt.style.pointerEvents='auto'; }
+                    if (sl) { sl.style.opacity='1'; }
+
+                    // Forzar reflow para que iOS Safari aplique todos los cambios
+                    void document.body.offsetHeight;
+
+                    // ====== 2. FADE BLANCO (overlay nuevo que se desvanece) ======
+                    // Más fiable que reiniciar la animación CSS del body en iOS Safari
+                    var fadeOverlay = document.createElement('div');
+                    fadeOverlay.setAttribute('id', 'bfcacheFadeOverlay');
+                    fadeOverlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:999999;opacity:1;pointer-events:none;transition:opacity 1.2s ease;';
+                    document.body.appendChild(fadeOverlay);
+                    // Forzar reflow para registrar opacity:1 antes de animar
+                    void fadeOverlay.offsetHeight;
+                    fadeOverlay.style.opacity = '0';
+                    // Eliminar overlay al terminar
+                    fadeOverlay.addEventListener('transitionend', function() { fadeOverlay.remove(); });
+                    // Safety: eliminar aunque transitionend no dispare (iOS quirk)
+                    setTimeout(function() {
+                        var fo = document.getElementById('bfcacheFadeOverlay');
+                        if (fo) fo.remove();
+                    }, 2000);
+
+                    // ====== 3. RESTAURAR ESTADO NORMAL ======
+                    requestAnimationFrame(function() {
+                        // Devolver transiciones CSS normales
+                        document.body.style.transition = '';
+                        document.body.style.animation  = '';
+                        if (cvs) cvs.style.transition = '';
+                        if (nav) nav.style.transition = '';
+                    });
+
+                    // Reanudar videos (iOS los pausa en bfcache)
+                    if (vidBg) {
+                        vidBg.querySelectorAll('video').forEach(function(v) {
+                            if (v.paused) v.play().catch(function(){});
+                        });
+                    }
+
+                    // Reanudar grano
+                    if (localStorage.getItem('visualEffectsEnabled') !== 'false' &&
+                        typeof window.startGrainAnimation === 'function') {
+                        window.startGrainAnimation();
+                    }
+
+                    // Limpiar morph data
+                    try { sessionStorage.removeItem('morphTransition'); } catch(ex) {}
+
+                } catch (err) {
+                    // Último recurso: si algo falla, al menos hacer la página visible
+                    console.error('[PAGESHOW] Error en restauración:', err);
+                    document.body.style.cssText = 'opacity:1 !important;';
+                    document.body.classList.remove('unloading', 'morphing');
                 }
-                
-                // 16. Reanudar grano
-                var visualEnabled = localStorage.getItem('visualEffectsEnabled') !== 'false';
-                if (visualEnabled && typeof window.startGrainAnimation === 'function') {
-                    window.startGrainAnimation();
-                }
-                
-                // 17. Limpiar sessionStorage de morph
-                try { sessionStorage.removeItem('morphTransition'); } catch(ex) {}
             });
 
             // --- PRELOADER FADE LOGIC ---

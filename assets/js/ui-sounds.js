@@ -343,9 +343,120 @@
     // Auto-initialize
     init();
 
+    /**
+     * Play a sound and return a Promise that resolves when the sound ends.
+     * Includes safety timeout to avoid blocking navigation indefinitely.
+     * @param {string} soundType - Type of sound to play
+     * @param {number} maxWaitMs - Maximum time to wait before resolving (default 4000ms)
+     * @returns {Promise} Resolves when sound ends, errors, or timeout is reached
+     */
+    function playSoundAndWait(soundType, maxWaitMs) {
+        maxWaitMs = maxWaitMs || 4000;
+        return new Promise(function(resolve) {
+            var safetyTimer = null;
+            var resolved = false;
+
+            function done() {
+                if (resolved) return;
+                resolved = true;
+                if (safetyTimer) clearTimeout(safetyTimer);
+                resolve();
+            }
+
+            // Check if audio is enabled from multiple sources
+            var storageAudioEnabled = localStorage.getItem('audioEnabled') !== 'false';
+            var globalAudioEnabled = typeof window.audioEnabled === 'boolean' ? window.audioEnabled : true;
+            if (!audioEnabled || !storageAudioEnabled || !globalAudioEnabled) {
+                done();
+                return;
+            }
+
+            // Ensure audio is initialized
+            if (!audioInitialized) {
+                initAudio();
+            }
+
+            var audio = audioElements[soundType];
+            if (!audio) {
+                console.warn('[UI-SOUNDS] playAndWait: sound type "' + soundType + '" not found');
+                done();
+                return;
+            }
+
+            // Set volume based on type
+            if (soundType.startsWith('asmr')) {
+                audio.volume = 0.45;
+            } else if (soundType === 'mapClick') {
+                audio.volume = 0.35;
+            } else if (soundType === 'dragEnd') {
+                audio.volume = 0.12;
+            } else {
+                audio.volume = 0.15;
+            }
+
+            // Set pitch variation
+            var pitchVariation = 1.0;
+            if (soundType !== 'mapClick' && soundType !== 'dragEnd') {
+                pitchVariation = 0.5 + Math.random() * 1.0;
+            }
+            audio.playbackRate = pitchVariation;
+
+            // Listen for ended event
+            function onEnded() {
+                console.log('[UI-SOUNDS] playAndWait: "' + soundType + '" ended naturally');
+                audio.removeEventListener('error', onError);
+                done();
+            }
+            function onError() {
+                console.warn('[UI-SOUNDS] playAndWait: "' + soundType + '" error event');
+                audio.removeEventListener('ended', onEnded);
+                done();
+            }
+            audio.addEventListener('ended', onEnded, { once: true });
+            audio.addEventListener('error', onError, { once: true });
+
+            // Safety timeout
+            safetyTimer = setTimeout(function() {
+                console.warn('[UI-SOUNDS] playAndWait: safety timeout (' + maxWaitMs + 'ms) for "' + soundType + '"');
+                audio.removeEventListener('ended', onEnded);
+                audio.removeEventListener('error', onError);
+                done();
+            }, maxWaitMs);
+
+            // Reset and play
+            audio.currentTime = 0;
+            audio.play().catch(function(err) {
+                console.debug('[UI-SOUNDS] playAndWait: play failed:', err.message);
+                audio.removeEventListener('ended', onEnded);
+                audio.removeEventListener('error', onError);
+                done();
+            });
+        });
+    }
+
+    /**
+     * Stop all currently playing sounds
+     */
+    function stopAllSounds() {
+        Object.keys(audioElements).forEach(function(key) {
+            try {
+                var audio = audioElements[key];
+                if (audio && !audio.paused) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+            } catch(e) {
+                console.debug('[UI-SOUNDS] stopAll: error stopping "' + key + '":', e);
+            }
+        });
+        console.log('[UI-SOUNDS] All sounds stopped');
+    }
+
     // Expose API for external control
     window.UISounds = {
         play: playSound,
+        playAndWait: playSoundAndWait,
+        stopAll: stopAllSounds,
         enable: () => { audioEnabled = true; },
         disable: () => { audioEnabled = false; },
         setVolume: (soundType, volume) => {
