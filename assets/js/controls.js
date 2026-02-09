@@ -960,7 +960,8 @@ function initializeControls() {
     // Definir funciones antes de usarlas
     
     function updateAudio() {
-        if (audioEnabled && window.preloaderEnterPressed) {
+        // Require user interaction before playing any audio (browser autoplay policy)
+        if (audioEnabled && window.preloaderEnterPressed && userHasInteracted) {
             console.log('[UPDATE-AUDIO] Attempting to start audio...');
             
             // Asegurar que los filtros estén inicializados
@@ -1038,8 +1039,8 @@ function initializeControls() {
     // Update volume smoothly every frame — almacenar para poder limpiar
     var noiseVolumeTimer = setInterval(updateNoiseVolume, 16); // ~60fps
 
-    // Initialize audio state - muted by default
-    updateAudio();
+    // Initialize audio icon state only
+    // Audio playback is deferred to first user interaction to comply with browser autoplay policies
     updateAudioIcon();
 
     if (audioToggle) {
@@ -1060,9 +1061,15 @@ function initializeControls() {
             if (audioEnabled) {
                 console.log('[TOGGLE] Starting audio playback...');
                 
-                // Asegurar que el AudioContext esté inicializado
+                // Marcar interacción del usuario (el click en toggle cuenta)
+                userHasInteracted = true;
+                
+                // Asegurar que el AudioContext esté inicializado y resumido
                 if (!_audioFiltersInitialized) {
                     setupAudioFilters();
+                }
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(function() {});
                 }
                 
                 if (noiseSound) {
@@ -1144,25 +1151,94 @@ function initializeControls() {
         
         userHasInteracted = true;
         
-        // Enable audio
-        audioEnabled = true;
-        localStorage.setItem('audioEnabled', audioEnabled);
+        // Enable audio (respect user's stored preference)
+        var storedPref = localStorage.getItem('audioEnabled');
+        audioEnabled = storedPref !== 'false'; // true by default, false only if explicitly disabled
+        window.audioEnabled = audioEnabled;
         
         console.log('[FIRST-INTERACTION] Audio activated on first user interaction');
         console.log('[FIRST-INTERACTION] audioEnabled:', audioEnabled);
         console.log('[FIRST-INTERACTION] preloaderEnterPressed:', window.preloaderEnterPressed);
-        console.log('[FIRST-INTERACTION] noiseSound:', noiseSound);
-        console.log('[FIRST-INTERACTION] whispersSound:', whispersSound);
+        
+        // Resume AudioContext (required by browsers — must happen inside user gesture)
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume().then(function() {
+                console.log('[FIRST-INTERACTION] AudioContext resumed');
+            }).catch(function() {});
+        }
         
         updateAudio();
         updateAudioIcon();
     }
     
-    // Listen for various user interactions
+    // Listen for user interactions that count as valid gestures for autoplay policy
+    // NOTE: mousemove is NOT a valid user gesture — browsers will still block autoplay
     document.addEventListener('click', activateAudioOnFirstInteraction, { once: true });
     document.addEventListener('touchstart', activateAudioOnFirstInteraction, { once: true });
     document.addEventListener('keydown', activateAudioOnFirstInteraction, { once: true });
-    document.addEventListener('mousemove', activateAudioOnFirstInteraction, { once: true });
+
+    // ========== PAGE VISIBILITY API — PAUSE/RESUME AUDIO ==========
+    // When the page is hidden (tab switch, browser minimized, mobile app switch),
+    // pause all audio. Resume when the page becomes visible again.
+    let _audioWasPlayingBeforeHidden = false;
+    
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            // Page is now hidden — pause all audio
+            console.log('[VISIBILITY] Page hidden — pausing all audio');
+            
+            // Track whether audio was playing so we can resume later
+            _audioWasPlayingBeforeHidden = audioEnabled && userHasInteracted && window.preloaderEnterPressed;
+            
+            // Suspend AudioContext (stops all processing)
+            if (audioCtx && audioCtx.state === 'running') {
+                audioCtx.suspend().catch(function() {});
+            }
+            
+            // Stop crossfade loops to prevent new instances being created
+            stopCrossfadeLoop(noiseCrossfadeSystem, true);
+            stopCrossfadeLoop(whispersCrossfadeSystem, false);
+            
+            // Pause audio elements
+            if (noiseSound && !noiseSound.paused) noiseSound.pause();
+            if (whispersSound && !whispersSound.paused) whispersSound.pause();
+            if (lockedInSound && !lockedInSound.paused) lockedInSound.pause();
+            
+            // Pause crossfade instances too
+            if (noiseCrossfadeSystem.currentInstance && !noiseCrossfadeSystem.currentInstance.paused) {
+                noiseCrossfadeSystem.currentInstance.pause();
+            }
+            if (noiseCrossfadeSystem.nextInstance && !noiseCrossfadeSystem.nextInstance.paused) {
+                noiseCrossfadeSystem.nextInstance.pause();
+            }
+            if (whispersCrossfadeSystem.currentInstance && !whispersCrossfadeSystem.currentInstance.paused) {
+                whispersCrossfadeSystem.currentInstance.pause();
+            }
+            if (whispersCrossfadeSystem.nextInstance && !whispersCrossfadeSystem.nextInstance.paused) {
+                whispersCrossfadeSystem.nextInstance.pause();
+            }
+            
+            // Stop UI sounds
+            if (window.UISounds && typeof window.UISounds.stopAll === 'function') {
+                window.UISounds.stopAll();
+            }
+        } else {
+            // Page is now visible — resume audio if it was playing before
+            console.log('[VISIBILITY] Page visible — resuming audio, wasPlaying:', _audioWasPlayingBeforeHidden);
+            
+            if (_audioWasPlayingBeforeHidden && audioEnabled) {
+                // Resume AudioContext
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume().then(function() {
+                        console.log('[VISIBILITY] AudioContext resumed');
+                    }).catch(function() {});
+                }
+                
+                // Restart audio playback via updateAudio (which handles crossfade loops too)
+                updateAudio();
+            }
+        }
+    });
 
     // ========== MAKE STATES GLOBALLY ACCESSIBLE ==========
 
@@ -1185,6 +1261,15 @@ function initializeControls() {
     window.setupAudioFiltersExternal = setupAudioFilters;
     window.noiseGain = noiseGain;
     window.whispersGain = whispersGain;
+    
+    // Expose AudioContext resume for external scripts (e.g., index-page.js)
+    window.resumeAudioContext = function() {
+        userHasInteracted = true;
+        if (audioCtx && audioCtx.state === 'suspended') {
+            return audioCtx.resume();
+        }
+        return Promise.resolve();
+    };
     
     console.log('[CONTROLS] initializeControls() completed successfully');
 }

@@ -259,6 +259,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 try {
                     var soundEnabled = localStorage.getItem('audioEnabled') !== 'false';
                     if (soundEnabled) {
+                        // Resume AudioContext on user gesture (required by browsers)
+                        if (typeof window.resumeAudioContext === 'function') {
+                            window.resumeAudioContext();
+                        }
                         if (typeof window.setupAudioFiltersExternal === 'function') {
                             window.setupAudioFiltersExternal();
                         }

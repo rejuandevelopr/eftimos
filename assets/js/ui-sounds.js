@@ -30,6 +30,7 @@
     // State tracking
     let audioEnabled = true;
     let audioInitialized = false;
+    let pageIsVisible = !document.hidden; // Track page visibility
     let lastHoverTime = 0;
     const HOVER_DEBOUNCE = 50; // ms - prevent rapid repeated hover sounds
 
@@ -56,6 +57,9 @@
      * @param {string} soundType - Type of sound to play (hover, click, mapClick)
      */
     function playSound(soundType) {
+        // Block playback when page is not visible
+        if (!pageIsVisible) return;
+
         // Check if audio is enabled from multiple sources
         const storageAudioEnabled = localStorage.getItem('audioEnabled') !== 'false';
         const globalAudioEnabled = typeof window.audioEnabled === 'boolean' ? window.audioEnabled : true;
@@ -322,7 +326,7 @@
             console.log('[UI-SOUNDS] Audio toggled:', audioEnabled);
         });
 
-        // Initialize audio on first user interaction
+        // Initialize audio on first user interaction (valid gestures only)
         const initOnInteraction = () => {
             if (!audioInitialized) {
                 initAudio();
@@ -331,11 +335,23 @@
 
         document.addEventListener('click', initOnInteraction, { once: true });
         document.addEventListener('touchstart', initOnInteraction, { once: true });
-        document.addEventListener('mouseenter', initOnInteraction, { once: true, capture: true });
 
         // Setup event listeners
         setupHoverSounds();
         setupClickSounds();
+
+        // ========== PAGE VISIBILITY API ==========
+        // Pause UI sounds when page is hidden, resume when visible
+        document.addEventListener('visibilitychange', function() {
+            pageIsVisible = !document.hidden;
+            if (document.hidden) {
+                // Stop any currently playing UI sounds
+                stopAllSounds();
+                console.log('[UI-SOUNDS] Page hidden — sounds paused');
+            } else {
+                console.log('[UI-SOUNDS] Page visible — sounds resumed');
+            }
+        });
 
         console.log('[UI-SOUNDS] System ready');
     }
@@ -361,6 +377,12 @@
                 resolved = true;
                 if (safetyTimer) clearTimeout(safetyTimer);
                 resolve();
+            }
+
+            // Block playback when page is not visible
+            if (!pageIsVisible) {
+                done();
+                return;
             }
 
             // Check if audio is enabled from multiple sources
