@@ -294,6 +294,32 @@ window.addEventListener('pagehide', () => {
 });
 
 // ========================================
+// BFCACHE RESTORATION - Remove unloading on pageshow
+// ========================================
+window.addEventListener('pageshow', (e) => {
+    if (e.persisted || isUnloading) {
+        console.log('[GRAIN] pageshow restauración - removiendo unloading, reiniciando grano');
+        isUnloading = false;
+        document.body.classList.remove('unloading');
+        
+        // Reiniciar animación de grano si efectos visuales están habilitados
+        const visualEffectsEnabled = localStorage.getItem('visualEffectsEnabled') !== 'false';
+        if (visualEffectsEnabled && !isAnimating) {
+            isAnimating = true;
+            animateGrain();
+        }
+    }
+});
+
+// Exponer función para reiniciar grano desde fuera
+window.startGrainAnimation = function() {
+    if (!isAnimating) {
+        isAnimating = true;
+        animateGrain();
+    }
+};
+
+// ========================================
 // START ANIMATION (only if enabled)
 // ========================================
 if (shouldStartGrain) {
