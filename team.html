@@ -8,7 +8,7 @@
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Gallery - Eftimos</title>
+    <title>Team - Eftimos</title>
     <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/eaf_white-outline.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/eaf_white-outline.png">
@@ -17,9 +17,9 @@
     <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon_io/android-chrome-512x512.png">
 
     <meta name="description"
-        content="Explore the Eftimos collection gallery - an immersive visual experience.">
+        content="Meet the creative minds behind Eaftimos - visionaries, artists, and craftspeople.">
     <meta name="keywords"
-        content="Eftimos, fashion gallery, collection, minimal design, modern fashion">
+        content="Eaftimos, team, creative director, designers, fashion team, creative minds">
 
     <!-- Preload critical fonts -->
     <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
@@ -38,12 +38,6 @@
         body.menu-open #dropdownMenu::before {
             transform: translateX(0) !important;
             pointer-events: all !important;
-        }
-
-        /* Evitar desplazamiento de galería al abrir menú */
-        body.menu-open .gallery-container {
-            top: 50vh !important;
-            left: 50vw !important;
         }
 
         /* Estilos para la galería */
@@ -79,8 +73,9 @@
 
         .gallery-container {
             position: fixed;
-            top: 50vh;
-            left: 50vw;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: auto;
             max-width: 90vw;
             max-height: calc(100vh - 200px);
@@ -89,7 +84,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transform: translate(-50%, -50%);
         }
 
         /* Galería de imágenes estilo Tinder */
@@ -102,87 +96,275 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 0;
+            margin-bottom: 100px;
             margin-top: 70px;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-user-drag: none;
-            -khtml-user-drag: none;
-            -moz-user-drag: none;
-            user-drag: none;
-        }
-
-        .gallery-wrapper * {
-            -webkit-user-drag: none;
-            user-drag: none;
         }
 
         .gallery-track {
             position: relative;
-            width: auto;
-            min-width: 300px;
-            max-width: 90vw;
-            min-height: 400px;
-            max-height: calc(100vh - 200px);
+            width: 420px;
+            height: 600px;
         }
 
         .gallery-card {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: auto;
-            height: auto;
+            transform: translate(-50%, -50%);
+            width: 420px;
+            height: 600px;
             border-radius: 12px;
             overflow: visible;
             background: transparent;
-            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
+                        opacity 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
+                        filter 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
             will-change: transform, opacity, filter;
+            perspective: 1500px;
+        }
+
+        /* Contenedor interno para el flip */
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transform-style: preserve-3d;
             cursor: pointer;
+        }
+
+        .gallery-card.flipped .card-inner {
+            transform: rotateY(180deg);
+            cursor: default;
+        }
+
+        /* Caras de la tarjeta */
+        .card-front,
+        .card-back {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 12px;
+            overflow: hidden;
+            mix-blend-mode: difference;
+        }
+
+        .card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            overflow-y: auto;
+        }
+
+        /* Estilo para el scrollbar del card-back */
+        .card-back::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .card-back::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+        }
+
+        .card-back::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+
+        .card-back::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .card-back-content {
+            color: #fff;
+            text-align: center;
+            max-width: 90%;
+        }
+
+        .card-back-title {
+            font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .card-back-bio {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            letter-spacing: 0.3px;
+            margin-bottom: 1.5rem;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .card-back-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+            width: 100%;
+        }
+
+        .card-back-detail {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-family: 'Helvetica', sans-serif;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .card-back-detail-label {
+            color: rgba(255, 255, 255, 0.6);
+            min-width: 80px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        .card-back-detail-value {
+            color: rgba(255, 255, 255, 0.9);
+            flex: 1;
+        }
+
+        .flip-button {
+            padding: 0.6rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .flip-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Prevenir interacción con las caras que no están visibles */
+        .card-front {
+            pointer-events: auto;
+        }
+
+        .gallery-card.flipped .card-front {
+            pointer-events: none;
+        }
+
+        .card-back {
+            pointer-events: none;
+        }
+
+        .gallery-card.flipped .card-back {
+            pointer-events: auto;
         }
         
         .gallery-card.active {
-            z-index: 100;
+            cursor: grab;
+        }
+
+        .gallery-card.active.flipped {
+            cursor: default;
+        }
+        
+        .gallery-card.dragging {
+            cursor: grabbing !important;
+            transition: none;
+        }
+        
+        .gallery-card.zoomed {
+            cursor: grab;
+        }
+        
+        .gallery-card.zoomed.dragging {
+            cursor: grabbing !important;
+        }
+
+        .gallery-card.active {
+            z-index: 10;
             opacity: 1;
-            filter: blur(0px) brightness(1);
-            transform: translate(-50%, -50%) scale(1) translateX(0);
+            filter: blur(0px);
+            transform: translate(-50%, -50%) scale(1.05);
         }
 
-        .gallery-card.side {
-            z-index: 50;
-            opacity: 0.6;
-        }
-
-        .gallery-card.far {
-            z-index: 30;
-            opacity: 0.3;
+        .gallery-card.next {
+            z-index: 9;
+            opacity: 0.7;
+            filter: blur(2px);
+            transform: translate(-50%, -50%) scale(0.95) translateY(20px);
         }
 
         .gallery-card.hidden {
             z-index: 1;
             opacity: 0;
+            filter: blur(8px);
+            transform: translate(-50%, -50%) scale(0.85) translateY(40px);
             pointer-events: none;
+        }
+
+        .gallery-card.returning {
+            transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) !important;
         }
 
         .gallery-card.zoomed {
             cursor: zoom-out;
-            z-index: 1000 !important;
         }
 
-        .gallery-card.zoomed img {
-            pointer-events: auto;
-            cursor: grab;
+        .gallery-card.swiping-left {
+            transform: translate(-50%, -50%) translateX(-150%) rotate(-20deg) !important;
+            opacity: 0 !important;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s cubic-bezier(0.4, 0, 1, 1) 0.15s !important;
         }
 
-        .gallery-card.zoomed img:active {
-            cursor: grabbing;
+        .gallery-card.swiping-right {
+            transform: translate(-50%, -50%) translateX(150%) rotate(20deg) !important;
+            opacity: 0 !important;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s cubic-bezier(0.4, 0, 1, 1) 0.15s !important;
+        }
+
+        .gallery-card.coming-from-back {
+            z-index: 1 !important;
+            transform: translate(-50%, -50%) translateX(-180px) scale(0.85) rotate(-15deg) !important;
+            opacity: 0.75 !important;
+            transition: none !important;
+        }
+
+        .gallery-card.coming-from-back.moving-forward {
+            z-index: 100 !important;
+            transform: translate(-50%, -50%) translateX(0) scale(1.05) rotate(0deg) !important;
+            opacity: 1 !important;
+            transition: transform 0.5s cubic-bezier(0.34, 1.15, 0.64, 1), opacity 0.5s ease, z-index 0s !important;
+        }
+
+        .gallery-card.moving-to-back {
+            z-index: 5 !important;
+            transform: translate(-50%, -50%) scale(0.95) !important;
+            opacity: 0.7 !important;
+            transition: transform 0.5s cubic-bezier(0.34, 1.15, 0.64, 1), opacity 0.5s ease, z-index 0s 0.1s !important;
         }
 
         .gallery-card img {
-            width: auto;
-            height: auto;
-            max-width: 600px;
-            max-height: 65vh;
-            object-fit: contain;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
             display: block;
             user-select: none;
             -webkit-user-select: none;
@@ -192,132 +374,147 @@
             -o-user-drag: none;
             user-drag: none;
             pointer-events: none;
+            transition: transform 0.3s ease;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-            transition: transform 0.3s ease;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
+        /* Reducir tamaño en desktop */
+        @media (min-width: 768px) {
             .gallery-card img {
-                max-width: 85vw;
-                max-height: 60vh;
+                width: 100%;
+                height: 100%;
+            }
+            
+            .gallery-card {
+                width: 420px;
+                height: 600px;
+            }
+            
+            .gallery-wrapper {
+                max-width: 420px;
+            }
+
+            .card-back {
+                max-height: calc(100vh - 250px);
             }
         }
 
-        .gallery-caption-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 1rem;
-        }
-
-        .gallery-caption {
-            padding: 0.8rem 1.5rem;
-            background: rgba(0,0,0,0.8);
-            color: #fff;
-            font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            text-align: center;
-            border-radius: 8px;
-            white-space: nowrap;
+        /* Caption sobre la imagen con degradado */
+        .card-info-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 2rem 1.5rem 1.5rem 1.5rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.7) 50%, transparent);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            z-index: 5;
+            pointer-events: auto;
             transition: opacity 0.3s ease;
         }
 
-        /* Controles de navegación */
-        .gallery-controls {
-            position: relative;
+        .card-title {
+            color: #fff;
+            font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .card-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-family: 'Helvetica', sans-serif;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            letter-spacing: 0.3px;
+            margin-bottom: 1rem;
+        }
+
+        .card-social-links {
             display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .social-link {
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 2rem;
-            z-index: 506;
-            margin-top: 24px;
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-
-        .gallery-controls.hidden {
-            opacity: 0;
-            transform: translateY(20px);
-            pointer-events: none;
-        }
-
-        .gallery-btn {
-            width: 45px;
-            height: 45px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: #fff;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            text-decoration: none;
+            pointer-events: auto;
         }
 
-        .gallery-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.5);
+        .social-link:hover {
+            background: rgba(255, 255, 255, 0.25);
             transform: scale(1.1);
         }
 
-        .gallery-btn svg {
-            width: 20px;
-            height: 20px;
+        .social-link svg {
+            width: 16px;
+            height: 16px;
+            fill: #fff;
         }
 
-        /* Overlay de textos animados */
-        .overlay-words-layer {
+        /* Controles de navegación - OCULTOS */
+        .gallery-controls {
+            display: none;
+        }
+
+        /* Overlay de textos animados - Estilo parallax-title */
+        .card-overlay-words {
             position: fixed;
-            top: 50vh;
-            left: 50vw;
-            transform: translate(-50%, -50%);
-            width: 90vw;
-            height: calc(100vh - 300px);
-            max-width: 800px;
-            z-index: 520;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 20;
             pointer-events: none;
-            overflow: hidden;
-            transition: opacity 0.4s ease;
-        }
-
-        /* Evitar desplazamiento de overlay-words al abrir menú */
-        body.menu-open .overlay-words-layer {
-            top: 50vh !important;
-            left: 50vw !important;
-        }
-
-        .overlay-words-layer.hidden {
+            overflow: visible;
             opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+
+        .gallery-card.active .card-overlay-words {
+            opacity: 1;
+        }
+
+        .gallery-card.flipped .card-overlay-words {
+            opacity: 0;
+            transition: opacity 0.4s ease;
         }
 
         .overlay-word {
             position: absolute;
             font-family: 'Tangerine', 'Times New Roman', serif;
-            font-size: 5rem;
+            font-size: 6rem;
             font-weight: bold;
             color: transparent;
             -webkit-text-stroke: 0.2px #ffffff;
             text-stroke: 0.2px #ffffff;
-            text-transform: lowercase;
             mix-blend-mode: difference;
             white-space: nowrap;
             will-change: transform, filter, opacity;
             opacity: 0;
-            filter: blur(20px);
-            transition: opacity 1.2s ease, filter 1.2s ease;
+            filter: blur(0px);
+            transition: opacity 1.4s ease, filter 1.4s ease;
             line-height: 1;
+            text-transform: lowercase;
         }
 
-        .overlay-word:nth-child(1) { top: 20%; left: 10%; }
-        .overlay-word:nth-child(2) { top: 40%; right: 15%; }
-        .overlay-word:nth-child(3) { top: 60%; left: 20%; }
-        .overlay-word:nth-child(4) { top: 30%; right: 20%; }
-        .overlay-word:nth-child(5) { bottom: 20%; right: 15%; }
+        .card-overlay-words .overlay-word:nth-child(1) { top: 18%; left: 10%; }
+        .card-overlay-words .overlay-word:nth-child(2) { top: 40%; right: 8%; }
+        .card-overlay-words .overlay-word:nth-child(3) { top: 62%; left: 12%; }
+        .card-overlay-words .overlay-word:nth-child(4) { top: 28%; right: 15%; }
+        .card-overlay-words .overlay-word:nth-child(5) { bottom: 15%; right: 10%; }
 
         .overlay-word.active {
             opacity: 1;
@@ -326,7 +523,8 @@
 
         .overlay-word.fading {
             opacity: 0;
-            filter: blur(20px);
+            filter: blur(0px);
+            transition: opacity 1.4s ease;
         }
 
         /* Sección de descripción de colección */
@@ -372,7 +570,7 @@
             top: 50%;
             right: 2rem;
             transform: translateY(-50%);
-            display: none; /* Oculto permanentemente */
+            display: none;
             flex-direction: column;
             gap: 8px;
             z-index: 15;
@@ -393,11 +591,6 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            body.menu-open .gallery-container {
-                top: 50vh !important;
-                left: 50vw !important;
-            }
-
             .gallery-container {
                 max-width: 95vw;
                 max-height: calc(100vh - 250px);
@@ -409,41 +602,63 @@
             }
 
             .gallery-track {
-                max-width: 95vw;
+                width: 85vw;
+                height: min(75vh, 550px);
             }
 
             .gallery-card {
-                max-height: calc(100vh - 250px);
-                max-width: 95vw;
+                width: 85vw;
+                height: min(75vh, 550px);
             }
 
             .gallery-card img {
-                max-height: calc(100vh - 250px);
-                max-width: 95vw;
-            }
-
-            .gallery-controls {
-                gap: 1.5rem;
-                margin-top: 16px;
-            }
-
-            .gallery-btn {
-                width: 40px;
-                height: 40px;
-            }
-
-            .gallery-btn svg {
-                width: 18px;
-                height: 18px;
+                width: 100%;
+                height: 100%;
             }
 
             .overlay-word {
-                font-size: 3rem;
+                font-size: 3.5rem;
             }
 
-            .gallery-caption {
-                font-size: 0.9rem;
+            .card-overlay-words .overlay-word:nth-child(1) { top: 15%; left: 5%; }
+            .card-overlay-words .overlay-word:nth-child(2) { top: 38%; right: 5%; }
+            .card-overlay-words .overlay-word:nth-child(3) { top: 60%; left: 8%; }
+            .card-overlay-words .overlay-word:nth-child(4) { top: 25%; right: 10%; }
+            .card-overlay-words .overlay-word:nth-child(5) { bottom: 18%; right: 6%; }
+
+            .card-title {
+                font-size: 1.1rem;
+            }
+
+            .card-description {
+                font-size: 0.8rem;
+            }
+
+            .card-info-overlay {
+                padding: 1.5rem 1rem 1rem 1rem;
+            }
+
+            .card-back {
                 padding: 1.5rem;
+            }
+
+            .card-back-title {
+                font-size: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .card-back-bio {
+                font-size: 0.8rem;
+                margin-bottom: 1rem;
+            }
+
+            .card-back-detail {
+                font-size: 0.75rem;
+            }
+
+            .card-back-details {
+                gap: 0.6rem;
+                margin-bottom: 1rem;
             }
 
             .collection-description {
@@ -492,21 +707,23 @@
                 <span></span>
                 <span></span>
             </div>
-            
-            <!-- Logo Centrado -->
-            <a href="index.html" class="logo" data-shape="circle">
-                <img src="assets/images/logo-white.png" alt="Eftimos Logo" width="150" height="auto" draggable="false">
+            <!-- Logo compartido con preloader -->
+            <a href="index.html" class="logo shared-logo" data-shape="circle">
+                <img src="assets/images/logo-white.png" alt="Eaftimos Logo" id="sharedLogo" width="150" height="auto"
+                    draggable="false">
             </a>
         </div>
-        
+
         <!-- Menú Desplegable -->
         <div class="dropdown-menu" id="dropdownMenu">
             <div class="menu-links">
-                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer" class="dropdown-link" data-shape="circle">SHOP</a>
+                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer"
+                    class="dropdown-link" data-shape="circle">SHOP</a>
                 <div class="dropdown-item-with-submenu" style="display:none;">
                     <button class="dropdown-link dropdown-toggle" id="collectionsToggle">
                         COLLECTIONS
-                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"
+                            stroke="currentColor" stroke-width="2">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </button>
@@ -518,7 +735,8 @@
                 <div class="dropdown-item-with-submenu">
                     <button class="dropdown-link dropdown-toggle" id="socialMediaToggle">
                         SOCIAL MEDIA
-                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"
+                            stroke="currentColor" stroke-width="2">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </button>
@@ -529,21 +747,29 @@
                 </div>
                 <button class="dropdown-link" id="contactBtn" data-shape="circle">CONTACT</button>
             </div>
-            
+
             <!-- Control Icons in Sidebar -->
             <div class="sidebar-controls">
                 <div class="sidebar-control-buttons">
                     <button class="sidebar-control-btn" id="visualToggle" title="Toggle Visual Effects">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <!-- Icono de ojo abierto -->
                             <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                             <circle class="eye-open" cx="12" cy="12" r="3"></circle>
-                            <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" stroke-linecap="round"></line>
+                            <!-- Icono de ojo cerrado (oculto inicialmente) -->
+                            <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23"
+                                stroke-linecap="round"></line>
                         </svg>
                     </button>
                     <button class="sidebar-control-btn" id="audioToggle" title="Toggle Audio">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                            <path class="speaker-on" d="M3 9v6c0 1.105.895 2 2 2h4l5 5V4H9c-1.105 0-2 .895-2 2v3z"></path>
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <!-- Altavoz abierto -->
+                            <path class="speaker-on" d="M3 9v6c0 1.105.895 2 2 2h4l5 5V4H9c-1.105 0-2 .895-2 2v3z">
+                            </path>
                             <path class="speaker-on" d="M17.5 3.5a4 4 0 0 1 0 5.66M19.07 4.93a8 8 0 0 1 0 11.31"></path>
+                            <!-- Altavoz mudo (oculto inicialmente) -->
                             <path class="speaker-off" style="display:none;" d="M11 5L6 9H2v6h4l5 5V5z"></path>
                             <line class="speaker-off" style="display:none;" x1="23" y1="9" x2="17" y2="15"></line>
                             <line class="speaker-off" style="display:none;" x1="17" y1="9" x2="23" y2="15"></line>
@@ -562,7 +788,7 @@
             <h2>CONTACT US</h2>
             <form id="contactForm" action="https://formsubmit.co/beastnirvana.csn@gmail.com" method="POST">
                 <!-- FormSubmit Configuration -->
-                <input type="hidden" name="_subject" value="New contact from Eftimos Gallery">
+                <input type="hidden" name="_subject" value="New contact from Eftimos Team">
                 <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_template" value="table">
                 
@@ -581,38 +807,12 @@
     </div>
 
     <main>
-        <!-- Overlay de textos animados -->
-        <div class="overlay-words-layer" id="overlayWordsLayer">
-            <div class="overlay-word">VISION</div>
-            <div class="overlay-word">CRAFT</div>
-            <div class="overlay-word">SHADOW</div>
-            <div class="overlay-word">STANCE</div>
-            <div class="overlay-word">SILENCE</div>
-        </div>
-
         <!-- Galería principal -->
         <div class="gallery-container">
             <div class="gallery-wrapper">
                 <div class="gallery-track" id="galleryTrack">
                     <!-- Las tarjetas se generarán dinámicamente -->
                 </div>
-            </div>
-
-            <!-- Controles de navegación -->
-            <div class="gallery-controls">
-                <button class="gallery-btn" id="prevBtn" aria-label="Previous">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                </button>
-                <div class="gallery-caption-container" id="galleryCaptionContainer">
-                    <span class="gallery-caption" id="galleryCaption">LOOK 1</span>
-                </div>
-                <button class="gallery-btn" id="nextBtn" aria-label="Next">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                </button>
             </div>
         </div>
 
@@ -621,10 +821,13 @@
             <!-- Los puntos se generarán dinámicamente -->
         </div>
 
+        <!-- Contenedor de overlay words (fuera de las cartas) -->
+        <div id="overlayWordsContainer"></div>
+
         <!-- Sección de información de la colección -->
         <div class="collection-info">
             <div class="collection-description">
-                <p>AW24 COLLECTION — A STUDY IN SHADOW AND FORM. EACH PIECE CRAFTED WITH PRECISION, BORN FROM INTROSPECTION AND SHAPED BY TIME. BLACK AS OBSESSION, SILENCE AS LANGUAGE, FABRIC AS TRUTH.</p>
+                <p>THE MINDS BEHIND EAFTIMOS — A COLLECTIVE OF VISIONARIES, CREATORS, AND CRAFTSPEOPLE UNITED BY PASSION. EACH VOICE DISTINCT, EVERY VISION SHARED. TOGETHER WE BUILD, DREAM, AND SHAPE THE FUTURE OF FASHION.</p>
             </div>
         </div>
     </main>
@@ -644,131 +847,91 @@
     <script src="assets/js/controls.js"></script>
 
     <script>
-        // Configuración de la galería - Colección RESILIENCE AW24
-        window.galleryImages = [
-            { src: 'assets/images/runway-page/LOOK 1.JPG', caption: 'LOOK 1' },
-            { src: 'assets/images/runway-page/LOOK 2.JPG', caption: 'LOOK 2' },
-            { src: 'assets/images/runway-page/LOOK 3.JPG', caption: 'LOOK 3' },
-            { src: 'assets/images/runway-page/LOOK 4.JPG', caption: 'LOOK 4' },
-            { src: 'assets/images/runway-page/LOOK 5.JPG', caption: 'LOOK 5' },
-            { src: 'assets/images/runway-page/LOOK 6.JPG', caption: 'LOOK 6' },
-            { src: 'assets/images/runway-page/LOOK 7.JPG', caption: 'LOOK 7' },
-            { src: 'assets/images/runway-page/LOOK 8.JPG', caption: 'LOOK 8' },
-            { src: 'assets/images/runway-page/LOOK 9.JPG', caption: 'LOOK 9' },
-            { src: 'assets/images/runway-page/LOOK 10.JPG', caption: 'LOOK 10' },
-            { src: 'assets/images/runway-page/LOOK 11.JPG', caption: 'LOOK 11' },
-            { src: 'assets/images/runway-page/LOOK 12.JPG', caption: 'LOOK 12' },
-            { src: 'assets/images/runway-page/LOOK 13.JPG', caption: 'LOOK 13' },
-            { src: 'assets/images/runway-page/LOOK 14.JPG', caption: 'LOOK 14' },
-            { src: 'assets/images/runway-page/LOOK 15.JPG', caption: 'LOOK 15' },
-            { src: 'assets/images/runway-page/LOOK 16.JPG', caption: 'LOOK 16' }
-        ];
-    </script>
-
-    <!-- Galería carrusel con zoom -->
-    <script src="assets/js/gallery-carousel-zoom.js"></script>
-
-    <script>
-        // Fade-in blanco al entrar
-        window.addEventListener('load', function() {
-            var overlay = document.getElementById('entryWhiteOverlay');
-            if (overlay) {
-                setTimeout(function() {
-                    overlay.style.opacity = '0';
-                    setTimeout(function() {
-                        overlay.parentNode && overlay.parentNode.removeChild(overlay);
-                    }, 380);
-                }, 10);
+        // Configuración de la galería - Miembros del equipo
+        const galleryImages = [
+            { 
+                src: 'assets/images/team-page/team-erik.jpg', 
+                title: 'ERIK BRUCCIA',
+                description: 'Creative Director & Founder',
+                bio: 'Visionary leader with over 15 years of experience in fashion. Erik founded Eaftimos with the mission to redefine contemporary aesthetics through minimalist design and bold storytelling.',
+                details: {
+                    location: 'Mexico City',
+                    joined: '2015',
+                    specialty: 'Brand Strategy & Creative Vision'
+                },
+                social: {
+                    twitter: 'https://twitter.com/eaftimos',
+                    instagram: 'https://instagram.com/eaftimos'
+                },
+                overlayWords: ['VISION', 'CREATE', 'LEAD', 'INSPIRE', 'DESIGN']
+            },
+            { 
+                src: 'assets/images/runway-page/LOOK 2.JPG', 
+                title: 'FRAN',
+                description: 'Head of Design',
+                bio: 'Master of form and function, Sofia brings architectural precision to every piece. Her work balances innovation with timeless elegance, creating garments that transcend trends.',
+                details: {
+                    location: 'Barcelona',
+                    joined: '2017',
+                    specialty: 'Pattern Making & Tailoring'
+                },
+                social: {
+                    twitter: 'https://twitter.com/sofia',
+                    instagram: 'https://instagram.com/sofia'
+                },
+                overlayWords: ['CRAFT', 'DETAIL', 'FORM', 'BEAUTY', 'STRUCTURE']
+            },
+            { 
+                src: 'assets/images/runway-page/LOOK 3.JPG', 
+                title: 'MABY',
+                description: 'Lead Photographer',
+                bio: 'Capturing the essence of light and shadow, Alex transforms concepts into visual narratives. His lens reveals the soul behind every collection, making the invisible visible.',
+                details: {
+                    location: 'New York',
+                    joined: '2018',
+                    specialty: 'Editorial & Campaign Photography'
+                },
+                social: {
+                    twitter: 'https://twitter.com/alex',
+                    instagram: 'https://instagram.com/alex'
+                },
+                overlayWords: ['CAPTURE', 'LIGHT', 'MOMENT', 'FRAME', 'LENS']
+            },
+            { 
+                src: 'assets/images/runway-page/LOOK 4.JPG', 
+                title: 'CRIS GARCÍA',
+                description: 'Fashion Stylist',
+                bio: 'Emma curates visual poetry through styling. Her intuitive approach creates harmonious compositions that elevate each garment into a complete artistic statement.',
+                details: {
+                    location: 'London',
+                    joined: '2019',
+                    specialty: 'Editorial Styling & Art Direction'
+                },
+                social: {
+                    twitter: 'https://twitter.com/emma',
+                    instagram: 'https://instagram.com/emma'
+                },
+                overlayWords: ['STYLE', 'FLOW', 'GRACE', 'ELEGANCE', 'BALANCE']
+            },
+            { 
+                src: 'assets/images/team-page/team-charlie.jpeg', 
+                title: 'CHARLIE SÁNCHEZ',
+                description: 'Creative Designer',
+                bio: 'Obsessive urban culture and couture lover, Charlie orchestrates the digital and visual identity of EAFTIMOS. His multidisciplinary background as game designer, filmmaker and journalist seamlessly blends into his current mindset, designing cohesive brand experiences.',
+                details: {
+                    location: 'Granada, Spain',
+                    joined: '2025',
+                    specialty: 'Visual Identity & Brand Design'
+                },
+                social: {
+                    twitter: 'https://twitter.com/charliesnchez',
+                    instagram: 'https://www.instagram.com/charliesnchez'
+                },
+                overlayWords: ['ART', 'VISION', 'COHERENCE', 'DESIGN', 'GAMIFICATION']
             }
-        });
-
-        // Overlay fade blanco al hacer click en el logo
-        document.addEventListener('DOMContentLoaded', function() {
-            var logoLink = document.querySelector('a.logo');
-            if (logoLink) {
-                logoLink.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Fade out del audio
-                    const noiseSound = document.getElementById('noiseSound');
-                    const whispersSound = document.getElementById('whispersSound');
-                    const fadeDuration = 300;
-                    const startTime = performance.now();
-                    
-                    function fadeOutAudio() {
-                        const elapsed = performance.now() - startTime;
-                        const progress = Math.min(1, elapsed / fadeDuration);
-                        const eased = 1 - Math.pow(1 - progress, 3);
-                        const volume = 1 - eased;
-                        
-                        if (noiseSound && window.noiseGain) {
-                            window.noiseGain.gain.value *= volume;
-                        }
-                        
-                        if (whispersSound && window.whispersGain) {
-                            window.whispersGain.gain.value *= volume;
-                        }
-                        
-                        if (progress < 1) {
-                            requestAnimationFrame(fadeOutAudio);
-                        } else {
-                            if (noiseSound) noiseSound.pause();
-                            if (whispersSound) whispersSound.pause();
-                        }
-                    }
-                    
-                    fadeOutAudio();
-                    
-                    // Crear overlay blanco
-                    var overlay = document.createElement('div');
-                    overlay.style.position = 'fixed';
-                    overlay.style.top = '0';
-                    overlay.style.left = '0';
-                    overlay.style.width = '100vw';
-                    overlay.style.height = '100vh';
-                    overlay.style.background = '#fff';
-                    overlay.style.zIndex = '250000';
-                    overlay.style.pointerEvents = 'auto';
-                    overlay.style.transition = 'opacity 0.38s cubic-bezier(.77,0,.18,1)';
-                    overlay.style.opacity = '0';
-                    document.body.appendChild(overlay);
-                    void overlay.offsetWidth;
-                    overlay.style.opacity = '1';
-                    
-                    setTimeout(function() {
-                        window.location.href = logoLink.href;
-                    }, 320);
-                });
-            }
-        });
-    </script>
-</body>
-
-</html>
-            { src: 'assets/images/runway-page/LOOK 2.JPG', caption: 'LOOK 2' },
-            { src: 'assets/images/runway-page/LOOK 3.JPG', caption: 'LOOK 3' },
-            { src: 'assets/images/runway-page/LOOK 4.JPG', caption: 'LOOK 4' },
-            { src: 'assets/images/runway-page/LOOK 5.JPG', caption: 'LOOK 5' },
-            { src: 'assets/images/runway-page/LOOK 6.JPG', caption: 'LOOK 6' },
-            { src: 'assets/images/runway-page/LOOK 7.JPG', caption: 'LOOK 7' },
-            { src: 'assets/images/runway-page/LOOK 8.JPG', caption: 'LOOK 8' },
-            { src: 'assets/images/runway-page/LOOK 9.JPG', caption: 'LOOK 9' },
-            { src: 'assets/images/runway-page/LOOK 10.JPG', caption: 'LOOK 10' },
-            { src: 'assets/images/runway-page/LOOK 11.JPG', caption: 'LOOK 11' },
-            { src: 'assets/images/runway-page/LOOK 12.JPG', caption: 'LOOK 12' },
-            { src: 'assets/images/runway-page/LOOK 13.JPG', caption: 'LOOK 13' },
-            { src: 'assets/images/runway-page/LOOK 14.JPG', caption: 'LOOK 14' },
-            { src: 'assets/images/runway-page/LOOK 15.JPG', caption: 'LOOK 15' },
-            { src: 'assets/images/runway-page/LOOK 16.JPG', caption: 'LOOK 16' }
         ];
 
         let currentIndex = 0;
-        let isZoomed = false;
-        let currentScale = 1;
-        let panX = 0;
-        let panY = 0;
-        const MAX_SCALE = 3;
-        const MIN_SCALE = 1;
         let isDragging = false;
         let startX = 0;
         let startY = 0;
@@ -785,6 +948,10 @@
         const SWIPE_THRESHOLD = 100; // Píxeles mínimos para cambiar de imagen
         const MAX_SCALE = 3;
         const MIN_SCALE = 1;
+
+        // Audio para transición de tarjetas
+        const swipeSound = new Audio('assets/sounds/web-sfx/Cursor5.mp3');
+        swipeSound.volume = 0.3;
 
         let pageLoaderHidden = false;
 
@@ -833,11 +1000,93 @@
                 else if (index === 1) card.classList.add('next');
                 else card.classList.add('hidden');
 
+                // Las overlay words se crearán fuera de la tarjeta más adelante
+
+                // Crear enlaces sociales
+                let socialLinksHTML = '<div class="card-social-links">';
+                if (image.social.twitter) {
+                    socialLinksHTML += `
+                        <a href="${image.social.twitter}" target="_blank" rel="noopener noreferrer" class="social-link" title="Twitter">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                        </a>
+                    `;
+                }
+                if (image.social.instagram) {
+                    socialLinksHTML += `
+                        <a href="${image.social.instagram}" target="_blank" rel="noopener noreferrer" class="social-link" title="Instagram">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                            </svg>
+                        </a>
+                    `;
+                }
+                socialLinksHTML += '</div>';
+
+                // Crear detalles para la parte trasera
+                let detailsHTML = '<div class="card-back-details">';
+                if (image.details) {
+                    detailsHTML += `
+                        <div class="card-back-detail">
+                            <div class="card-back-detail-label">Hometown:</div>
+                            <div class="card-back-detail-value">${image.details.location}</div>
+                        </div>
+                        <div class="card-back-detail">
+                            <div class="card-back-detail-label">Joined:</div>
+                            <div class="card-back-detail-value">${image.details.joined}</div>
+                        </div>
+                        <div class="card-back-detail">
+                            <div class="card-back-detail-label">Specialty:</div>
+                            <div class="card-back-detail-value">${image.details.specialty}</div>
+                        </div>
+                    `;
+                }
+                detailsHTML += '</div>';
+
                 card.innerHTML = `
-                    <img src="${image.src}" alt="${image.caption}" draggable="false">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <img src="${image.src}" alt="${image.title}" draggable="false">
+                            <div class="card-info-overlay">
+                                <div class="card-title">${image.title}</div>
+                                <div class="card-description">${image.description}</div>
+                                ${socialLinksHTML}
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <div class="card-back-content">
+                                <div class="card-back-title">${image.title}</div>
+                                <div class="card-back-bio">${image.bio || 'No bio available.'}</div>
+                                ${detailsHTML}
+                                <button class="flip-button" onclick="flipCard(this)">BACK TO FRONT</button>
+                            </div>
+                        </div>
+                    </div>
                 `;
 
+                // Crear overlay words fuera de la tarjeta (position fixed)
+                const cardOverlayWords = document.createElement('div');
+                cardOverlayWords.className = 'card-overlay-words';
+                image.overlayWords.forEach(word => {
+                    const wordElement = document.createElement('div');
+                    wordElement.className = 'overlay-word';
+                    wordElement.textContent = word;
+                    cardOverlayWords.appendChild(wordElement);
+                });
+                
+                // Añadir overlay words al contenedor global (no a la carta)
+                document.getElementById('overlayWordsContainer').appendChild(cardOverlayWords);
+                
+                // Guardar referencia en la carta
+                card.overlayWordsElement = cardOverlayWords;
+
                 track.appendChild(card);
+                
+                // Iniciar animación de palabras para la primera tarjeta
+                if (index === 0) {
+                    setTimeout(() => animateCardWords(card), 500);
+                }
                 
                 // Prevenir completamente el arrastre nativo de la imagen
                 const img = card.querySelector('img');
@@ -854,8 +1103,61 @@
                 progressIndicator.appendChild(dot);
 
                 // Event listeners para drag
-                card.addEventListener('mousedown', startDrag);
-                card.addEventListener('touchstart', startDrag);
+                const cardInner = card.querySelector('.card-inner');
+                cardInner.addEventListener('mousedown', startDrag);
+                cardInner.addEventListener('touchstart', startDrag);
+                
+                // Event listener para clic/tap en la tarjeta (flip)
+                let clickStartX = 0;
+                let clickStartY = 0;
+                let clickStartTime = 0;
+                
+                cardInner.addEventListener('mousedown', function(e) {
+                    clickStartX = e.clientX;
+                    clickStartY = e.clientY;
+                    clickStartTime = Date.now();
+                });
+                
+                cardInner.addEventListener('touchstart', function(e) {
+                    if (e.touches.length === 1) {
+                        clickStartX = e.touches[0].clientX;
+                        clickStartY = e.touches[0].clientY;
+                        clickStartTime = Date.now();
+                    }
+                }, { passive: true });
+                
+                cardInner.addEventListener('click', function(e) {
+                    // Calcular movimiento desde el mousedown/touchstart
+                    const endX = e.clientX || e.changedTouches?.[0]?.clientX || 0;
+                    const endY = e.clientY || e.changedTouches?.[0]?.clientY || 0;
+                    const moveDistance = Math.sqrt(Math.pow(endX - clickStartX, 2) + Math.pow(endY - clickStartY, 2));
+                    const clickDuration = Date.now() - clickStartTime;
+                    
+                    // Solo flip si no hubo movimiento significativo, no hay zoom, y fue un clic rápido
+                    if (moveDistance < 10 && !isZoomed && clickDuration < 300) {
+                        // Evitar flip si se hace clic en un enlace social o botón
+                        if (e.target.closest('.social-link') || e.target.closest('.flip-button')) {
+                            return;
+                        }
+                        
+                        // Solo permitir flip en tarjeta activa
+                        if (card.classList.contains('active')) {
+                            card.classList.toggle('flipped');
+                            
+                            // Ocultar/mostrar elementos UI
+                            const progressIndicator = document.querySelector('.progress-indicator');
+                            const collectionInfo = document.querySelector('.collection-info');
+                            
+                            if (card.classList.contains('flipped')) {
+                                progressIndicator?.classList.add('hidden');
+                                collectionInfo?.classList.add('hidden');
+                            } else {
+                                progressIndicator?.classList.remove('hidden');
+                                collectionInfo?.classList.remove('hidden');
+                            }
+                        }
+                    }
+                });
             });
 
             document.addEventListener('mousemove', drag);
@@ -871,75 +1173,37 @@
             // Event listener para zoom con rueda del ratón
             track.addEventListener('wheel', handleWheel, { passive: false });
             
-            // Prevenir arrastre nativo del navegador en todo el wrapper
+            // Prevenir arrastre nativo del navegador en las imágenes
             track.addEventListener('dragstart', (e) => {
-                e.preventDefault();
-                return false;
-            });
-            
-            // Prevenir arrastre a nivel de documento para la galería
-            document.addEventListener('dragstart', (e) => {
-                if (e.target.closest('.gallery-wrapper') || e.target.closest('.gallery-container')) {
+                if (e.target.tagName === 'IMG') {
                     e.preventDefault();
-                    return false;
                 }
             });
-            
-            document.addEventListener('drag', (e) => {
-                if (e.target.closest('.gallery-wrapper') || e.target.closest('.gallery-container')) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
+        }
 
-            // Zoom drag a nivel de documento - permite arrastrar la imagen zoomeada desde cualquier punto
-            document.addEventListener('mousedown', (e) => {
-                if (!isZoomed) return;
-                if (isDragging) return;
-                if (e.target.closest('.side-menu') || e.target.closest('.menu-toggle')) return;
+        // Función global para voltear tarjetas desde el botón
+        function flipCard(button) {
+            const card = button.closest('.gallery-card');
+            if (card) {
+                card.classList.remove('flipped');
                 
-                const card = document.querySelector('.gallery-card.active');
-                if (!card) return;
-                
-                isDragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                startPanX = panX;
-                startPanY = panY;
-                
-                const img = card.querySelector('img');
-                if (img) img.style.transition = 'none';
-                
-                card.style.cursor = 'grabbing';
-                document.body.style.cursor = 'grabbing';
-                document.body.style.userSelect = 'none';
-                
-                e.preventDefault();
-            });
-
-            document.addEventListener('touchstart', (e) => {
-                if (!isZoomed || e.touches.length !== 1) return;
-                if (isDragging) return;
-                if (e.target.closest('.side-menu') || e.target.closest('.menu-toggle')) return;
-                
-                const card = document.querySelector('.gallery-card.active');
-                if (!card) return;
-                
-                isDragging = true;
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-                startPanX = panX;
-                startPanY = panY;
-                
-                const img = card.querySelector('img');
-                if (img) img.style.transition = 'none';
-            }, { passive: false });
+                // Mostrar elementos UI al regresar al frente
+                const progressIndicator = document.querySelector('.progress-indicator');
+                const collectionInfo = document.querySelector('.collection-info');
+                progressIndicator?.classList.remove('hidden');
+                collectionInfo?.classList.remove('hidden');
+            }
         }
 
         // Funciones de drag y zoom
         function startDrag(e) {
             const card = e.target.closest('.gallery-card');
             if (card && card.classList.contains('active')) {
+                // No permitir arrastre si la tarjeta está volteada
+                if (card.classList.contains('flipped')) {
+                    return;
+                }
+                
                 // Prevenir comportamiento nativo del navegador
                 e.preventDefault();
                 e.stopPropagation();
@@ -948,8 +1212,8 @@
                 const currentTime = Date.now();
                 const tapGap = currentTime - lastTapTime;
                 
-                if (tapGap < 300 && tapGap > 0) {
-                    // Doble tap detectado
+                if (tapGap < 300 && tapGap > 0 && !card.classList.contains('flipped')) {
+                    // Doble tap detectado (solo en cara frontal)
                     toggleZoom(card);
                     lastTapTime = 0;
                     return;
@@ -984,13 +1248,32 @@
             currentY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
             
             if (isZoomed) {
-                // Si está zoomeada, hacer pan
+                // Si está zoomeada, hacer pan con límites
                 panX = startPanX + (currentX - startX);
                 panY = startPanY + (currentY - startY);
                 
                 const activeCard = document.querySelector('.gallery-card.active');
                 const img = activeCard?.querySelector('img');
                 if (img) {
+                    // Calcular límites para que la imagen no se salga del contenedor
+                    const cardRect = activeCard.getBoundingClientRect();
+                    
+                    // Usar dimensiones renderizadas de la imagen (sin scale)
+                    const imgWidth = img.offsetWidth;
+                    const imgHeight = img.offsetHeight;
+                    
+                    // Dimensiones escaladas de la imagen
+                    const scaledWidth = imgWidth * currentScale;
+                    const scaledHeight = imgHeight * currentScale;
+                    
+                    // Calcular el máximo desplazamiento permitido (más restrictivo: 60% del overflow)
+                    const maxPanX = Math.max(0, (scaledWidth - cardRect.width) / 2) * 0.6;
+                    const maxPanY = Math.max(0, (scaledHeight - cardRect.height) / 2) * 0.6;
+                    
+                    // Aplicar límites
+                    panX = Math.max(-maxPanX, Math.min(maxPanX, panX));
+                    panY = Math.max(-maxPanY, Math.min(maxPanY, panY));
+                    
                     img.style.transform = `scale(${currentScale}) translate(${panX / currentScale}px, ${panY / currentScale}px)`;
                 }
             } else {
@@ -1000,7 +1283,7 @@
                 const activeCard = document.querySelector('.gallery-card.active');
                 if (activeCard) {
                     const rotation = dragOffset * 0.05;
-                    activeCard.style.transform = `translate(-50%, -50%) translateX(${dragOffset}px) rotate(${rotation}deg)`;
+                    activeCard.style.transform = `translate(-50%, -50%) scale(1.05) translateX(${dragOffset}px) rotate(${rotation}deg)`;
                 }
             }
         }
@@ -1039,7 +1322,7 @@
                 } else {
                     // Volver al centro con animación elástica
                     activeCard.classList.add('returning');
-                    activeCard.style.transform = 'translate(-50%, -50%)';
+                    activeCard.style.transform = 'translate(-50%, -50%) scale(1.05)';
                     setTimeout(() => {
                         activeCard.classList.remove('returning');
                     }, 400);
@@ -1065,6 +1348,9 @@
             } else {
                 currentScale = 2;
             }
+            // Resetear pan al aplicar zoom
+            panX = 0;
+            panY = 0;
             const img = card ? card.querySelector('img') : document.querySelector('.gallery-card.active img');
             if (img) {
                 img.style.transform = `scale(${currentScale})`;
@@ -1090,17 +1376,31 @@
         }
 
         function hideUIElements() {
-            document.querySelector('.gallery-controls')?.classList.add('hidden');
-            document.querySelector('.overlay-words-layer')?.classList.add('hidden');
             document.querySelector('.collection-info')?.classList.add('hidden');
             document.querySelector('.progress-indicator')?.classList.add('hidden');
+            // Ocultar el overlay de información de la tarjeta activa
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (activeCard) {
+                const cardInfo = activeCard.querySelector('.card-info-overlay');
+                if (cardInfo) cardInfo.style.opacity = '0';
+                // Ocultar palabras overlay cuando hay zoom
+                const overlayWords = activeCard.querySelector('.card-overlay-words');
+                if (overlayWords) overlayWords.style.opacity = '0';
+            }
         }
 
         function showUIElements() {
-            document.querySelector('.gallery-controls')?.classList.remove('hidden');
-            document.querySelector('.overlay-words-layer')?.classList.remove('hidden');
             document.querySelector('.collection-info')?.classList.remove('hidden');
             document.querySelector('.progress-indicator')?.classList.remove('hidden');
+            // Mostrar el overlay de información de la tarjeta activa
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (activeCard && !activeCard.classList.contains('flipped')) {
+                const cardInfo = activeCard.querySelector('.card-info-overlay');
+                if (cardInfo) cardInfo.style.opacity = '1';
+                // Mostrar palabras overlay
+                const overlayWords = activeCard.querySelector('.card-overlay-words');
+                if (overlayWords) overlayWords.style.opacity = '1';
+            }
         }
 
         // Soporte para pinch zoom en móviles
@@ -1127,7 +1427,25 @@
                 if (activeCard) {
                     const img = activeCard.querySelector('img');
                     if (img) {
-                        img.style.transform = `scale(${currentScale})`;
+                        // Calcular límites para el pan con el nuevo scale
+                        const cardRect = activeCard.getBoundingClientRect();
+                        
+                        // Usar dimensiones renderizadas de la imagen
+                        const imgWidth = img.offsetWidth;
+                        const imgHeight = img.offsetHeight;
+                        
+                        const scaledWidth = imgWidth * currentScale;
+                        const scaledHeight = imgHeight * currentScale;
+                        
+                        // Límites más restrictivos: 60% del overflow
+                        const maxPanX = Math.max(0, (scaledWidth - cardRect.width) / 2) * 0.6;
+                        const maxPanY = Math.max(0, (scaledHeight - cardRect.height) / 2) * 0.6;
+                        
+                        // Ajustar pan a los límites
+                        panX = Math.max(-maxPanX, Math.min(maxPanX, panX));
+                        panY = Math.max(-maxPanY, Math.min(maxPanY, panY));
+                        
+                        img.style.transform = `scale(${currentScale}) translate(${panX / currentScale}px, ${panY / currentScale}px)`;
                     }
                     
                     if (currentScale > 1.1 && !isZoomed) {
@@ -1266,8 +1584,9 @@
             const dots = document.querySelectorAll('.progress-dot');
 
             cards.forEach((card, index) => {
-                card.classList.remove('active', 'next', 'hidden', 'swiping-left', 'swiping-right', 'returning', 'coming-from-back', 'moving-forward', 'moving-to-back');
-                card.style.transform = 'translate(-50%, -50%)';
+                card.classList.remove('active', 'next', 'hidden', 'swiping-left', 'swiping-right', 'returning', 'coming-from-back', 'moving-forward', 'moving-to-back', 'flipped');
+                // Resetear transform inline para permitir que CSS tome control
+                card.style.transform = '';
                 
                 // Resetear zoom de la imagen
                 const img = card.querySelector('img');
@@ -1275,8 +1594,13 @@
                     img.style.transform = 'scale(1)';
                 }
 
+                // Detener animación de palabras de tarjetas no activas
+                stopCardWords(card);
+
                 if (index === currentIndex) {
                     card.classList.add('active');
+                    // Iniciar animación de palabras de la tarjeta activa
+                    setTimeout(() => animateCardWords(card), 300);
                 } else if (index === currentIndex + 1 || (currentIndex === galleryImages.length - 1 && index === 0)) {
                     card.classList.add('next');
                 } else {
@@ -1287,20 +1611,80 @@
             dots.forEach((dot, index) => {
                 dot.classList.toggle('active', index === currentIndex);
             });
+        }
 
-            // Actualizar el caption
-            const captionElement = document.getElementById('galleryCaption');
-            if (captionElement && galleryImages[currentIndex]) {
-                captionElement.textContent = galleryImages[currentIndex].caption;
+        // Animar las palabras overlay de una tarjeta específica
+        function animateCardWords(card) {
+            if (!card.overlayWordsElement) return;
+            const words = card.overlayWordsElement.querySelectorAll('.overlay-word');
+            if (!words.length) return;
+
+            let currentWordIndex = 0;
+
+            function showNextWord() {
+                // Desvanecer la palabra actual suavemente
+                words.forEach(word => {
+                    if (word.classList.contains('active')) {
+                        word.classList.remove('active');
+                        word.classList.add('fading');
+                    }
+                });
+
+                // Mostrar la siguiente palabra después de la transición
+                setTimeout(() => {
+                    words.forEach(word => word.classList.remove('fading'));
+                    words[currentWordIndex].classList.add('active');
+                    currentWordIndex = (currentWordIndex + 1) % words.length;
+                }, 700);
             }
+
+            // Mostrar primera palabra inmediatamente
+            words[0].classList.add('active');
+            currentWordIndex = 1;
+
+            // Guardar intervalo en la tarjeta para poder limpiarlo
+            if (card.wordInterval) clearInterval(card.wordInterval);
+            card.wordInterval = setInterval(showNextWord, 4500);
+        }
+
+        // Detener animación de palabras de una tarjeta suavemente
+        function stopCardWords(card) {
+            if (card.wordInterval) {
+                clearInterval(card.wordInterval);
+                card.wordInterval = null;
+            }
+            if (!card.overlayWordsElement) return;
+            const words = card.overlayWordsElement.querySelectorAll('.overlay-word');
+            // Desactivar suavemente sin poppeos
+            words.forEach(word => {
+                if (word.classList.contains('active')) {
+                    word.classList.add('fading');
+                }
+                // Remover clases después de la transición
+                setTimeout(() => {
+                    word.classList.remove('active', 'fading');
+                }, 1400);
+            });
         }
 
         function nextImage() {
+            // Reproducir sonido de transición
+            if (swipeSound && !swipeSound.paused) {
+                swipeSound.currentTime = 0;
+            }
+            swipeSound.play().catch(e => console.log('Audio play prevented:', e));
+
             currentIndex = (currentIndex + 1) % galleryImages.length;
             updateCards();
         }
 
         function prevImage() {
+            // Reproducir sonido de transición
+            if (swipeSound && !swipeSound.paused) {
+                swipeSound.currentTime = 0;
+            }
+            swipeSound.play().catch(e => console.log('Audio play prevented:', e));
+
             // Calcular el índice de la imagen anterior
             const prevIndex = (currentIndex - 1 + galleryImages.length) % galleryImages.length;
             const cards = document.querySelectorAll('.gallery-card');
@@ -1376,74 +1760,29 @@
                     dot.classList.toggle('active', index === currentIndex);
                 });
                 
-                // Actualizar caption
-                const captionElement = document.getElementById('galleryCaption');
-                if (captionElement && galleryImages[currentIndex]) {
-                    captionElement.textContent = galleryImages[currentIndex].caption;
-                }
             }, 20);
         }
 
-        // Event listeners para botones
-        document.getElementById('nextBtn').addEventListener('click', () => {
-            const activeCard = document.querySelector('.gallery-card.active');
-            if (activeCard) {
-                activeCard.classList.add('swiping-right');
-                setTimeout(() => nextImage(), 250);
-            }
-        });
-
-        document.getElementById('prevBtn').addEventListener('click', () => {
-            const activeCard = document.querySelector('.gallery-card.active');
-            if (activeCard) {
-                activeCard.classList.add('swiping-left');
-                setTimeout(() => prevImage(), 250);
-            }
-        });
-
-        // Soporte para teclado
+        // Soporte para teclado - navegación con flechas
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight') {
-                document.getElementById('nextBtn').click();
+                const activeCard = document.querySelector('.gallery-card.active');
+                if (activeCard) {
+                    activeCard.classList.add('swiping-right');
+                    setTimeout(() => nextImage(), 250);
+                }
             } else if (e.key === 'ArrowLeft') {
-                document.getElementById('prevBtn').click();
+                const activeCard = document.querySelector('.gallery-card.active');
+                if (activeCard) {
+                    activeCard.classList.add('swiping-left');
+                    setTimeout(() => prevImage(), 250);
+                }
             }
         });
-
-        // Animación de textos overlay
-        function animateOverlayWords() {
-            const words = document.querySelectorAll('.overlay-word');
-            let currentWordIndex = 0;
-
-            function showNextWord() {
-                // Desvanecer la palabra actual
-                words.forEach(word => {
-                    if (word.classList.contains('active')) {
-                        word.classList.remove('active');
-                        word.classList.add('fading');
-                    }
-                });
-
-                // Mostrar la siguiente palabra
-                setTimeout(() => {
-                    words.forEach(word => word.classList.remove('fading'));
-                    words[currentWordIndex].classList.add('active');
-                    currentWordIndex = (currentWordIndex + 1) % words.length;
-                }, 600);
-            }
-
-            // Mostrar primera palabra inmediatamente
-            words[0].classList.add('active');
-            currentWordIndex = 1;
-
-            // Ciclo de animación
-            setInterval(showNextWord, 4000);
-        }
 
         // Inicializar
         document.addEventListener('DOMContentLoaded', () => {
             initGallery();
-            animateOverlayWords();
             waitForGalleryImages().then(() => {
                 requestAnimationFrame(hidePageLoader);
             });

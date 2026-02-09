@@ -71,7 +71,8 @@ const particleCount = 40;
 
 let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 let smoothPos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-let prevMouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+let prevSmoothPos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+let lastCursorTime = performance.now();
 let mouseSpeed = 0;
 let isHoveringMapItem = false;
 let hoveredItemCenter = { x: 0, y: 0 };
@@ -80,6 +81,7 @@ let currentTrailOpacity = 0;
 let currentTrailRadius = 90;
 let targetTrailOpacity = 0;
 let targetTrailRadius = 90;
+let smoothedSpeedIntensity = 0;
 
 let clickBurst = false;
 let burstTimer = 0;
@@ -219,7 +221,7 @@ class Particle {
       }
     } else if (shapeMode === "heart") {
       const t = idxRatio * Math.PI * 2;
-      const scale = 6;
+      const scale = 2.5;
       const x = 16 * Math.sin(t) ** 3;
       const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
       this.shapeTargetX = smoothPos.x + x * scale;
@@ -233,10 +235,193 @@ class Particle {
         this.shapeTargetX = smoothPos.x + letterPoints[pIndex].x - 50;
         this.shapeTargetY = smoothPos.y + letterPoints[pIndex].y - 50;
       }
+    } else if (shapeMode === "star") {
+      // 5-pointed star
+      const points = 5;
+      const outerRadius = 35;
+      const innerRadius = 15;
+      const segment = Math.floor(idxRatio * points * 2);
+      const t = (idxRatio * points * 2) % 1;
+      const isOuter = segment % 2 === 0;
+      const angle = (segment / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+      const nextAngle = ((segment + 1) / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+      const currentRadius = isOuter ? outerRadius : innerRadius;
+      const nextRadius = isOuter ? innerRadius : outerRadius;
+      const x = Math.cos(angle) * currentRadius + (Math.cos(nextAngle) * nextRadius - Math.cos(angle) * currentRadius) * t;
+      const y = Math.sin(angle) * currentRadius + (Math.sin(nextAngle) * nextRadius - Math.sin(angle) * currentRadius) * t;
+      this.shapeTargetX = smoothPos.x + x;
+      this.shapeTargetY = smoothPos.y + y;
+    } else if (shapeMode === "square") {
+      // Square/rectangle
+      const side = 50;
+      const segment = Math.floor(idxRatio * 4);
+      const t = (idxRatio * 4) % 1;
+      if (segment === 0) {
+        // Top edge
+        this.shapeTargetX = smoothPos.x - side / 2 + side * t;
+        this.shapeTargetY = smoothPos.y - side / 2;
+      } else if (segment === 1) {
+        // Right edge
+        this.shapeTargetX = smoothPos.x + side / 2;
+        this.shapeTargetY = smoothPos.y - side / 2 + side * t;
+      } else if (segment === 2) {
+        // Bottom edge
+        this.shapeTargetX = smoothPos.x + side / 2 - side * t;
+        this.shapeTargetY = smoothPos.y + side / 2;
+      } else {
+        // Left edge
+        this.shapeTargetX = smoothPos.x - side / 2;
+        this.shapeTargetY = smoothPos.y + side / 2 - side * t;
+      }
+    } else if (shapeMode === "infinity") {
+      // Lemniscate (infinity symbol)
+      const t = idxRatio * Math.PI * 2;
+      const scale = 25;
+      const x = Math.cos(t) / (1 + Math.sin(t) * Math.sin(t));
+      const y = Math.sin(t) * Math.cos(t) / (1 + Math.sin(t) * Math.sin(t));
+      this.shapeTargetX = smoothPos.x + x * scale;
+      this.shapeTargetY = smoothPos.y + y * scale;
+    } else if (shapeMode === "wave") {
+      // Sinusoidal wave
+      const waveLength = 80;
+      const amplitude = 20;
+      const x = (idxRatio - 0.5) * waveLength;
+      const y = Math.sin(idxRatio * Math.PI * 4) * amplitude;
+      this.shapeTargetX = smoothPos.x + x;
+      this.shapeTargetY = smoothPos.y + y;
+    } else if (shapeMode === "cross") {
+      // Cross/plus sign
+      const armLength = 35;
+      const thickness = 8;
+      const segment = Math.floor(idxRatio * 4);
+      const t = (idxRatio * 4) % 1;
+      if (segment === 0) {
+        // Top vertical
+        this.shapeTargetX = smoothPos.x + (Math.random() - 0.5) * thickness;
+        this.shapeTargetY = smoothPos.y - armLength + armLength * t;
+      } else if (segment === 1) {
+        // Right horizontal
+        this.shapeTargetX = smoothPos.x + armLength * t;
+        this.shapeTargetY = smoothPos.y + (Math.random() - 0.5) * thickness;
+      } else if (segment === 2) {
+        // Bottom vertical
+        this.shapeTargetX = smoothPos.x + (Math.random() - 0.5) * thickness;
+        this.shapeTargetY = smoothPos.y + armLength * t;
+      } else {
+        // Left horizontal
+        this.shapeTargetX = smoothPos.x - armLength + armLength * t;
+        this.shapeTargetY = smoothPos.y + (Math.random() - 0.5) * thickness;
+      }
+    } else if (shapeMode === "hexagon") {
+      // Hexagon
+      const radius = 32;
+      const angle = idxRatio * Math.PI * 2;
+      const segment = Math.floor(idxRatio * 6);
+      const t = (idxRatio * 6) % 1;
+      const currentAngle = (segment / 6) * Math.PI * 2;
+      const nextAngle = ((segment + 1) / 6) * Math.PI * 2;
+      const x1 = Math.cos(currentAngle) * radius;
+      const y1 = Math.sin(currentAngle) * radius;
+      const x2 = Math.cos(nextAngle) * radius;
+      const y2 = Math.sin(nextAngle) * radius;
+      this.shapeTargetX = smoothPos.x + x1 + (x2 - x1) * t;
+      this.shapeTargetY = smoothPos.y + y1 + (y2 - y1) * t;
+    } else if (shapeMode === "diamond") {
+      // Diamond (rotated square)
+      const size = 40;
+      const segment = Math.floor(idxRatio * 4);
+      const t = (idxRatio * 4) % 1;
+      if (segment === 0) {
+        // Top to right
+        this.shapeTargetX = smoothPos.x + size * t;
+        this.shapeTargetY = smoothPos.y - size + size * t;
+      } else if (segment === 1) {
+        // Right to bottom
+        this.shapeTargetX = smoothPos.x + size - size * t;
+        this.shapeTargetY = smoothPos.y + size * t;
+      } else if (segment === 2) {
+        // Bottom to left
+        this.shapeTargetX = smoothPos.x - size * t;
+        this.shapeTargetY = smoothPos.y + size - size * t;
+      } else {
+        // Left to top
+        this.shapeTargetX = smoothPos.x - size + size * t;
+        this.shapeTargetY = smoothPos.y - size * t;
+      }
+    } else if (shapeMode === "eye") {
+      // Eye shape (almond/ellipse with pointed ends) - only outline
+      const t = idxRatio * Math.PI * 2;
+      const radiusX = 40;
+      const radiusY = 18;
+      // Create pointed ends by modulating the y radius
+      const modulation = Math.abs(Math.sin(t)) * 0.7 + 0.3;
+      const x = Math.cos(t) * radiusX;
+      const y = Math.sin(t) * radiusY * modulation;
+      this.shapeTargetX = smoothPos.x + x;
+      this.shapeTargetY = smoothPos.y + y;
+    } else if (shapeMode === "bag") {
+      // Shopping bag shape
+      const totalParticles = particleCount;
+      const bagParticles = Math.floor(totalParticles * 0.75); // 75% for bag body
+      const handleParticles = totalParticles - bagParticles; // 25% for handles
+      
+      if (this.index < bagParticles) {
+        // Bag body (trapezoid)
+        const t = this.index / bagParticles;
+        const width = 30;
+        const height = 35;
+        const topWidth = 28;
+        
+        if (t < 0.25) {
+          // Top edge
+          const edgeT = t / 0.25;
+          this.shapeTargetX = smoothPos.x - topWidth / 2 + topWidth * edgeT;
+          this.shapeTargetY = smoothPos.y - height / 2;
+        } else if (t < 0.5) {
+          // Right edge
+          const edgeT = (t - 0.25) / 0.25;
+          this.shapeTargetX = smoothPos.x + topWidth / 2 + (width - topWidth) / 2 * edgeT;
+          this.shapeTargetY = smoothPos.y - height / 2 + height * edgeT;
+        } else if (t < 0.75) {
+          // Bottom edge
+          const edgeT = (t - 0.5) / 0.25;
+          this.shapeTargetX = smoothPos.x + width / 2 - width * edgeT;
+          this.shapeTargetY = smoothPos.y + height / 2;
+        } else {
+          // Left edge
+          const edgeT = (t - 0.75) / 0.25;
+          this.shapeTargetX = smoothPos.x - width / 2 + (width - topWidth) / 2 * edgeT;
+          this.shapeTargetY = smoothPos.y + height / 2 - height * edgeT;
+        }
+      } else {
+        // Handles (two arcs on top)
+        const handleIndex = this.index - bagParticles;
+        const handleT = handleIndex / handleParticles;
+        const handleWidth = 10;
+        const handleHeight = 8;
+        
+        if (handleT < 0.5) {
+          // Left handle
+          const arcT = (handleT / 0.5) * Math.PI;
+          this.shapeTargetX = smoothPos.x - 14 + Math.sin(arcT) * handleWidth;
+          this.shapeTargetY = smoothPos.y - 18 - Math.cos(arcT) * handleHeight;
+        } else {
+          // Right handle
+          const arcT = ((handleT - 0.5) / 0.5) * Math.PI;
+          this.shapeTargetX = smoothPos.x + 14 - Math.sin(arcT) * handleWidth;
+          this.shapeTargetY = smoothPos.y - 18 - Math.cos(arcT) * handleHeight;
+        }
+      }
     } else {
       this.shapeTargetX = smoothPos.x + (Math.random() - 0.5) * spread;
       this.shapeTargetY = smoothPos.y + (Math.random() - 0.5) * spread;
     }
+    
+    // Apply offset to center shapes properly with cursor
+    const offsetX = -3;
+    const offsetY = -3;
+    this.shapeTargetX += offsetX;
+    this.shapeTargetY += offsetY;
   }
 
   draw() {
@@ -301,17 +486,23 @@ function animateCursor() {
     if (burstTimer <= 0) clickBurst = false;
   }
 
-  // Calculate mouse speed
-  const dx = mouse.x - prevMouse.x;
-  const dy = mouse.y - prevMouse.y;
-  const currentSpeed = Math.sqrt(dx * dx + dy * dy);
+  // Calculate speed based on smoothed position and delta time
+  const dt = Math.max(8, Math.min(40, now - lastCursorTime));
+  lastCursorTime = now;
+  const dx = smoothPos.x - prevSmoothPos.x;
+  const dy = smoothPos.y - prevSmoothPos.y;
+  const pixelsPerFrame = (Math.sqrt(dx * dx + dy * dy) / dt) * 16.67;
 
   // Smooth the speed value
-  mouseSpeed += (currentSpeed - mouseSpeed) * 0.3;
+  mouseSpeed += (pixelsPerFrame - mouseSpeed) * 0.12;
 
-  // Update previous mouse position
-  prevMouse.x = mouse.x;
-  prevMouse.y = mouse.y;
+  // Smooth speed intensity to avoid trail popping
+  const targetSpeedIntensity = Math.min(mouseSpeed / 28, 1);
+  smoothedSpeedIntensity += (targetSpeedIntensity - smoothedSpeedIntensity) * 0.12;
+
+  // Update previous smoothed position
+  prevSmoothPos.x = smoothPos.x;
+  prevSmoothPos.y = smoothPos.y;
 
   // Trail and ripple painting on canvas
   // Lógica original: trail normal y drag, pero el release es solo un fade out
@@ -325,25 +516,14 @@ function animateCursor() {
   }
   window._lastDragActive = dragActive;
   if (!dragActive) {
-    if (!window._trailFadeStart) window._trailFadeStart = Date.now();
-    const now = Date.now();
-    const t = (now - window._trailFadeStart) / 1000;
-    if (mouseSpeed > 0.5 || currentTrailOpacity > 0.01) {
-      window._trailFadeStart = Date.now();
-    }
     trailCtx.globalCompositeOperation = 'destination-out';
     if (window._dragTrail && window._dragTrail.state === 'expand') {
       // Release: solo fade out
       trailCtx.fillStyle = 'rgba(0, 0, 0, 0.10)';
       trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
-    } else if (t < 1.2) {
-      trailCtx.fillStyle = 'rgba(0, 0, 0, 0.035)';
-      trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
     } else {
-      let exp = Math.pow(Math.max(0, (t - 1.2) / 1.3), 2.7);
-      let alpha = 0.035 + 0.32 * Math.min(1, exp);
-      if (alpha > 0.38) alpha = 0.38;
-      trailCtx.fillStyle = `rgba(0,0,0,${alpha})`;
+      const fadeAlpha = 0.03;
+      trailCtx.fillStyle = `rgba(0, 0, 0, ${fadeAlpha})`;
       trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
     }
     trailCtx.globalCompositeOperation = 'source-over';
@@ -424,6 +604,10 @@ function animateCursor() {
       // Normal trail logic
       window._dragTrail = null;
       let printTrail = !(isMouseDown && hasDragged);
+      
+      // Suavizar transiciones entre estados con interpolación más lenta
+      if (!window._trailInterp) window._trailInterp = 0.06;
+      
       if (isHoveringMapItem) {
         targetTrailX = (mouse.x + hoveredItemCenter.x) / 2;
         targetTrailY = (mouse.y + hoveredItemCenter.y) / 2;
@@ -434,41 +618,48 @@ function animateCursor() {
         const maxTrail = 260;
         targetTrailRadius = minTrail + (maxTrail - minTrail) * zoom;
         targetTrailOpacity = 0.38; // punto medio entre los dos valores anteriores
-        interp = 0.13;
-      } else if (mouseSpeed > 0.5) {
-        targetTrailX = smoothPos.x;
-        targetTrailY = smoothPos.y;
-        const speedIntensity = Math.min(mouseSpeed / 20, 1);
-        targetTrailOpacity = 0.12 * speedIntensity; // más opaco/denso en movimiento normal
-        targetTrailRadius = 90;
-        interp = 0.15;
+        interp = 0.09; // Reducido de 0.13 para transición más suave
       } else {
         targetTrailX = smoothPos.x;
         targetTrailY = smoothPos.y;
-        targetTrailOpacity = 0;
+        const speedIntensity = smoothedSpeedIntensity;
+        targetTrailOpacity = 0.1 * speedIntensity; // más opaco/denso en movimiento normal
         targetTrailRadius = 90;
-        interp = 0.05;
+        interp = 0.06 + (0.04 * speedIntensity); // Reducido para más suavidad
       }
-      trailPosition.x += (targetTrailX - trailPosition.x) * interp;
-      trailPosition.y += (targetTrailY - trailPosition.y) * interp;
-      currentTrailOpacity += (targetTrailOpacity - currentTrailOpacity) * interp;
-      currentTrailRadius += (targetTrailRadius - currentTrailRadius) * interp;
+      
+      // Suavizar cambios del factor de interpolación para evitar saltos
+      window._trailInterp += (interp - window._trailInterp) * 0.08;
+      const smoothInterp = window._trailInterp;
+      
+      trailPosition.x += (targetTrailX - trailPosition.x) * smoothInterp;
+      trailPosition.y += (targetTrailY - trailPosition.y) * smoothInterp;
+      // Interpolación más lenta para opacidad y radio
+      currentTrailOpacity += (targetTrailOpacity - currentTrailOpacity) * (smoothInterp * 0.6);
+      currentTrailRadius += (targetTrailRadius - currentTrailRadius) * (smoothInterp * 0.5);
       if (printTrail && currentTrailOpacity > 0.01) {
+        // Gradiente unificado con transición suave entre estados
+        // Usar factor de blend basado en si estamos en hover
+        if (!window._hoverBlend) window._hoverBlend = 0;
+        const targetBlend = isHoveringMapItem ? 1 : 0;
+        window._hoverBlend += (targetBlend - window._hoverBlend) * 0.08; // Transición muy suave
+        
+        const blend = window._hoverBlend;
         const gradient = trailCtx.createRadialGradient(
           trailPosition.x, trailPosition.y, 0,
           trailPosition.x, trailPosition.y, currentTrailRadius
         );
-        if (isHoveringMapItem) {
-          // Mayor opacidad y menos difuminado para el trail al hacer hover
-          gradient.addColorStop(0.0, `rgba(0,0,0,${currentTrailOpacity * 1.05})`);
-          gradient.addColorStop(0.48, `rgba(0,0,0,${currentTrailOpacity * 0.54})`);
-          gradient.addColorStop(0.85, `rgba(0,0,0,${currentTrailOpacity * 0.10})`);
-          gradient.addColorStop(1.0, 'rgba(0,0,0,0)');
-        } else {
-          gradient.addColorStop(0.0, `rgba(0,0,0,${currentTrailOpacity * 1.05})`);
-          gradient.addColorStop(0.85, `rgba(0,0,0,${currentTrailOpacity * 0.04})`);
-          gradient.addColorStop(1.0, 'rgba(0,0,0,0)');
-        }
+        
+        // Interpolar los color stops entre hover y normal
+        const midStop = 0.48 + (0.85 - 0.48) * (1 - blend); // 0.48 en hover, 0.85 en normal
+        const midAlpha = (0.54 * blend) + (0.04 * (1 - blend));
+        const endAlpha = 0.10 * blend + 0.04 * (1 - blend);
+        
+        gradient.addColorStop(0.0, `rgba(0,0,0,${currentTrailOpacity * 1.05})`);
+        gradient.addColorStop(midStop, `rgba(0,0,0,${currentTrailOpacity * midAlpha})`);
+        gradient.addColorStop(0.85, `rgba(0,0,0,${currentTrailOpacity * endAlpha})`);
+        gradient.addColorStop(1.0, 'rgba(0,0,0,0)');
+        
         trailCtx.save();
         trailCtx.globalAlpha = 1;
         trailCtx.fillStyle = gradient;
@@ -522,7 +713,7 @@ window.addEventListener("mousemove", e => {
 });
 
 
-document.querySelectorAll("a, button, .video-link, .cinema-close, .menu-toggle").forEach(el => {
+document.querySelectorAll("a, button, input, textarea, select, .video-link, .cinema-close, .menu-toggle, .press-slide-card").forEach(el => {
   el.addEventListener("mouseenter", () => {
     shapeMode = el.dataset.shape || "circle";
     if (shapeMode === "letter" && el.dataset.letter) {

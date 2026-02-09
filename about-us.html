@@ -7,11 +7,11 @@
         body { animation: none !important; }
         </style>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>About Us - Eaftimos</title>
     <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/eaf_white-outline.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/eaf_white-outline.png">
     <link rel="manifest" href="assets/images/favicon_io/site.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon_io/android-chrome-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon_io/android-chrome-512x512.png">
@@ -29,6 +29,9 @@
 
     <!-- DNS prefetch for faster resource loading -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cherish&display=swap" rel="stylesheet">
 
         <!-- Mostrar menú lateral solo cuando el menú está abierto, igual que en index.html -->
         <style>
@@ -193,34 +196,6 @@
                 transition: filter 0.3s ease-out, opacity 0.5s ease-out;
             }
 
-            /* Títulos parallax con blend mode */
-            .parallax-titles-layer {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                z-index: 15;
-                pointer-events: none;
-                overflow: visible;
-            }
-
-            .parallax-title {
-                position: absolute;
-                font-family: Georgia, 'Times New Roman', serif;
-                font-size: 6rem;
-                font-weight: bold;
-                color: transparent;
-                -webkit-text-stroke: 2px #ffffff;
-                text-stroke: 2px #ffffff;
-                mix-blend-mode: difference;
-                white-space: nowrap;
-                will-change: transform, filter, opacity;
-                opacity: 0;
-                line-height: 1;
-                filter: blur(0px);
-                transition: filter 0.3s ease-out, opacity 0.4s ease-out;
-            }
 
             /* Responsive */
             @media (max-width: 768px) {
@@ -246,9 +221,6 @@
                     max-width: 100%;
                 }
 
-                .parallax-title {
-                    font-size: 3rem;
-                }
             }
         </style>
 </head>
@@ -277,7 +249,7 @@
         <!-- Menú Desplegable -->
         <div class="dropdown-menu" id="dropdownMenu">
             <div class="menu-links">
-                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer" class="dropdown-link">SHOP</a>
+                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer" class="dropdown-link" data-shape="circle">SHOP</a>
                 <div class="dropdown-item-with-submenu" style="display:none;">
                     <button class="dropdown-link dropdown-toggle" id="collectionsToggle">
                         COLLECTIONS
@@ -290,7 +262,19 @@
                         <a href="gallery-view.html" class="submenu-link">RESiLiENCE AW24</a>
                     </div>
                 </div>
-                <button class="dropdown-link" id="contactBtn">CONTACT</button>
+                <div class="dropdown-item-with-submenu">
+                    <button class="dropdown-link dropdown-toggle" id="socialMediaToggle">
+                        SOCIAL MEDIA
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="submenu" id="socialMediaSubmenu">
+                        <a href="https://www.instagram.com/eaftimos/" target="_blank" rel="noopener noreferrer" class="submenu-link">INSTAGRAM</a>
+                        <a href="https://www.tiktok.com/@eaftimos" target="_blank" rel="noopener noreferrer" class="submenu-link">TIKTOK</a>
+                    </div>
+                </div>
+                <button class="dropdown-link" id="contactBtn" data-shape="circle">CONTACT</button>
             </div>
             
             <!-- Control Icons in Sidebar -->
@@ -327,15 +311,20 @@
         <div class="contact-modal-content">
             <button class="contact-close" id="contactClose">&times;</button>
             <h2>CONTACT US</h2>
-            <form id="contactForm">
+            <form id="contactForm" action="https://formsubmit.co/beastnirvana.csn@gmail.com" method="POST">
+                <!-- FormSubmit Configuration -->
+                <input type="hidden" name="_subject" value="New contact from Eftimos About Us">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_template" value="table">
+                
                 <div class="form-group">
-                    <input type="text" id="name" name="name" placeholder="NAME" required>
+                    <input type="text" id="name" name="name" placeholder="NAME" required data-shape="cross">
                 </div>
                 <div class="form-group">
-                    <input type="email" id="email" name="email" placeholder="EMAIL" required>
+                    <input type="email" id="email" name="email" placeholder="EMAIL" required data-shape="cross">
                 </div>
                 <div class="form-group">
-                    <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required></textarea>
+                    <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required data-shape="cross"></textarea>
                 </div>
                 <button type="submit" class="submit-btn">SEND</button>
             </form>
@@ -390,6 +379,7 @@
     <!-- Load scripts -->
     <script defer src="assets/js/ui-sounds.js"></script>
     <script defer src="assets/js/cursor-effect.js"></script>
+    <script defer src="assets/js/parallax-title-reveal.js"></script>
     <script src="assets/js/tooltip-nebula.js"></script>
     <script src="assets/js/controls.js"></script>
 

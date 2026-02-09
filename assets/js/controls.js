@@ -567,6 +567,19 @@ function initializeControls() {
         });
     }
 
+    // ========== SOCIAL MEDIA SUBMENU ==========
+    const socialMediaToggle = document.getElementById('socialMediaToggle');
+    const socialMediaSubmenu = document.getElementById('socialMediaSubmenu');
+
+    if (socialMediaToggle && socialMediaSubmenu) {
+        socialMediaToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            socialMediaToggle.classList.toggle('active');
+            socialMediaSubmenu.classList.toggle('active');
+        });
+    }
+
     // ========== CONTACT MODAL ==========
     const contactBtn = document.getElementById('contactBtn');
     const contactModal = document.getElementById('contactModal');
@@ -614,11 +627,16 @@ function initializeControls() {
 
     if (contactForm) {
         contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            // Aquí puedes agregar la lógica para enviar el formulario
-            alert('Form submitted! (Add your form handling logic here)');
-            contactModal.classList.remove('active');
-            contactForm.reset();
+            // El formulario ahora se envía a FormSubmit
+            // No hacemos e.preventDefault() para permitir el envío normal del formulario
+            // FormSubmit redirige automáticamente después del envío
+            
+            // Opcionalmente, mostrar mensaje de "enviando"
+            const submitBtn = contactForm.querySelector('.submit-btn');
+            if (submitBtn) {
+                submitBtn.textContent = 'SENDING...';
+                submitBtn.disabled = true;
+            }
         });
     }
 

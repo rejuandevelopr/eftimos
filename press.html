@@ -1,17 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
         <style>
-        /* Elimina animación global de entrada para esta página */
+        /* Elimina animaciÃƒÂ³n global de entrada para esta pÃƒÂ¡gina */
         body { animation: none !important; }
         </style>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>PRESS - Eaftimos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PRESS - EAFTIMOS</title>
     <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/eaf_white-outline.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/eaf_white-outline.png">
     <link rel="manifest" href="assets/images/favicon_io/site.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon_io/android-chrome-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon_io/android-chrome-512x512.png">
@@ -29,8 +29,11 @@
 
     <!-- DNS prefetch for faster resource loading -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cherish&display=swap" rel="stylesheet">
 
-        <!-- Mostrar menú lateral solo cuando el menú está abierto, igual que en index.html -->
+        <!-- Mostrar menÃƒÂº lateral solo cuando el menÃƒÂº estÃƒÂ¡ abierto, igual que en index.html -->
         <style>
             /* Forzar .active visualmente cuando body.menu-open, para que se apliquen los estilos de .dropdown-menu.active y .dropdown-menu.active::before */
             body.menu-open #dropdownMenu {
@@ -43,7 +46,37 @@
                 pointer-events: all !important;
             }
 
-            /* Estilos específicos para la página About Us */
+            /* Efecto blur en el fondo al abrir menÃƒÂº - OVERRIDE del style.css global */
+            /* No aplicar filter en main porque rompe position:fixed de los hijos */
+            body.menu-open main {
+                filter: none !important;
+            }
+
+            /* Aplicar blur directamente a los contenedores internos */
+            body.menu-open .origin-container,
+            body.menu-open #videos-background {
+                filter: blur(8px);
+                transition: filter 0.4s ease;
+            }
+
+            body.menu-open .press-controls,
+            body.menu-open .press-controls > *,
+            body.menu-open .slider-arrows,
+            body.menu-open .slider-arrow,
+            body.menu-open .press-slider,
+            body.menu-open .press-slide,
+            body.menu-open .scroll-content,
+            body.menu-open .origin-container {
+                pointer-events: none !important;
+            }
+            
+            body.menu-open .press-slide {
+                transition: none !important;
+                animation: none !important;
+                will-change: auto !important;
+            }
+
+            /* Estilos especÃƒÂ­ficos para la pÃƒÂ¡gina About Us */
             body {
                 overflow-x: hidden;
                 background-color: #1a1a1a;
@@ -90,23 +123,13 @@
                 left: 50%;
                 transform: translate(-50%, -50%);
                 width: 90%;
-                max-width: 800px;
-                height: 70vh;
-                overflow-y: auto;
+                max-width: 1400px;
+                height: 75vh;
+                max-height: 900px;
+                overflow: visible;
                 z-index: 10;
-                padding: 3rem;
+                padding: 2rem;
                 background: transparent;
-                /* Gradientes de difuminado arriba y abajo */
-                -webkit-mask-image: linear-gradient(to bottom, 
-                    transparent 0%, 
-                    black 10%, 
-                    black 90%, 
-                    transparent 100%);
-                mask-image: linear-gradient(to bottom, 
-                    transparent 0%, 
-                    black 10%, 
-                    black 90%, 
-                    transparent 100%);
             }
 
             /* Scrollbar personalizado */
@@ -168,7 +191,7 @@
                 will-change: filter;
             }
 
-            /* Contenedor de imágenes parallax en capa fija */
+            /* Contenedor de imÃƒÂ¡genes parallax en capa fija */
             .parallax-images-layer {
                 position: fixed;
                 top: 0;
@@ -193,61 +216,638 @@
                 transition: filter 0.3s ease-out, opacity 0.5s ease-out;
             }
 
-            /* Títulos parallax con blend mode */
-            .parallax-titles-layer {
-                position: fixed;
+            /* Estilos para el slider de noticias */
+            .press-slider {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: default;
+                overflow: hidden;
+                touch-action: pan-y pinch-zoom;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+
+            .press-slider.dragging {
+                cursor: grabbing;
+            }
+
+            .press-slider.dragging .press-slide-card {
+                cursor: grabbing !important;
+            }
+
+            /* ===== MODO MULTI-CARD (PC / horizontal) ===== */
+            .press-slides-track {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+            }
+
+            .press-slide {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 1;
+                transition: transform 0.5s ease, opacity 0.5s ease, filter 0.5s ease;
+                will-change: transform, opacity, filter;
+                user-select: none;
+                padding: 1rem 1.5rem;
+                pointer-events: auto;
+                cursor: pointer;
+            }
+
+            .press-slide.no-transition {
+                transition: none !important;
+            }
+
+            /* En multi-card: clases visuales (transform lo maneja JS) */
+            .press-slide.side-card {
+                opacity: 0.5;
+                filter: blur(1px);
+                cursor: pointer;
+            }
+
+            .press-slide.center-card {
+                opacity: 1;
+                filter: blur(0px);
+                cursor: pointer;
+                z-index: 3;
+            }
+
+            .press-slide.side-card {
+                z-index: 2;
+            }
+
+            .press-slide.hidden-card {
+                opacity: 0;
+                pointer-events: none !important;
+                z-index: 0;
+            }
+
+            /* Contenedor de tarjeta unificada */
+            .press-slide-card {
+                position: relative;
+                width: 380px;
+                height: 480px;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+                cursor: pointer;
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+
+            .press-slide.center-card .press-slide-card:hover,
+            .press-slide.active .press-slide-card:hover {
+                transform: scale(1.02);
+                box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9);
+            }
+
+            .press-slide-image {
+                position: absolute;
                 top: 0;
                 left: 0;
-                width: 100vw;
-                height: 100vh;
-                z-index: 15;
-                pointer-events: none;
-                overflow: visible;
+                width: 100%;
+                height: 100%;
             }
 
-            .parallax-title {
-                position: absolute;
-                font-family: Georgia, 'Times New Roman', serif;
-                font-size: 6rem;
-                font-weight: bold;
-                color: transparent;
-                -webkit-text-stroke: 2px #ffffff;
-                text-stroke: 2px #ffffff;
-                mix-blend-mode: difference;
-                white-space: nowrap;
-                will-change: transform, filter, opacity;
-                opacity: 0;
-                line-height: 1;
-                filter: blur(0px);
-                transition: filter 0.3s ease-out, opacity 0.4s ease-out;
+            .press-slide-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                object-position: center;
+                display: block;
             }
+
+            .press-slide-content {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.85) 30%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.3) 70%, rgba(0, 0, 0, 0.1) 85%, transparent 100%);
+                padding: 3rem 2rem 2rem 2rem;
+            }
+
+            .press-portal {
+                font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+                font-size: 0.75rem;
+                color: rgba(255, 255, 255, 0.6);
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                margin-bottom: 0.5rem;
+            }
+
+            .press-slide h2 {
+                font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+                font-size: 1.8rem;
+                font-weight: bold;
+                color: #ffffff;
+                text-align: left;
+                margin: 0;
+                letter-spacing: 0.5px;
+                line-height: 1.2;
+                background: transparent;
+                padding: 0;
+            }
+
+            /* Contenedor de controles (botÃƒÂ³n + dots) */
+            .press-controls {
+                position: absolute;
+                bottom: 2.5rem;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1.2rem;
+                z-index: 30;
+                pointer-events: none;
+            }
+
+            .press-controls > * {
+                pointer-events: auto;
+            }
+
+            .press-btn {
+                position: relative;
+                display: inline-block;
+                padding: 1rem 3rem;
+                background: transparent;
+                border: 2px solid #ffffff;
+                color: #ffffff;
+                text-decoration: none;
+                font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+                font-size: 1.1rem;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                cursor: pointer !important;
+                backdrop-filter: blur(5px);
+                overflow: hidden;
+            }
+
+            .press-btn::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: #ffffff;
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: -1;
+            }
+
+            .press-btn:hover {
+                color: #1a1a1a;
+            }
+
+            .press-btn:hover::before {
+                left: 0;
+            }
+
+            /* Controles de navegaciÃƒÂ³n del slider */
+            .slider-nav {
+                display: flex;
+                gap: 1rem;
+            }
+
+            .slider-dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                border: 2px solid #ffffff;
+                cursor: pointer !important;
+                transition: all 0.3s ease;
+            }
+
+            .slider-dot.active {
+                background: #ffffff;
+                transform: scale(1.2);
+            }
+
+            .slider-arrows {
+                position: absolute;
+                top: 50%;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                padding: 0 2rem;
+                transform: translateY(-50%);
+                pointer-events: none;
+                z-index: 35; /* MÃƒÂ¡s alto para que las flechas estÃƒÂ©n sobre todo */
+            }
+
+            .slider-arrow {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.1);
+                border: 2px solid #ffffff;
+                color: #ffffff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer !important;
+                transition: all 0.3s ease;
+                pointer-events: auto;
+                backdrop-filter: blur(5px);
+            }
+
+            .slider-arrow:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: scale(1.1);
+            }
+
+            .slider-arrow svg {
+                width: 24px;
+                height: 24px;
+            }
+
 
             /* Responsive */
-            @media (max-width: 768px) {
+
+            /* Pantallas grandes (1600px+) */
+            @media (min-width: 1600px) {
                 .scroll-content {
-                    width: 95%;
-                    height: 75vh;
-                    padding: 2rem;
+                    max-width: 1600px;
                 }
 
-                .origin-text h1 {
+                .press-slide {
+                    padding: 1rem 2rem;
+                }
+
+                .press-slide-card {
+                    width: 420px;
+                    height: 520px;
+                }
+
+                .press-slide-content {
+                    padding: 3.5rem 2.5rem 2.5rem 2.5rem;
+                }
+
+                .press-slide h2 {
                     font-size: 2rem;
                 }
+            }
 
-                .origin-text h2 {
+            /* Tablets y pantallas medianas (hasta 1024px) */
+            @media (max-width: 1024px) {
+                .scroll-content {
+                    width: 95%;
+                    max-width: 1200px;
+                }
+
+                .press-slide {
+                    padding: 1rem 1rem;
+                }
+
+                .press-slide-card {
+                    width: 320px;
+                    height: 420px;
+                }
+
+                .press-slide-content {
+                    padding: 2.5rem 1.8rem 1.8rem 1.8rem;
+                }
+
+                .press-slide h2 {
                     font-size: 1.4rem;
                 }
 
-                .origin-text {
-                    font-size: 1rem;
+                .press-controls {
+                    bottom: 2rem;
+                }
+            }
+
+            /* ===== MODO SINGLE-CARD (Portrait / MÃƒÂ³vil, <=900px) ===== */
+            @media (max-width: 900px) {
+                .press-slides-track {
+                    display: contents; /* Desactivar track en mobile */
                 }
 
-                .parallax-image {
-                    max-width: 100%;
+                .press-slider {
+                    position: relative;
                 }
 
-                .parallax-title {
-                    font-size: 3rem;
+                .press-slide {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    opacity: 0;
+                    transform: scale(0.9);
+                    pointer-events: none;
+                    padding: 2rem 1.5rem;
+                    transition: opacity 0.6s ease, transform 0.6s ease;
+                }
+
+                .press-slide.active {
+                    opacity: 1;
+                    transform: scale(1);
+                    pointer-events: auto;
+                }
+
+                .press-slide.side-card,
+                .press-slide.hidden-card,
+                .press-slide.center-card {
+                    /* Reset multi-card classes en mobile */
+                    opacity: unset;
+                    transform: unset;
+                    filter: unset;
+                }
+
+                .press-slide-card {
+                    width: 100%;
+                    max-width: 380px;
+                    height: 420px;
+                }
+
+                .press-slide-content {
+                    padding: 2rem 1.5rem 1.5rem 1.5rem;
+                }
+
+                .press-slide h2 {
+                    font-size: 1.5rem;
+                    text-align: center;
+                }
+
+                .press-portal {
+                    text-align: center;
+                }
+
+                .press-controls {
+                    bottom: auto;
+                    top: calc(50% + 200px + 0.5rem);
+                    gap: 1.6rem;
+                }
+            }
+
+            /* Tablets pequeÃƒÂ±as y mÃƒÂ³viles (hasta 768px) */
+            @media (max-width: 768px) {
+                .scroll-content {
+                    width: 95%;
+                    height: 100vh;
+                    padding: 1rem;
+                    top: 0;
+                    transform: translate(-50%, 0);
+                }
+
+                .press-slider {
+                    cursor: default;
+                }
+
+                .press-slider.dragging {
+                    cursor: default;
+                }
+
+                .press-slide {
+                    padding: 0.5rem 1rem 1rem 1rem;
+                    padding-top: 0;
+                }
+
+                .press-slide-card {
+                    max-width: 320px;
+                    height: 360px;
+                }
+
+                .press-slide-content {
+                    padding: 1.5rem 1.2rem 1rem 1.2rem;
+                }
+
+                .press-slide h2 {
+                    font-size: 1.3rem;
+                    text-align: center;
+                }
+
+                .press-portal {
+                    text-align: center;
+                    font-size: 0.7rem;
+                    margin-bottom: 0.4rem;
+                }
+
+                .press-btn {
+                    padding: 0.9rem 2.5rem;
+                    font-size: 0.95rem;
+                }
+
+                .press-controls {
+                    bottom: auto;
+                    top: calc(50% + 190px + 0.5rem);
+                    gap: 1.6rem;
+                }
+
+                .slider-arrows {
+                    padding: 0 0.5rem;
+                }
+
+                .slider-arrow {
+                    width: 45px;
+                    height: 45px;
+                }
+
+                .slider-arrow svg {
+                    width: 20px;
+                    height: 20px;
+                }
+            }
+
+            /* MÃƒÂ³viles pequeÃƒÂ±os (hasta 480px) */
+            @media (max-width: 480px) {
+                .scroll-content {
+                    width: 100%;
+                    padding: 0.5rem;
+                }
+
+                .press-slide {
+                    padding: 0.5rem 0.5rem 1rem 0.5rem;
+                    padding-top: 0;
+                }
+
+                .press-slide-card {
+                    max-width: 290px;
+                    height: 340px;
+                }
+
+                .press-slide-content {
+                    padding: 1.2rem 1rem 0.8rem 1rem;
+                }
+
+                .press-slide h2 {
+                    font-size: 1.15rem;
+                }
+
+                .press-portal {
+                    font-size: 0.65rem;
+                    margin-bottom: 0.3rem;
+                }
+
+                .press-btn {
+                    padding: 0.75rem 2rem;
+                    font-size: 0.85rem;
+                }
+
+                .slider-nav {
+                    gap: 0.7rem;
+                }
+
+                .press-controls {
+                    bottom: auto;
+                    top: calc(50% + 170px + 0.5rem);
+                    gap: 1.6rem;
+                }
+
+                .slider-dot {
+                    width: 10px;
+                    height: 10px;
+                }
+
+                .slider-arrow {
+                    width: 40px;
+                    height: 40px;
+                }
+
+                .slider-arrow svg {
+                    width: 18px;
+                    height: 18px;
+                }
+            }
+
+            /* MÃƒÂ³viles muy pequeÃƒÂ±os (hasta 360px) */
+            @media (max-width: 360px) {
+                .press-slide {
+                    padding: 0.5rem 0.3rem 1rem 0.3rem;
+                    padding-top: 0;
+                }
+
+                .press-slide-card {
+                    max-width: 270px;
+                    height: 310px;
+                }
+
+                .press-slide-content {
+                    padding: 1rem 0.9rem 0.7rem 0.9rem;
+                }
+
+                .press-slide h2 {
+                    font-size: 1.05rem;
+                }
+
+                .press-portal {
+                    font-size: 0.6rem;
+                    margin-bottom: 0.25rem;
+                }
+
+                .press-btn {
+                    padding: 0.7rem 1.5rem;
+                    font-size: 0.8rem;
+                }
+
+                .press-controls {
+                    bottom: auto;
+                    top: calc(50% + 165px + 0.5rem);
+                    gap: 1.4rem;
+                }
+
+                .slider-nav {
+                    gap: 0.6rem;
+                }
+
+                .slider-arrow {
+                    width: 35px;
+                    height: 35px;
+                }
+            }
+
+            /* Pantallas en landscape (altura reducida) */
+            @media (max-height: 600px) and (orientation: landscape) {
+                .scroll-content {
+                    height: 100vh;
+                    padding: 0.5rem;
+                    top: 50%;
+                }
+
+                .press-slide {
+                    padding: 0.5rem 1rem;
+                }
+
+                .press-slide-card {
+                    max-width: 300px;
+                    height: 260px;
+                }
+
+                .press-slide-content {
+                    padding: 1.2rem 1rem 0.8rem 1rem;
+                }
+
+                .press-slide h2 {
+                    font-size: 1.1rem;
+                    text-align: left;
+                }
+
+                .press-portal {
+                    font-size: 0.6rem;
+                    text-align: left;
+                    margin-bottom: 0.3rem;
+                }
+
+                .press-btn {
+                    padding: 0.6rem 1.8rem;
+                    font-size: 0.85rem;
+                }
+
+                .press-controls {
+                    bottom: 0.3rem;
+                }
+
+                .slider-nav {
+                    display: none;
+                }
+
+                .slider-arrows {
+                    top: 50%;
+                    transform: translateY(-50%);
+                    padding: 0 0.5rem;
+                }
+
+                .slider-arrow {
+                    width: 35px;
+                    height: 35px;
+                    background: rgba(255, 255, 255, 0.15);
+                }
+            }
+
+            /* Ajuste para pantallas muy altas */
+            @media (min-height: 1000px) {
+                .scroll-content {
+                    max-height: 800px;
+                }
+            }
+
+            /* Escritorio: aumentar distancia entre tarjetas y controles (dots) */
+            @media (min-width: 901px) {
+                .press-controls {
+                    /* Fix controls to viewport on desktop so they can be placed lower
+                       (positioning relative to .scroll-content prevented previous changes) */
+                    position: fixed;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    bottom: 0.3rem; /* moved further down toward screen bottom */
+                    gap: 2.8rem;
+                    z-index: 9999;
+                    pointer-events: auto;
+                }
+                /* Raise slides/cards a bit on desktop so there's more gap to the controls (reduced) */
+                .press-slide {
+                    top: 43%;
                 }
             }
         </style>
@@ -274,10 +874,10 @@
             </a>
         </div>
         
-        <!-- Menú Desplegable -->
+        <!-- MenÃƒÂº Desplegable -->
         <div class="dropdown-menu" id="dropdownMenu">
             <div class="menu-links">
-                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer" class="dropdown-link">SHOP</a>
+                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer" class="dropdown-link" data-shape="circle">SHOP</a>
                 <div class="dropdown-item-with-submenu" style="display:none;">
                     <button class="dropdown-link dropdown-toggle" id="collectionsToggle">
                         COLLECTIONS
@@ -290,7 +890,19 @@
                         <a href="gallery-view.html" class="submenu-link">RESiLiENCE AW24</a>
                     </div>
                 </div>
-                <button class="dropdown-link" id="contactBtn">CONTACT</button>
+                <div class="dropdown-item-with-submenu">
+                    <button class="dropdown-link dropdown-toggle" id="socialMediaToggle">
+                        SOCIAL MEDIA
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="submenu" id="socialMediaSubmenu">
+                        <a href="https://www.instagram.com/eaftimos/" target="_blank" rel="noopener noreferrer" class="submenu-link">INSTAGRAM</a>
+                        <a href="https://www.tiktok.com/@eaftimos" target="_blank" rel="noopener noreferrer" class="submenu-link">TIKTOK</a>
+                    </div>
+                </div>
+                <button class="dropdown-link" id="contactBtn" data-shape="circle">CONTACT</button>
             </div>
             
             <!-- Control Icons in Sidebar -->
@@ -327,15 +939,20 @@
         <div class="contact-modal-content">
             <button class="contact-close" id="contactClose">&times;</button>
             <h2>CONTACT US</h2>
-            <form id="contactForm">
+            <form id="contactForm" action="https://formsubmit.co/beastnirvana.csn@gmail.com" method="POST">
+                <!-- FormSubmit Configuration -->
+                <input type="hidden" name="_subject" value="New contact from Eftimos Press">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_template" value="table">
+                
                 <div class="form-group">
-                    <input type="text" id="name" name="name" placeholder="NAME" required>
+                    <input type="text" id="name" name="name" placeholder="NAME" required data-shape="cross">
                 </div>
                 <div class="form-group">
-                    <input type="email" id="email" name="email" placeholder="EMAIL" required>
+                    <input type="email" id="email" name="email" placeholder="EMAIL" required data-shape="cross">
                 </div>
                 <div class="form-group">
-                    <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required></textarea>
+                    <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required data-shape="cross"></textarea>
                 </div>
                 <button type="submit" class="submit-btn">SEND</button>
             </form>
@@ -351,28 +968,104 @@
 
     <main>
         <div class="origin-container">
-            <!-- Capa de títulos parallax (sobre el texto) -->
-            <div class="parallax-titles-layer" id="parallaxTitlesLayer">
-                <div class="parallax-title" data-speed="0.6" data-position="20" data-horizontal="5">VISION</div>
-                <div class="parallax-title" data-speed="0.5" data-position="45" data-horizontal="70">STANCE</div>
-                <div class="parallax-title" data-speed="0.7" data-position="70" data-horizontal="10">SHADOW</div>
-            </div>
-
-            <!-- Capa de imágenes parallax (detrás del texto) -->
-            <div class="parallax-images-layer" id="parallaxImagesLayer">
-                <img src="assets/images/vision-page/vision-n3.jpg" alt="Eaftimos Vision" class="parallax-image" data-speed="0.38" data-position="50" data-horizontal="50">
-            </div>
-
-            <!-- Contenido de texto scrolleable -->
+            <!-- Contenido de slider de noticias -->
             <div class="scroll-content" id="scrollContent">
-                <div class="origin-text">
-                    <p>EAFTIMOS IS THE SHADOW THAT LIVES WITHIN US. A FASHION STUDIO FOUNDED IN 2022 AND BASED IN MADRID, WORKING THROUGH INTROSPECTION AND CRAFTSMANSHIP TO TURN CLOTHING INTO AN ACT OF PRESENCE. WE DON'T CHASE TRENDS: WE CHOOSE A STANCE. WE CHOOSE ARCHIVE. WE WORK SLOWLY, WITH FULL CONTROL OVER MATERIALS AND PROCESS.</p>
+                <div class="press-slider">
+                    <div class="press-slides-track" id="slidesTrack">
+                    <!-- Slide 1 -->
+                    <div class="press-slide" data-url="https://infoleon.infobierzo.com/noticias-leon/eaftimos-disenador-leones-erik-bruccia-ultimo-videoclip-nicki-nicole-saiko_1013600_102.html">
+                        <div class="press-slide-card">
+                            <div class="press-slide-image">
+                                <img src="assets/images/press-page/press-saiko-clip.jpeg" alt="Nicki Nicole & Saiko">
+                            </div>
+                            <div class="press-slide-content">
+                                <div class="press-portal">InfoLeón</div>
+                                <h2>EAFTIMOS Featured in Nicki Nicole & Saiko's Music Video</h2>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Slide 2 -->
+                    <div class="press-slide" data-url="https://graziamagazine.com/es/articles/ego-20-anos-impulsando-el-talento-emergente-en-mbfwmadrid/">
+                        <div class="press-slide-card">
+                            <div class="press-slide-image">
+                                <img src="assets/images/press-page/press-grazia.webp" alt="EGO MBFWMadrid">
+                            </div>
+                            <div class="press-slide-content">
+                                <div class="press-portal">Grazia Magazine</div>
+                                <h2>EGO: 20 Years Driving Emerging Talent at MBFWMadrid</h2>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Slide 3 -->
+                    <div class="press-slide" data-url="https://www.europapress.es/chance/moda/noticia-20-anos-talento-emergente-moda-espanola-son-disenadores-ego-cerraran-proxima-mbfw-20260205132037.html">
+                        <div class="press-slide-card">
+                            <div class="press-slide-image">
+                                <img src="assets/images/press-page/press-MFW.jpg" alt="MBFW Madrid">
+                            </div>
+                            <div class="press-slide-content">
+                                <div class="press-portal">Europa Press</div>
+                                <h2>20 Years of Emerging Talent: EGO Designers to Close Next MBFW</h2>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Slide 4 -->
+                    <div class="press-slide" data-url="https://www.vanitatis.elconfidencial.com/estilo/moda/2026-02-05/mercedes-benz-fashion-week-madrid-capital-internacional-moda_4297683/">
+                        <div class="press-slide-card">
+                            <div class="press-slide-image">
+                                <img src="assets/images/press-page/press-el-confidencial.jpg" alt="Mercedes-Benz Fashion Week Madrid">
+                            </div>
+                            <div class="press-slide-content">
+                                <div class="press-portal">El Confidencial</div>
+                                <h2>Mercedes-Benz Fashion Week Madrid: International Fashion Capital</h2>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Slide 5 -->
+                    <div class="press-slide" data-url="https://infoleon.infobierzo.com/noticias-leon/moda-leonesa-presentacion-premios-ceciarmy-instagram_1019933_102.html">
+                        <div class="press-slide-card">
+                            <div class="press-slide-image">
+                                <img src="assets/images/press-page/press-ceciarmy.png" alt="Ceciarmy Army Awards">
+                            </div>
+                            <div class="press-slide-content">
+                                <div class="press-portal">InfoLeón</div>
+                                <h2>EAFTIMOS Featured in Ceciarmy's Army Awards Presentation</h2>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
 
-                    <p>WE DESIGN, CUT, SEW, AND DYE BY HAND. WE PRODUCE MADE-TO-ORDER, IN LIMITED SERIES, USING EUROPEAN-SOURCED FABRICS AND FUNCTIONAL HARDWARE. OUR LANGUAGE IS SOBER AND QUIET; BLACK IS AN OBSESSION. AS YOHJI YAMAMOTO WROTE: "BLACK IS MODEST AND ARROGANT AT THE SAME TIME… ABOVE ALL, BLACK SAYS: 'I DON'T BOTHER YOU — DON'T BOTHER ME'."</p>
+                    <!-- Flechas de navegaciÃƒÂ³n -->
+                    <div class="slider-arrows">
+                        <button class="slider-arrow" id="prevBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <button class="slider-arrow" id="nextBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
 
-                    <p>EACH COLLECTION OPENS A NEW CHAPTER; EAFTIMOS REMAINS: PRECISION, PAUSE, AND MATERIAL HONESTY. IF YOU CHOOSE TO BE DIFFERENT, THERE IS SPACE FOR YOU HERE.</p>
+                    </div>
 
-                    <div style="height: 20vh;"></div>
+                <!-- Controles: Dots encima del botÃƒÂ³n Read Article dentro de scroll-content -->
+                <div class="press-controls">
+                    <div class="slider-nav">
+                        <span class="slider-dot active" data-slide="0"></span>
+                        <span class="slider-dot" data-slide="1"></span>
+                        <span class="slider-dot" data-slide="2"></span>
+                        <span class="slider-dot" data-slide="3"></span>
+                        <span class="slider-dot" data-slide="4"></span>
+                    </div>
+                    <a href="#" class="press-btn" id="readArticleBtn" target="_blank" rel="noopener noreferrer">Read Article</a>
+                </div>
+
                 </div>
             </div>
         </div>
@@ -381,10 +1074,625 @@
     <!-- Sonidos - Sistema de crossfade manual -->
     <audio id="noiseSound" src="assets/sounds/breathing.mp3" preload="auto"></audio>
     <audio id="whispersSound" src="assets/sounds/breathing.mp3" preload="auto"></audio>
+    <audio id="slideChangeSound" src="assets/sounds/web-sfx/Cursor5.mp3" preload="auto"></audio>
 
     <script>
     // IMPORTANTE: Configurar ANTES de cargar controls.js
-    window.preloaderEnterPressed = true; // Esta página no tiene preloader
+    window.preloaderEnterPressed = true; // Esta pÃƒÂ¡gina no tiene preloader
+    </script>
+
+    <!-- Script del slider de noticias -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const slides = document.querySelectorAll('.press-slide');
+        const dots = document.querySelectorAll('.slider-dot');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const readArticleBtn = document.getElementById('readArticleBtn');
+        const slideChangeSound = document.getElementById('slideChangeSound');
+        const slider = document.querySelector('.press-slider');
+        const track = document.getElementById('slidesTrack');
+        let currentSlide = 0;
+        let autoplayInterval;
+        let inactivityTimer;
+        let hasInteracted = false;
+
+        // ============================================
+        // DETECCION DE MODO: MULTI-CARD vs SINGLE-CARD
+        // ============================================
+        const multiCardQuery = window.matchMedia('(min-width: 901px)');
+        let isMultiCard = multiCardQuery.matches;
+
+        multiCardQuery.addEventListener('change', function(e) {
+            isMultiCard = e.matches;
+            clearAllInlineStyles();
+            showSlide(currentSlide);
+        });
+
+        function clearAllInlineStyles() {
+            slides.forEach(function(slide) {
+                slide.style.transition = '';
+                slide.style.transform = '';
+                slide.style.opacity = '';
+                slide.style.filter = '';
+                slide.style.pointerEvents = '';
+                slide.classList.remove('active', 'center-card', 'side-card', 'hidden-card', 'no-transition');
+            });
+        }
+
+        // ============================================
+        // FUNCIONES COMUNES
+        // ============================================
+
+        function updateReadArticleButton() {
+            const activeSlide = slides[currentSlide];
+            const url = activeSlide.getAttribute('data-url');
+            if (readArticleBtn && url) {
+                readArticleBtn.href = url;
+            }
+        }
+
+        function playSlideSound() {
+            if (slideChangeSound) {
+                slideChangeSound.currentTime = 0;
+                slideChangeSound.play().catch(function() {});
+            }
+        }
+
+        function updateDots() {
+            dots.forEach(function(dot, i) {
+                dot.classList.toggle('active', i === currentSlide);
+            });
+        }
+
+        // ============================================
+        // MODO MULTI-CARD (PC / Horizontal, >900px)
+        // Posicionamiento absoluto individual + loop infinito visual
+        // ============================================
+
+        function getCircularDiff(i, current, total) {
+            var diff = i - current;
+            if (diff > total / 2) diff -= total;
+            if (diff < -total / 2) diff += total;
+            return diff;
+        }
+
+        function getSlideWidth() {
+            if (!slides[0]) return 420;
+            return slides[0].offsetWidth;
+        }
+
+        function showSlideMultiCard(index, animate) {
+            currentSlide = ((index % slides.length) + slides.length) % slides.length;
+            var slideW = getSlideWidth();
+
+            slides.forEach(function(slide, i) {
+                var diff = getCircularDiff(i, currentSlide, slides.length);
+                slide.classList.remove('center-card', 'side-card', 'hidden-card', 'active', 'no-transition');
+
+                if (animate === false) {
+                    slide.classList.add('no-transition');
+                }
+
+                var scale = diff === 0 ? 1 : (Math.abs(diff) === 1 ? 0.88 : 0.8);
+                var xOffset = diff * slideW;
+                slide.style.transform = 'translate(-50%, -50%) translateX(' + xOffset + 'px) scale(' + scale + ')';
+
+                if (diff === 0) {
+                    slide.classList.add('center-card', 'active');
+                    slide.style.pointerEvents = 'auto';
+                } else if (Math.abs(diff) === 1) {
+                    slide.classList.add('side-card');
+                    slide.style.pointerEvents = 'auto';
+                } else {
+                    slide.classList.add('hidden-card');
+                    slide.style.pointerEvents = 'none';
+                }
+            });
+
+            if (animate === false) {
+                void slides[0].offsetWidth;
+                slides.forEach(function(s) { s.classList.remove('no-transition'); });
+            }
+
+            updateDots();
+            updateReadArticleButton();
+        }
+
+        function updateMultiCardDragPositions(dragDelta) {
+            var slideW = getSlideWidth();
+            slides.forEach(function(slide, i) {
+                var diff = getCircularDiff(i, currentSlide, slides.length);
+                var scale = diff === 0 ? 1 : (Math.abs(diff) === 1 ? 0.88 : 0.8);
+                var xOffset = diff * slideW + dragDelta;
+                slide.style.transform = 'translate(-50%, -50%) translateX(' + xOffset + 'px) scale(' + scale + ')';
+            });
+        }
+
+        // ============================================
+        // MODO SINGLE-CARD (Movil / Portrait, <=900px)
+        // ============================================
+
+        function showSlideSingleCard(index) {
+            if (index >= slides.length) currentSlide = 0;
+            else if (index < 0) currentSlide = slides.length - 1;
+            else currentSlide = index;
+
+            slides.forEach(function(slide, i) {
+                slide.style.transition = 'opacity 0.6s ease, transform 0.6s ease, filter 0.6s ease';
+                slide.classList.remove('center-card', 'side-card', 'hidden-card');
+
+                if (i === currentSlide) {
+                    slide.classList.add('active');
+                    slide.style.transform = 'translateX(0) scale(1)';
+                    slide.style.opacity = '1';
+                    slide.style.filter = 'blur(0px)';
+                    slide.style.pointerEvents = 'auto';
+                } else {
+                    slide.classList.remove('active');
+                    slide.style.transform = 'translateX(0) scale(0.9)';
+                    slide.style.opacity = '0';
+                    slide.style.filter = 'blur(8px)';
+                    slide.style.pointerEvents = 'none';
+                }
+            });
+
+            updateDots();
+            updateReadArticleButton();
+        }
+
+        // ============================================
+        // showSlide UNIFICADO
+        // ============================================
+
+        function showSlide(index) {
+            if (isMultiCard) {
+                showSlideMultiCard(index);
+            } else {
+                showSlideSingleCard(index);
+            }
+            playSlideSound();
+        }
+
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        // ============================================
+        // AUTOPLAY
+        // ============================================
+
+        function startAutoplay() {
+            clearInterval(autoplayInterval);
+            clearTimeout(inactivityTimer);
+            autoplayInterval = setInterval(nextSlide, 5000);
+        }
+
+        function stopAutoplay() {
+            clearInterval(autoplayInterval);
+            clearTimeout(inactivityTimer);
+        }
+
+        function scheduleAutoplayResume() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(startAutoplay, 1000);
+        }
+
+        // ============================================
+        // EVENT LISTENERS: Botones & Dots
+        // ============================================
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                prevSlide(); stopAutoplay(); scheduleAutoplayResume();
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                nextSlide(); stopAutoplay(); scheduleAutoplayResume();
+            });
+        }
+
+        dots.forEach(function(dot, index) {
+            dot.addEventListener('click', function() {
+                showSlide(index); stopAutoplay(); scheduleAutoplayResume();
+            });
+        });
+
+        // ============================================
+        // CLICKS EN TARJETAS
+        // ============================================
+
+        slides.forEach(function(slide, slideIndex) {
+            var card = slide.querySelector('.press-slide-card');
+            if (card) {
+                card.addEventListener('click', function(e) {
+                    if (hasInteracted ||
+                        e.target.closest('.slider-arrow') ||
+                        e.target.closest('.slider-dot') ||
+                        e.target.closest('.press-btn') ||
+                        e.target.closest('.press-controls')) {
+                        return;
+                    }
+
+                    if (isMultiCard) {
+                        if (slide.classList.contains('side-card')) {
+                            showSlide(slideIndex);
+                            stopAutoplay(); scheduleAutoplayResume();
+                            return;
+                        }
+                        if (slide.classList.contains('center-card')) {
+                            var url = slide.getAttribute('data-url');
+                            if (url) window.open(url, '_blank', 'noopener,noreferrer');
+                        }
+                    } else {
+                        var url = slide.getAttribute('data-url');
+                        if (url && slide.classList.contains('active')) {
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                        }
+                    }
+                });
+            }
+        });
+
+        // ============================================
+        // AUTOPLAY & HOVER PAUSE
+        // ============================================
+
+        updateReadArticleButton();
+        startAutoplay();
+
+        if (slider) {
+            slider.addEventListener('mouseenter', stopAutoplay);
+            slider.addEventListener('mouseleave', startAutoplay);
+        }
+
+        // ============================================
+        // NAVEGACION CON RUEDA DEL RATON
+        // ============================================
+        var wheelAccumulator = 0;
+        var wheelTimer = null;
+
+        if (slider) {
+            slider.addEventListener('wheel', function(e) {
+                e.preventDefault();
+
+                wheelAccumulator += e.deltaY || e.deltaX;
+
+                clearTimeout(wheelTimer);
+                wheelTimer = setTimeout(function() { wheelAccumulator = 0; }, 200);
+
+                var threshold = 50;
+                if (wheelAccumulator > threshold) {
+                    wheelAccumulator = 0;
+                    nextSlide();
+                    stopAutoplay();
+                    scheduleAutoplayResume();
+                } else if (wheelAccumulator < -threshold) {
+                    wheelAccumulator = 0;
+                    prevSlide();
+                    stopAutoplay();
+                    scheduleAutoplayResume();
+                }
+            }, { passive: false });
+        }
+
+        // ============================================
+        // DRAG CON RATON
+        // ============================================
+        var isDragging = false;
+        var startX = 0;
+        var currentTranslateVal = 0;
+
+        if (slider) {
+            slider.addEventListener('mousedown', dragStart);
+            slider.addEventListener('mouseup', dragEnd);
+            slider.addEventListener('mouseleave', dragEnd);
+            slider.addEventListener('mousemove', dragMove);
+            slider.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+            slides.forEach(function(slide) {
+                slide.querySelectorAll('img').forEach(function(img) {
+                    img.addEventListener('dragstart', function(e) { e.preventDefault(); });
+                });
+            });
+        }
+
+        function dragStart(e) {
+            if (e.target.closest('.slider-arrow') ||
+                e.target.closest('.slider-dot') ||
+                e.target.closest('.press-btn') ||
+                e.target.closest('.press-controls') ||
+                e.target.tagName === 'A') {
+                return;
+            }
+
+            hasInteracted = false;
+            isDragging = true;
+            startX = e.pageX;
+            currentTranslateVal = 0;
+            slider.classList.add('dragging');
+
+            if (isMultiCard) {
+                slides.forEach(function(s) { s.classList.add('no-transition'); });
+            }
+
+            stopAutoplay();
+        }
+
+        function dragMove(e) {
+            if (!isDragging) return;
+
+            var diff = e.pageX - startX;
+            currentTranslateVal = diff;
+
+            if (Math.abs(diff) > 15) {
+                hasInteracted = true;
+                e.preventDefault();
+            }
+
+            if (isMultiCard) {
+                updateMultiCardDragPositions(diff);
+            } else {
+                setSingleCardDragPosition(diff);
+            }
+        }
+
+        function dragEnd() {
+            if (!isDragging) return;
+
+            isDragging = false;
+            slider.classList.remove('dragging');
+
+            if (isMultiCard) {
+                slides.forEach(function(s) { s.classList.remove('no-transition'); });
+            }
+
+            var movedBy = currentTranslateVal;
+            var threshold = isMultiCard
+                ? getSlideWidth() * 0.2
+                : slider.offsetWidth * 0.15;
+
+            if (movedBy < -threshold) {
+                nextSlide();
+            } else if (movedBy > threshold) {
+                prevSlide();
+            } else {
+                if (isMultiCard) {
+                    showSlideMultiCard(currentSlide, true);
+                } else {
+                    resetSingleCardPosition();
+                }
+            }
+
+            currentTranslateVal = 0;
+            setTimeout(function() { hasInteracted = false; }, 100);
+            scheduleAutoplayResume();
+        }
+
+        // ============================================
+        // SINGLE-CARD: Drag visual helpers
+        // ============================================
+
+        function setSingleCardDragPosition(diff) {
+            var dragOffset = (diff / slider.offsetWidth) * 100;
+            var prevIndex = currentSlide === 0 ? slides.length - 1 : currentSlide - 1;
+            var nextIndex = currentSlide === slides.length - 1 ? 0 : currentSlide + 1;
+
+            slides.forEach(function(slide, index) {
+                slide.style.transition = 'none';
+
+                if (index === currentSlide) {
+                    var blurAmount = Math.min(5, Math.abs(dragOffset) / 10);
+                    slide.style.transform = 'translateX(' + dragOffset + '%) scale(1)';
+                    slide.style.opacity = '1';
+                    slide.style.filter = 'blur(' + blurAmount + 'px)';
+                    slide.style.pointerEvents = 'auto';
+                } else if (index === prevIndex) {
+                    var position = -100 + dragOffset;
+                    var opacity = Math.max(0, Math.min(1, (dragOffset + 20) / 50));
+                    var blurAmt = Math.max(3, 8 - (dragOffset / 10));
+                    slide.style.transform = 'translateX(' + position + '%) scale(0.9)';
+                    slide.style.opacity = opacity;
+                    slide.style.filter = 'blur(' + blurAmt + 'px)';
+                    slide.style.pointerEvents = 'none';
+                } else if (index === nextIndex) {
+                    var position = 100 + dragOffset;
+                    var opacity = Math.max(0, Math.min(1, (-dragOffset + 20) / 50));
+                    var blurAmt = Math.max(3, 8 + (dragOffset / 10));
+                    slide.style.transform = 'translateX(' + position + '%) scale(0.9)';
+                    slide.style.opacity = opacity;
+                    slide.style.filter = 'blur(' + blurAmt + 'px)';
+                    slide.style.pointerEvents = 'none';
+                } else {
+                    slide.style.opacity = '0';
+                    slide.style.filter = 'blur(10px)';
+                    slide.style.pointerEvents = 'none';
+                }
+            });
+        }
+
+        function resetSingleCardPosition() {
+            var prevIndex = currentSlide === 0 ? slides.length - 1 : currentSlide - 1;
+            var nextIndex = currentSlide === slides.length - 1 ? 0 : currentSlide + 1;
+
+            slides.forEach(function(slide, index) {
+                if (index === currentSlide) {
+                    slide.style.transition = 'transform 0.3s ease, filter 0.3s ease';
+                    slide.style.transform = 'translateX(0) scale(1)';
+                    slide.style.opacity = '1';
+                    slide.style.filter = 'blur(0px)';
+                    slide.style.pointerEvents = 'auto';
+                } else if (index === prevIndex || index === nextIndex) {
+                    slide.style.transition = 'none';
+                    slide.style.transform = 'translateX(0) scale(0.9)';
+                    slide.style.opacity = '0';
+                    slide.style.filter = 'blur(8px)';
+                    slide.style.pointerEvents = 'none';
+                }
+            });
+        }
+
+        // ============================================
+        // SOPORTE TACTIL (Touch)
+        // ============================================
+        var touchStartX = 0;
+        var touchStartY = 0;
+        var touchCurrentX = 0;
+        var isTouchDragging = false;
+        var touchTranslate = 0;
+
+        if (slider) {
+            slider.addEventListener('touchstart', function(e) {
+                if (e.target.closest('.slider-arrow') ||
+                    e.target.closest('.slider-dot') ||
+                    e.target.closest('.press-btn') ||
+                    e.target.closest('.press-controls') ||
+                    e.target.tagName === 'A') {
+                    return;
+                }
+
+                hasInteracted = false;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchCurrentX = touchStartX;
+                isTouchDragging = false;
+                touchTranslate = 0;
+                stopAutoplay();
+            }, { passive: true });
+
+            slider.addEventListener('touchmove', function(e) {
+                if (!touchStartX) return;
+
+                touchCurrentX = e.touches[0].clientX;
+                var touchCurrentY = e.touches[0].clientY;
+                var diffX = touchCurrentX - touchStartX;
+                var diffY = touchCurrentY - touchStartY;
+
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 15) {
+                    if (!isTouchDragging) {
+                        isTouchDragging = true;
+                        hasInteracted = true;
+                        slider.classList.add('dragging');
+                        if (isMultiCard) {
+                            slides.forEach(function(s) { s.classList.add('no-transition'); });
+                        }
+                    }
+                    touchTranslate = diffX;
+
+                    if (isMultiCard) {
+                        updateMultiCardDragPositions(diffX);
+                    } else {
+                        setSingleCardDragPosition(diffX);
+                    }
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            slider.addEventListener('touchend', function() {
+                if (!touchStartX) return;
+
+                if (isTouchDragging) {
+                    slider.classList.remove('dragging');
+
+                    if (isMultiCard) {
+                        slides.forEach(function(s) { s.classList.remove('no-transition'); });
+                    }
+
+                    var movedBy = touchTranslate;
+                    var threshold = isMultiCard
+                        ? getSlideWidth() * 0.2
+                        : slider.offsetWidth * 0.15;
+
+                    if (movedBy < -threshold) {
+                        nextSlide();
+                    } else if (movedBy > threshold) {
+                        prevSlide();
+                    } else {
+                        if (isMultiCard) {
+                            showSlideMultiCard(currentSlide, true);
+                        } else {
+                            resetSingleCardPosition();
+                        }
+                    }
+                }
+
+                touchStartX = 0;
+                touchStartY = 0;
+                touchCurrentX = 0;
+                isTouchDragging = false;
+                touchTranslate = 0;
+                setTimeout(function() { hasInteracted = false; }, 100);
+                scheduleAutoplayResume();
+            }, { passive: true });
+
+            slider.addEventListener('touchcancel', function() {
+                if (isTouchDragging) {
+                    slider.classList.remove('dragging');
+                    if (isMultiCard) {
+                        slides.forEach(function(s) { s.classList.remove('no-transition'); });
+                        showSlideMultiCard(currentSlide, true);
+                    } else {
+                        resetSingleCardPosition();
+                    }
+                }
+                touchStartX = 0;
+                touchStartY = 0;
+                isTouchDragging = false;
+                touchTranslate = 0;
+                scheduleAutoplayResume();
+            }, { passive: true });
+        }
+
+        // ============================================
+        // INICIALIZACION segun modo
+        // ============================================
+
+        if (isMultiCard) {
+            showSlideMultiCard(0, false);
+        } else {
+            slides[0].classList.add('active');
+            showSlideSingleCard(0);
+        }
+
+        // Re-calcular posicion al redimensionar
+        var resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                if (isMultiCard) {
+                    showSlideMultiCard(currentSlide, false);
+                }
+            }, 100);
+        });
+
+        // ============================================
+        // PAUSAR AUTOPLAY CUANDO SE ABRE EL MENU
+        // ============================================
+        var menuToggle = document.getElementById('menuToggle');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', function() {
+                if (document.body.classList.contains('menu-open')) {
+                    stopAutoplay();
+                } else {
+                    scheduleAutoplayResume();
+                }
+            });
+        }
+
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    if (document.body.classList.contains('menu-open')) {
+                        stopAutoplay();
+                    } else {
+                        scheduleAutoplayResume();
+                    }
+                }
+            });
+        });
+        observer.observe(document.body, { attributes: true });
+    });
     </script>
 
     <!-- Load scripts -->
@@ -394,7 +1702,7 @@
     <script src="assets/js/controls.js"></script>
 
     <script>
-    // Fade-in blanco rápido al entrar
+    // Fade-in blanco rÃƒÂ¡pido al entrar
     window.addEventListener('load', function() {
         var overlay = document.getElementById('entryWhiteOverlay');
         if (overlay) {
@@ -414,7 +1722,7 @@
             logoLink.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                // Fade out rápido del audio
+                // Fade out rÃƒÂ¡pido del audio
                 const noiseSound = document.getElementById('noiseSound');
                 const whispersSound = document.getElementById('whispersSound');
                 const fadeDuration = 300;
@@ -467,143 +1775,9 @@
         }
 
         // ============================================
-        // PARALLAX SCROLL EFFECT FOR IMAGES WITH BLUR
+        // El efecto parallax se ha deshabilitado para la pÃƒÂ¡gina de Press
+        // ya que ahora usa un slider de noticias en lugar de contenido scrolleable
         // ============================================
-        const scrollContent = document.getElementById('scrollContent');
-        const parallaxImages = document.querySelectorAll('.parallax-image');
-        const parallaxTitles = document.querySelectorAll('.parallax-title');
-        const textParagraphs = document.querySelectorAll('.origin-text p');
-        const viewportCenterY = window.innerHeight / 2;
-        const focusOffset = 150; // pixels de offset desde el centro
-        const maxBlur = 8; // píxeles máximos de blur
-
-        function calculateBlurForImage(position, scrollTop, scrollHeight) {
-            // Calcular la posición Y actual de la imagen en el viewport
-            const imagePosition = (position / 100) * window.innerHeight;
-            const distanceFromCenter = Math.abs(imagePosition - viewportCenterY);
-            
-            if (distanceFromCenter <= focusOffset) {
-                return 0; // Sin blur en el centro
-            }
-            
-            // Calcular blur proporcional a la distancia
-            const blurAmount = Math.min(
-                ((distanceFromCenter - focusOffset) / 300) * maxBlur,
-                maxBlur
-            );
-            
-            return blurAmount;
-        }
-
-        function calculateBlur(elementRect) {
-            const elementCenterY = elementRect.top + elementRect.height / 2;
-            const distanceFromCenter = Math.abs(elementCenterY - viewportCenterY);
-            
-            if (distanceFromCenter <= focusOffset) {
-                return 0; // Sin blur en el centro
-            }
-            
-            // Calcular blur proporcional a la distancia
-            const blurAmount = Math.min(
-                ((distanceFromCenter - focusOffset) / 300) * maxBlur,
-                maxBlur
-            );
-            
-            return blurAmount;
-        }
-
-        scrollContent.addEventListener('scroll', function() {
-            const scrollTop = scrollContent.scrollTop;
-            const scrollHeight = scrollContent.scrollHeight - scrollContent.clientHeight;
-            const scrollProgress = scrollTop / scrollHeight;
-
-            // Aplicar parallax, blur y opacidad a las imágenes
-            parallaxImages.forEach((img) => {
-                const speed = parseFloat(img.getAttribute('data-speed')) || 0.3;
-                const position = parseFloat(img.getAttribute('data-position')) || 50;
-                const horizontal = parseFloat(img.getAttribute('data-horizontal')) || 50;
-                
-                // Calcular la posición vertical de la imagen basada en el progreso del scroll
-                const basePosition = (position / 100) * scrollHeight;
-                const offset = (scrollTop - basePosition) * speed;
-                
-                // Posicionar la imagen
-                img.style.left = `${horizontal}%`;
-                img.style.top = `${position}%`;
-                img.style.transform = `translate(-50%, calc(-50% + ${offset}px))`;
-                
-                // Calcular y aplicar blur basado en su posición en pantalla
-                const blurAmount = calculateBlurForImage(position, scrollTop, scrollHeight);
-                img.style.filter = `blur(${blurAmount}px)`;
-                
-                // Calcular opacidad basada en el progreso del scroll
-                // Cada imagen se activa en un rango específico del scroll
-                const imageScrollPosition = position / 100; // posición normalizada (0-1)
-                const fadeRange = 0.15; // rango de fade in/out
-                
-                let opacity = 0;
-                
-                // Calcular distancia del scroll actual a la posición de la imagen
-                const distanceToImage = Math.abs(scrollProgress - imageScrollPosition);
-                
-                if (distanceToImage < fadeRange) {
-                    // Dentro del rango, calcular opacidad
-                    opacity = 1 - (distanceToImage / fadeRange);
-                }
-                
-                img.style.opacity = opacity;
-            });
-            
-            // Aplicar parallax a los títulos
-            parallaxTitles.forEach((title) => {
-                const speed = parseFloat(title.getAttribute('data-speed')) || 0.5;
-                const position = parseFloat(title.getAttribute('data-position')) || 50;
-                const horizontal = parseFloat(title.getAttribute('data-horizontal')) || 50;
-                
-                // Calcular offset parallax (los títulos se mueven más lento que el scroll)
-                const parallaxOffset = scrollTop * speed;
-                
-                // Posicionar el título
-                title.style.left = `${horizontal}%`;
-                title.style.top = `${position}%`;
-                title.style.transform = `translate(-50%, calc(-50% - ${parallaxOffset}px))`;
-                
-                // Calcular la posición actual del título en el viewport
-                const titleRect = title.getBoundingClientRect();
-                const titleCenterY = titleRect.top + titleRect.height / 2;
-                const distanceFromCenter = Math.abs(titleCenterY - viewportCenterY);
-                
-                // Calcular opacidad basada en distancia al centro
-                const fadeDistance = 250; // píxeles desde el centro donde empieza el fade
-                let opacity = 0.7;
-                
-                if (distanceFromCenter > focusOffset) {
-                    opacity = Math.max(0, 0.7 - ((distanceFromCenter - focusOffset) / fadeDistance) * 0.7);
-                }
-                
-                // Calcular blur basado en distancia al centro
-                let blurAmount = 0;
-                if (distanceFromCenter > focusOffset) {
-                    blurAmount = Math.min(
-                        ((distanceFromCenter - focusOffset) / 200) * maxBlur,
-                        maxBlur
-                    );
-                }
-                
-                title.style.opacity = opacity;
-                title.style.filter = `blur(${blurAmount}px)`;
-            });
-            
-            // Aplicar blur a los párrafos de texto
-            textParagraphs.forEach((p) => {
-                const pRect = p.getBoundingClientRect();
-                const blurAmount = calculateBlur(pRect);
-                p.style.filter = `blur(${blurAmount}px)`;
-            });
-        });
-        
-        // Ejecutar al cargar para establecer el estado inicial
-        scrollContent.dispatchEvent(new Event('scroll'));
     });
     </script>
 </body>

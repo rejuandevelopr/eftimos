@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>EAFTIMOS</title>
 
@@ -23,13 +23,13 @@
     <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
 
     <!-- Preload critical CSS -->
-    <link rel="stylesheet" href="assets/css/style.css?v=20260206">
+    <link rel="stylesheet" href="assets/css/style.css?v=20260208">
 
     <!-- DNS prefetch for faster resource loading -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
 </head>
 
-<body class="canvas-body">
+<body class="canvas-body index-page">
     <!-- PRELOADER -->
     <div id="preloader" class="preloader" style="z-index:1000; position:fixed; inset:0; background:#fff;">
         <div class="preloader-content preloader-sober">
@@ -109,7 +109,7 @@
         <div class="dropdown-menu" id="dropdownMenu">
             <div class="menu-links">
                 <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer"
-                    class="dropdown-link">SHOP</a>
+                    class="dropdown-link" data-shape="circle">SHOP</a>
                 <div class="dropdown-item-with-submenu" style="display:none;">
                     <button class="dropdown-link dropdown-toggle" id="collectionsToggle">
                         COLLECTIONS
@@ -123,7 +123,20 @@
                         <a href="gallery-view.html" class="submenu-link">RESiLiENCE AW24</a>
                     </div>
                 </div>
-                <button class="dropdown-link" id="contactBtn">CONTACT</button>
+                <div class="dropdown-item-with-submenu">
+                    <button class="dropdown-link dropdown-toggle" id="socialMediaToggle">
+                        SOCIAL MEDIA
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="submenu" id="socialMediaSubmenu">
+                        <a href="https://www.instagram.com/eaftimos/" target="_blank" rel="noopener noreferrer" class="submenu-link">INSTAGRAM</a>
+                        <a href="https://www.tiktok.com/@eaftimos" target="_blank" rel="noopener noreferrer" class="submenu-link">TIKTOK</a>
+                    </div>
+                </div>
+                <button class="dropdown-link" id="contactBtn" data-shape="circle">CONTACT</button>
             </div>
 
             <!-- Control Icons in Sidebar -->
@@ -162,17 +175,22 @@
     <!-- Contact Form Modal -->
     <div class="contact-modal" id="contactModal">
         <div class="contact-modal-content">
-            <button class="contact-close" id="contactClose">&times;</button>
+            <button class="contact-close" id="contactClose" data-shape="circle">&times;</button>
             <h2>CONTACT US</h2>
-            <form id="contactForm">
+            <form id="contactForm" action="https://formsubmit.co/beastnirvana.csn@gmail.com" method="POST">
+                <!-- FormSubmit Configuration -->
+                <input type="hidden" name="_subject" value="New contact from Eftimos">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_template" value="table">
+                
                 <div class="form-group">
-                    <input type="text" id="name" name="name" placeholder="NAME" required>
+                    <input type="text" id="name" name="name" placeholder="NAME" required data-shape="cross">
                 </div>
                 <div class="form-group">
-                    <input type="email" id="email" name="email" placeholder="EMAIL" required>
+                    <input type="email" id="email" name="email" placeholder="EMAIL" required data-shape="cross">
                 </div>
                 <div class="form-group">
-                    <select id="queryType" name="queryType" required>
+                    <select id="queryType" name="queryType" required data-shape="cross">
                         <option value="" disabled selected>TIPO DE CONSULTA</option>
                         <option value="Ropa a medida">Ropa a medida</option>
                         <option value="Estilismo">Estilismo</option>
@@ -182,9 +200,9 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required></textarea>
+                    <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required data-shape="cross"></textarea>
                 </div>
-                <button type="submit" class="submit-btn">SEND</button>
+                <button type="submit" class="submit-btn" data-shape="circle">SEND</button>
             </form>
         </div>
     </div>
@@ -194,34 +212,34 @@
     <div id="image-templates" style="display: none;">
         <!-- Todos los elementos del mapa llevan a clothes-view.html -->
         <div class="image-template initial-center">
-            <a href="clothes-view.html" class="image-link" data-sound="team">
+            <a href="team.html" class="image-link" data-sound="team" data-shape="circle">
                 <img src="assets/images/g-6.webp" alt="TEAM" width="170" height="170">
                 <span class="tooltip">TEAM</span>
             </a>
         </div>
         <div class="image-template">
-            <a href="origin.html" class="image-link" data-sound="origin">
+            <a href="origin.html" class="image-link" data-sound="origin" data-shape="circle">
                 <img src="assets/images/origin-page/origin-n5.JPG" alt="Fashion Mountain Collection" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">ORIGIN</span>
             </a>
         </div>
         <div class="image-template">
-            <a href="clothes-view.html" class="image-link" data-sound="atelier">
+            <a href="atelier.html" class="image-link" data-sound="atelier" data-shape="circle">
                 <img src="assets/images/g-5.webp" alt="Fashion Collection Winter" loading="lazy" width="170"
                     height="170">
                 <span class="tooltip">ATELIER</span>
             </a>
         </div>
         <div class="image-template">
-            <a href="gallery-view.html" class="image-link" data-sound="resilience">
+            <a href="gallery-view.html" class="image-link" data-sound="resilience" data-shape="circle">
                 <img src="assets/images/g-2.webp" alt="Fashion Nature Collection" loading="lazy" width="170"
                     height="170">
                 <span class="tooltip">RESiLiENCE AW24 COLLECTION</span>
             </a>
         </div>
         <div class="image-template">
-            <a href="bts.html" class="image-link" data-sound="bts">
+            <a href="bts.html" class="image-link" data-sound="bts" data-shape="circle">
                 <img src="assets/images/bts-resiliance/eaftimosbts1499.jpg" alt="Behind The Scenes" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">RESiLiENCE AW24 BTS</span>
@@ -234,21 +252,21 @@
             </div>
         </div>
         <div class="image-template">
-            <a href="about-us.html" class="image-link" data-sound="vision">
+            <a href="about-us.html" class="image-link" data-sound="vision" data-shape="circle">
                 <img src="assets/images/vision-page/vision-n3.jpg" alt="Fashion Winter Collection" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">VISION</span>
             </a>
         </div>
         <div class="image-template">
-            <a href="press.html" class="image-link" data-sound="press">
+            <a href="press.html" class="image-link" data-sound="press" data-shape="circle">
                 <img src="assets/images/press-page/press.webp" alt="Fashion Winter Collection" loading="lazy"
                     width="170" height="170">
                 <span class="tooltip">PRESS</span>
             </a>
         </div>
         <div class="image-template">
-            <div class="video-link" data-sound="locked-in-oneself">
+            <div class="video-link" data-sound="locked-in-oneself" data-shape="circle">
                 <video autoplay muted loop playsinline width="180" height="320" preload="metadata">
                     <source src="assets/vid/reels-mixed-vid.mp4" type="video/mp4">
                 </video>

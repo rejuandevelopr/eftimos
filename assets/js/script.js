@@ -1152,6 +1152,26 @@ canvas.addEventListener('mouseleave', () => {
 // ========================================
 // 🎬 MORPH TRANSITION + CINEMA MODE
 // ========================================
+function playMapInteractionSound(element) {
+    if (!window.UISounds || typeof window.UISounds.play !== 'function') return;
+    if (!element) return;
+
+    const linkElement = element.matches?.('.image-link, .video-link')
+        ? element
+        : element.querySelector?.('.image-link, .video-link');
+    const containerElement = element.closest?.('.image-container');
+    const soundId = linkElement?.dataset?.sound || containerElement?.dataset?.sound;
+
+    if (soundId) {
+        const asmrSoundKey = 'asmr' + soundId.split('-').map((word, index) =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join('');
+        window.UISounds.play(asmrSoundKey);
+    } else {
+        window.UISounds.play('mapClick');
+    }
+}
+
 canvas.addEventListener('click', (e) => {
     // Verificar y asegurar reproducción de white-noise en cada click
     if (typeof window.ensureWhiteNoisePlaying === 'function') {
@@ -1176,6 +1196,7 @@ canvas.addEventListener('click', (e) => {
         const vid = videoLink.querySelector('video');
         if (vid) {
             const container = e.target.closest('.image-container');
+            playMapInteractionSound(videoLink);
             createCinemaMode(vid, container);
         }
         hasMoved = false;
@@ -1196,6 +1217,7 @@ canvas.addEventListener('click', (e) => {
         const targetUrl = link.getAttribute('href');
 
         if (img && targetUrl) {
+            playMapInteractionSound(link);
             const soundId = link.dataset ? link.dataset.sound : null;
             createMorphTransition(img, targetUrl, soundId);
         }
@@ -1899,6 +1921,7 @@ canvas.addEventListener('touchend', (e) => {
                     const vid = videoLink.querySelector('video');
                     if (vid && container) {
                         console.log('[TOUCH] Opening cinema mode for video');
+                        playMapInteractionSound(videoLink);
                         createCinemaMode(vid, container);
                     }
                 }
@@ -1911,6 +1934,7 @@ canvas.addEventListener('touchend', (e) => {
                     console.log('[TOUCH] Navigating to:', targetUrl);
 
                     if (img && targetUrl) {
+                        playMapInteractionSound(imageLink);
                         const soundId = imageLink.dataset ? imageLink.dataset.sound : null;
                         createMorphTransition(img, targetUrl, soundId);
                     }
@@ -1926,6 +1950,7 @@ canvas.addEventListener('touchend', (e) => {
                             if (vid) {
                                 e.preventDefault();
                                 console.log('[TOUCH] Opening cinema mode for video (fallback)');
+                                playMapInteractionSound(linkInside);
                                 createCinemaMode(vid, container);
                             }
                         } else if (linkInside.classList.contains('image-link')) {
@@ -1934,6 +1959,7 @@ canvas.addEventListener('touchend', (e) => {
                             if (img && targetUrl) {
                                 e.preventDefault();
                                 console.log('[TOUCH] Navigating to:', targetUrl, '(fallback)');
+                                playMapInteractionSound(linkInside);
                                 const soundId = linkInside.dataset ? linkInside.dataset.sound : null;
                                 createMorphTransition(img, targetUrl, soundId);
                             }

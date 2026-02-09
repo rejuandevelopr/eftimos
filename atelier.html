@@ -8,7 +8,7 @@
         </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Eftimos</title>
+    <title>Atelier - Eftimos</title>
     <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/eaf_white-outline.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/eaf_white-outline.png">
@@ -17,9 +17,9 @@
     <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon_io/android-chrome-512x512.png">
 
     <meta name="description"
-        content="An inner house where silence, craft, and the avant-garde meet. Join to receive your access key and early access to releases and updates.">
+        content="Atelier - Custom tailored garments by Eftimos.">
     <meta name="keywords"
-        content="Eftimos, fashion brand, lifestyle brand, exclusive clothing, premium apparel, streetwear, minimal design, modern fashion, unisex fashion, luxury clothing, belonging, individuality">
+        content="Eftimos, atelier, custom, tailored, fashion, bespoke">
 
     <!-- Preload critical fonts -->
     <link rel="preload" href="assets/fonts/Helvetica.ttf" as="font" type="font/ttf" crossorigin>
@@ -29,27 +29,9 @@
 
     <!-- DNS prefetch for faster resource loading -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
-
-    <script>
-        // Set hero background before page renders (only on forward navigation)
-        (function () {
-            // Check if this is a back/forward navigation
-            const perfEntries = performance.getEntriesByType('navigation');
-            const isBackNavigation = perfEntries.length > 0 && perfEntries[0].type === 'back_forward';
-
-            // Only set background on fresh navigation, NOT on back button
-            if (!isBackNavigation) {
-                const transitionData = sessionStorage.getItem('morphTransition');
-                if (transitionData) {
-                    const data = JSON.parse(transitionData);
-                    // Add inline style to set background immediately
-                    const style = document.createElement('style');
-                    style.textContent = `.hero { background-image: url('${data.imageSrc}') !important; }`;
-                    document.head.appendChild(style);
-                }
-            }
-        })();
-    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cherish&display=swap" rel="stylesheet">
 
         <!-- Mostrar menú lateral solo cuando el menú está abierto, igual que en index.html -->
         <style>
@@ -62,6 +44,197 @@
                 /* Simula .dropdown-menu.active::before */
                 transform: translateX(0) !important;
                 pointer-events: all !important;
+            }
+
+            /* Estilos específicos para la página Atelier */
+            body {
+                overflow: hidden;
+                background-color: #1a1a1a;
+            }
+
+            .atelier-container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                perspective: 1000px;
+            }
+
+            /* Video de fondo */
+            #videos-background {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                z-index: 0;
+                overflow: hidden;
+                background-color: #000;
+            }
+
+            #videos-background video {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                min-width: 100%;
+                min-height: 100%;
+                width: auto;
+                height: auto;
+                transform: translate(-50%, -50%);
+                object-fit: cover;
+            }
+
+            /* Contenedor de texto fijo */
+            .atelier-content {
+                position: relative;
+                z-index: 10;
+                text-align: center;
+                max-width: 800px;
+                padding: 3rem;
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+                animation: contentFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                animation-delay: 0.3s;
+                transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+
+            @keyframes contentFadeIn {
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            .atelier-text {
+                color: #ffffff;
+                font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+                line-height: 1.8;
+                margin-bottom: 3rem;
+            }
+
+            .atelier-text h1 {
+                font-size: 4rem;
+                font-weight: bold;
+                margin-bottom: 2rem;
+                letter-spacing: 4px;
+                text-transform: uppercase;
+                opacity: 0;
+                transform: translateY(20px);
+                animation: textReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                animation-delay: 0.6s;
+            }
+
+            .atelier-text p {
+                font-size: 1.2rem;
+                letter-spacing: 1px;
+                margin-bottom: 1.5rem;
+                text-align: center;
+                opacity: 0;
+                transform: translateY(15px);
+                animation: textReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+
+            .atelier-text p:nth-of-type(1) {
+                animation-delay: 0.8s;
+            }
+
+            .atelier-text p:nth-of-type(2) {
+                animation-delay: 1s;
+            }
+
+            .atelier-text p:nth-of-type(3) {
+                animation-delay: 1.2s;
+            }
+
+            @keyframes textReveal {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            /* Botón de solicitud */
+            .request-btn {
+                background: transparent;
+                color: #ffffff;
+                border: 2px solid #ffffff;
+                padding: 1.2rem 3rem;
+                font-size: 1rem;
+                font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                cursor: pointer;
+                transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                position: relative;
+                overflow: hidden;
+                opacity: 0;
+                transform: translateY(15px);
+                animation: textReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                animation-delay: 1.4s;
+            }
+
+            .request-btn::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: #ffffff;
+                transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: -1;
+            }
+
+            .request-btn:hover {
+                color: #1a1a1a;
+            }
+
+            .request-btn:hover::before {
+                left: 0;
+            }
+
+            /* Efecto parallax sutil */
+            .atelier-content.parallax-active {
+                transition: transform 0.15s ease-out;
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .atelier-content {
+                    width: 95%;
+                    padding: 2rem;
+                    margin: 0 1rem;
+                }
+
+                .atelier-text h1 {
+                    font-size: 2.5rem;
+                    letter-spacing: 2px;
+                }
+
+                .atelier-text p {
+                    font-size: 1rem;
+                }
+
+                .request-btn {
+                    padding: 1rem 2rem;
+                    font-size: 0.9rem;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .atelier-content,
+                .atelier-text h1,
+                .atelier-text p,
+                .request-btn {
+                    animation: none;
+                    opacity: 1;
+                    transform: none;
+                }
             }
         </style>
 </head>
@@ -154,7 +327,7 @@
             <h2>CONTACT US</h2>
             <form id="contactForm" action="https://formsubmit.co/beastnirvana.csn@gmail.com" method="POST">
                 <!-- FormSubmit Configuration -->
-                <input type="hidden" name="_subject" value="New contact from Eftimos Clothes">
+                <input type="hidden" name="_subject" value="New contact from Eftimos Atelier">
                 <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_template" value="table">
                 
@@ -165,6 +338,16 @@
                     <input type="email" id="email" name="email" placeholder="EMAIL" required data-shape="cross">
                 </div>
                 <div class="form-group">
+                    <select id="queryType" name="queryType" required data-shape="cross">
+                        <option value="" disabled selected>TIPO DE CONSULTA</option>
+                        <option value="Ropa a medida">Ropa a medida</option>
+                        <option value="Estilismo">Estilismo</option>
+                        <option value="Prensa">Prensa</option>
+                        <option value="Redes sociales">Redes sociales</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required data-shape="cross"></textarea>
                 </div>
                 <button type="submit" class="submit-btn">SEND</button>
@@ -172,52 +355,39 @@
         </div>
     </div>
 
-    <main>
-        <section class="hero" id="heroSection" style="background-image: url(assets/images/g-11.webp);">
-            <div class="container">
-                <h1>AW24</h1>
-            </div>
-        </section>
+    <!-- Background Video -->
+    <div id="videos-background">
+        <video autoplay muted loop playsinline preload="auto">
+            <source src="assets/vid/top-clothes-vid.mov" type="video/mp4">
+        </video>
+    </div>
 
-        <section class="grid-view">
-            <div class="container-fluid">
-                <div class="grid-view-content">
-                    <div class="item">
-                        <a href="#" class="image-link">
-                            <img src="assets/images/g-11.webp" alt="">
-                            <span class="tooltip">AW20 Collection</span>
-                        </a>
-                    </div>
-                    <div class="item">
-                        <a href="#" class="image-link">
-                            <img src="assets/images/g-12.webp" alt="">
-                            <span class="tooltip">Winter Editorial</span>
-                        </a>
-                    </div>
-                    <div class="item">
-                        <a href="#" class="image-link">
-                            <img src="assets/images/g-16.avif" alt="">
-                            <span class="tooltip">Avant-Garde Series</span>
-                        </a>
-                    </div>
+    <main>
+        <div class="atelier-container">
+            <!-- Contenido fijo centrado -->
+            <div class="atelier-content">
+                <div class="atelier-text">
+                    <h1>ATELIER</h1>
+                    <p>TAILORED GARMENTS CRAFTED WITH PRECISION AND CARE.</p>
+                    <p>FROM INITIAL CONSULTATION TO FINAL FITTING, EVERY PIECE IS DESIGNED TO EMBODY YOUR VISION.</p>
+                    <p>EXCLUSIVITY, CRAFTSMANSHIP, AND ATTENTION TO DETAIL IN EVERY STITCH.</p>
                 </div>
+                <button class="request-btn" id="requestBtn">REQUEST A COMMISSION</button>
             </div>
-        </section>
+        </div>
     </main>
 
-    <!-- Sonidos - Sistema de crossfade manual (sin loop=true para evitar bloqueo del navegador) -->
+    <!-- Sonidos - Sistema de crossfade manual -->
     <audio id="noiseSound" src="assets/sounds/breathing.mp3" preload="auto"></audio>
     <audio id="whispersSound" src="assets/sounds/breathing.mp3" preload="auto"></audio>
-    <audio id="lockedInSound" src="assets/sounds/locked-in-oneself.mp3" preload="auto"></audio>
 
     <script>
     // IMPORTANTE: Configurar ANTES de cargar controls.js
     window.preloaderEnterPressed = true; // Esta página no tiene preloader
     </script>
 
-    <!-- Load scripts - Solo los necesarios para clothes-view -->
+    <!-- Load scripts -->
     <script defer src="assets/js/ui-sounds.js"></script>
-    <!-- script.js y grain-effect.js son para el mapa de index.html, no se usan aquí -->
     <script defer src="assets/js/cursor-effect.js"></script>
     <script src="assets/js/tooltip-nebula.js"></script>
     <script src="assets/js/controls.js"></script>
@@ -232,7 +402,7 @@
                 setTimeout(function() {
                     overlay.parentNode && overlay.parentNode.removeChild(overlay);
                 }, 380);
-            }, 10); // Mostrar overlay al menos un frame
+            }, 10);
         }
     });
 
@@ -243,43 +413,34 @@
             logoLink.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                // Fade out rápido del audio breathing
+                // Fade out rápido del audio
                 const noiseSound = document.getElementById('noiseSound');
                 const whispersSound = document.getElementById('whispersSound');
-                const fadeDuration = 300; // 300ms fade out
+                const fadeDuration = 300;
                 const startTime = performance.now();
                 
                 function fadeOutAudio() {
                     const elapsed = performance.now() - startTime;
                     const progress = Math.min(1, elapsed / fadeDuration);
-                    // Ease out cúbico para fade suave
                     const eased = 1 - Math.pow(1 - progress, 3);
                     const volume = 1 - eased;
                     
-                    // Aplicar fade a ambos sonidos
-                    if (noiseSound && typeof window.noiseCrossfadeSystem !== 'undefined') {
-                        if (window.noiseGain) {
-                            window.noiseGain.gain.value *= volume;
-                        }
+                    if (noiseSound && window.noiseGain) {
+                        window.noiseGain.gain.value *= volume;
                     }
                     
-                    if (whispersSound && typeof window.whispersCrossfadeSystem !== 'undefined') {
-                        if (window.whispersGain) {
-                            window.whispersGain.gain.value *= volume;
-                        }
+                    if (whispersSound && window.whispersGain) {
+                        window.whispersGain.gain.value *= volume;
                     }
                     
                     if (progress < 1) {
                         requestAnimationFrame(fadeOutAudio);
                     } else {
-                        // Fade out completado, pausar audio
                         if (noiseSound) noiseSound.pause();
                         if (whispersSound) whispersSound.pause();
-                        console.log('[LOGO-CLICK] Audio fade out completed');
                     }
                 }
                 
-                // Iniciar fade out del audio
                 fadeOutAudio();
                 
                 // Crear overlay blanco
@@ -295,24 +456,87 @@
                 overlay.style.transition = 'opacity 0.38s cubic-bezier(.77,0,.18,1)';
                 overlay.style.opacity = '0';
                 document.body.appendChild(overlay);
-                // Forzar reflow y luego fade-in
                 void overlay.offsetWidth;
                 overlay.style.opacity = '1';
                 
-                // Navegar después del fade out del audio (300ms)
                 setTimeout(function() {
                     window.location.href = logoLink.href;
-                }, 320); // Un poco más que el fade del audio
+                }, 320);
             });
+        }
+
+        // ============================================
+        // ATELIER - REQUEST BUTTON FUNCTIONALITY
+        // ============================================
+        const requestBtn = document.getElementById('requestBtn');
+        const contactModal = document.getElementById('contactModal');
+        const queryTypeSelect = document.getElementById('queryType');
+
+        if (requestBtn) {
+            requestBtn.addEventListener('click', function() {
+                // Abrir el modal de contacto
+                if (contactModal) {
+                    contactModal.classList.add('active');
+                }
+                
+                // Preseleccionar "Ropa a medida" en el select
+                if (queryTypeSelect) {
+                    queryTypeSelect.value = 'Ropa a medida';
+                }
+            });
+        }
+
+        // ============================================
+        // EFECTO PARALLAX SUTIL EN ATELIER CONTENT
+        // ============================================
+        const atelierContent = document.querySelector('.atelier-content');
+        let parallaxEnabled = true;
+
+        // Detectar si el usuario prefiere movimiento reducido
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            parallaxEnabled = false;
+        }
+
+        if (parallaxEnabled && atelierContent) {
+            let rafId = null;
+            let targetX = 0;
+            let targetY = 0;
+            let currentX = 0;
+            let currentY = 0;
+
+            document.addEventListener('mousemove', function(e) {
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                
+                // Calcular posición relativa del mouse (-1 a 1)
+                const mouseX = (e.clientX / windowWidth - 0.5) * 2;
+                const mouseY = (e.clientY / windowHeight - 0.5) * 2;
+                
+                // Movimiento sutil: max 15px en cada dirección
+                targetX = mouseX * 15;
+                targetY = mouseY * 15;
+            });
+
+            // Animación suave con interpolación
+            function animate() {
+                // Interpolación suave (lerp)
+                currentX += (targetX - currentX) * 0.1;
+                currentY += (targetY - currentY) * 0.1;
+                
+                // Aplicar transformación
+                atelierContent.style.transform = `translate(${currentX}px, ${currentY}px)`;
+                
+                rafId = requestAnimationFrame(animate);
+            }
+
+            // Iniciar animación después de que termine la animación de entrada
+            setTimeout(() => {
+                atelierContent.classList.add('parallax-active');
+                animate();
+            }, 2000);
         }
     });
     </script>
-
-    <script>
-    // (Eliminada animación/override de audio y descenso inicial)
-    </script>
-
-    <!-- (Eliminado script inline de menú para que solo controle controls.js) -->
 </body>
 
 </html>

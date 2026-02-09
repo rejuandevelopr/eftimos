@@ -171,8 +171,43 @@
      * Setup click sound listeners
      */
     function setupClickSounds() {
+        const TOUCH_MOVE_THRESHOLD = 8;
+        const MOUSE_MOVE_THRESHOLD = 5;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchHasMoved = false;
+        let touchTrackingActive = false;
+        let mouseStartX = 0;
+        let mouseStartY = 0;
+        let mouseHasMoved = false;
+        let mouseTrackingActive = false;
+
         // Listen for clicks on the entire document
         document.addEventListener('mousedown', (e) => {
+            // Ensure e.target is an element with closest method
+            if (!e.target || typeof e.target.closest !== 'function') return;
+
+            if (e.button !== 0) return;
+            mouseStartX = e.clientX;
+            mouseStartY = e.clientY;
+            mouseHasMoved = false;
+            mouseTrackingActive = true;
+        }, true); // Use capture phase
+
+        document.addEventListener('mousemove', (e) => {
+            if (!mouseTrackingActive) return;
+            const deltaX = Math.abs(e.clientX - mouseStartX);
+            const deltaY = Math.abs(e.clientY - mouseStartY);
+            if (deltaX > MOUSE_MOVE_THRESHOLD || deltaY > MOUSE_MOVE_THRESHOLD) {
+                mouseHasMoved = true;
+            }
+        }, true); // Use capture phase
+
+        document.addEventListener('mouseup', (e) => {
+            if (!mouseTrackingActive) return;
+            mouseTrackingActive = false;
+            if (mouseHasMoved) return;
+
             // Ensure e.target is an element with closest method
             if (!e.target || typeof e.target.closest !== 'function') return;
 
@@ -205,39 +240,57 @@
             }
         }, true); // Use capture phase
 
-        // Also handle touch events for mobile
+        // Also handle touch events for mobile (only on tap, not drag)
         document.addEventListener('touchstart', (e) => {
-            // Check if touch is on a map item
             const touch = e.touches[0];
             if (!touch) return;
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            touchHasMoved = false;
+            touchTrackingActive = true;
+        }, true); // Use capture phase
 
+        document.addEventListener('touchmove', (e) => {
+            if (!touchTrackingActive) return;
+            const touch = e.touches[0];
+            if (!touch) return;
+            const deltaX = Math.abs(touch.clientX - touchStartX);
+            const deltaY = Math.abs(touch.clientY - touchStartY);
+            if (deltaX > TOUCH_MOVE_THRESHOLD || deltaY > TOUCH_MOVE_THRESHOLD) {
+                touchHasMoved = true;
+            }
+        }, true); // Use capture phase
+
+        document.addEventListener('touchend', (e) => {
+            if (!touchTrackingActive) return;
+            touchTrackingActive = false;
+            if (touchHasMoved || !e.changedTouches || e.changedTouches.length === 0) {
+                return;
+            }
+
+            const touch = e.changedTouches[0];
             const element = document.elementFromPoint(touch.clientX, touch.clientY);
             if (!element || typeof element.closest !== 'function') return;
 
-            // Check if touch is on an interactive map item
             const mapInteractiveElement = element.closest('.image-container, .image-link, .video-link, .text-phrase');
             const isInsideCanvas = element.closest('#canvas') !== null;
 
             if (mapInteractiveElement && isInsideCanvas) {
-                // Check if element or its children have data-sound attribute
                 const linkElement = mapInteractiveElement.querySelector('.image-link, .video-link');
                 const containerElement = element.closest('.image-template');
                 const soundId = linkElement?.dataset?.sound || containerElement?.dataset?.sound;
 
                 if (soundId) {
-                    // Convert sound ID to camelCase for SOUNDS object key
                     const asmrSoundKey = 'asmr' + soundId.split('-').map((word, index) =>
                         word.charAt(0).toUpperCase() + word.slice(1)
                     ).join('');
 
-                    console.log('[UI-SOUNDS] Playing ASMR sound (touch):', asmrSoundKey, 'for element:', soundId);
+                    console.log('[UI-SOUNDS] Playing ASMR sound (tap):', asmrSoundKey, 'for element:', soundId);
                     playSound(asmrSoundKey);
                 } else {
-                    // Fallback to generic map click sound
                     playSound('mapClick');
                 }
             } else {
-                // Regular touch (anywhere else, including empty canvas areas) - play general click sound
                 playSound('click');
             }
         }, true); // Use capture phase

@@ -7,11 +7,11 @@
         body { animation: none !important; }
     </style>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Behind The Scenes - Eftimos</title>
     <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon_io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon_io/eaf_white-outline.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon_io/eaf_white-outline.png">
     <link rel="manifest" href="assets/images/favicon_io/site.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon_io/android-chrome-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon_io/android-chrome-512x512.png">
@@ -38,6 +38,11 @@
         body.menu-open #dropdownMenu::before {
             transform: translateX(0) !important;
             pointer-events: all !important;
+        }
+
+        /* Evitar desplazamiento de galería al abrir menú */
+        body.menu-open .gallery-container {
+            inset: 12vh 0 0 0 !important;
         }
 
         /* Estilos para la galería */
@@ -73,9 +78,7 @@
 
         .gallery-container {
             position: fixed;
-            top: 72%;
-            left: 50%;
-            transform: translate(-50%, -72%);
+            inset: 12vh 0 0 0;
             width: 100vw;
             height: 80vh;
             max-height: 80vh;
@@ -101,9 +104,28 @@
             overflow: hidden;
             cursor: grab;
             user-select: none;
+            -webkit-user-select: none;
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            user-drag: none;
+        }
+
+        .gallery-wrapper * {
+            -webkit-user-drag: none;
+            user-drag: none;
         }
 
         .gallery-wrapper:active {
+            cursor: grabbing;
+        }
+
+        /* Cursor específico cuando hay zoom */
+        body.zoomed-mode .gallery-wrapper {
+            cursor: grab;
+        }
+
+        body.zoomed-mode .gallery-wrapper:active {
             cursor: grabbing;
         }
 
@@ -153,6 +175,11 @@
             pointer-events: none;
         }
 
+        .gallery-card.zoomed {
+            cursor: zoom-out;
+            z-index: 1000 !important;
+        }
+
         .gallery-card img {
             width: auto;
             height: auto;
@@ -170,6 +197,16 @@
             pointer-events: none;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Habilitar pointer-events en la imagen cuando está zoomed para permitir drag */
+        .gallery-card.zoomed img {
+            pointer-events: auto;
+            cursor: grab;
+        }
+
+        .gallery-card.zoomed img:active {
+            cursor: grabbing;
         }
 
         /* Responsive */
@@ -248,8 +285,8 @@
         /* Overlay de textos animados */
         .overlay-words-layer {
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50vh;
+            left: 50vw;
             transform: translate(-50%, -50%);
             width: 90vw;
             height: calc(100vh - 300px);
@@ -258,6 +295,12 @@
             pointer-events: none;
             overflow: hidden;
             transition: opacity 0.4s ease;
+        }
+
+        /* Evitar desplazamiento de overlay-words al abrir menú */
+        body.menu-open .overlay-words-layer {
+            top: 50vh !important;
+            left: 50vw !important;
         }
 
         .overlay-words-layer.hidden {
@@ -340,7 +383,7 @@
             top: 50%;
             right: 2rem;
             transform: translateY(-50%);
-            display: flex;
+            display: none; /* Oculto permanentemente */
             flex-direction: column;
             gap: 8px;
             z-index: 515;
@@ -361,6 +404,10 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            body.menu-open .gallery-container {
+                inset: 12vh 0 0 0 !important;
+            }
+
             .gallery-controls {
                 gap: 1.5rem;
                 bottom: -70px;
@@ -441,7 +488,7 @@
         <!-- Menú Desplegable -->
         <div class="dropdown-menu" id="dropdownMenu">
             <div class="menu-links">
-                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer" class="dropdown-link">SHOP</a>
+                <a href="https://1peief-wi.myshopify.com/" target="_blank" rel="noopener noreferrer" class="dropdown-link" data-shape="circle">SHOP</a>
                 <div class="dropdown-item-with-submenu" style="display:none;">
                     <button class="dropdown-link dropdown-toggle" id="collectionsToggle">
                         COLLECTIONS
@@ -450,11 +497,23 @@
                         </svg>
                     </button>
                     <div class="submenu" id="collectionsSubmenu">
-                        <a href="#nierika" class="submenu-link">NIERIKA</a>
+                        <a href="#nierika" class="submenu-link">NIERIKA AW26</a>
                         <a href="gallery-view.html" class="submenu-link">RESiLiENCE AW24</a>
                     </div>
                 </div>
-                <button class="dropdown-link" id="contactBtn">CONTACT</button>
+                <div class="dropdown-item-with-submenu">
+                    <button class="dropdown-link dropdown-toggle" id="socialMediaToggle">
+                        SOCIAL MEDIA
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="submenu" id="socialMediaSubmenu">
+                        <a href="https://www.instagram.com/eaftimos/" target="_blank" rel="noopener noreferrer" class="submenu-link">INSTAGRAM</a>
+                        <a href="https://www.tiktok.com/@eaftimos" target="_blank" rel="noopener noreferrer" class="submenu-link">TIKTOK</a>
+                    </div>
+                </div>
+                <button class="dropdown-link" id="contactBtn" data-shape="circle">CONTACT</button>
             </div>
             
             <!-- Control Icons in Sidebar -->
@@ -487,15 +546,20 @@
         <div class="contact-modal-content">
             <button class="contact-close" id="contactClose">&times;</button>
             <h2>CONTACT US</h2>
-            <form id="contactForm">
+            <form id="contactForm" action="https://formsubmit.co/beastnirvana.csn@gmail.com" method="POST">
+                <!-- FormSubmit Configuration -->
+                <input type="hidden" name="_subject" value="New contact from Eftimos BTS">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_template" value="table">
+                
                 <div class="form-group">
-                    <input type="text" id="name" name="name" placeholder="NAME" required>
+                    <input type="text" id="name" name="name" placeholder="NAME" required data-shape="cross">
                 </div>
                 <div class="form-group">
-                    <input type="email" id="email" name="email" placeholder="EMAIL" required>
+                    <input type="email" id="email" name="email" placeholder="EMAIL" required data-shape="cross">
                 </div>
                 <div class="form-group">
-                    <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required></textarea>
+                    <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required data-shape="cross"></textarea>
                 </div>
                 <button type="submit" class="submit-btn">SEND</button>
             </form>
@@ -593,6 +657,29 @@
         let currentIndex = 0;
         const ITEMS_TO_SHOW = 5; // Mostrar 5 items: 2 a la izquierda, 1 centro, 2 a la derecha
 
+        // Variables de zoom
+        let isZoomed = false;
+        let currentScale = 1;
+        let panX = 0;
+        let panY = 0;
+        let startPanX = 0;
+        let startPanY = 0;
+        const MAX_SCALE = 4; // Aumentado para mejor zoom
+        const MIN_SCALE = 1;
+        const ZOOM_SPEED = 0.15; // Velocidad de zoom con rueda
+        let lastTapTime = 0;
+        
+        // Variables de zoom focal
+        let focalPointX = 0;
+        let focalPointY = 0;
+        
+        // Variables de pinch zoom
+        let isPinching = false;
+        let initialDistance = 0;
+        let initialScale = 1;
+        let pinchStartX = 0;
+        let pinchStartY = 0;
+
         let pageLoaderHidden = false;
 
         function hidePageLoader() {
@@ -644,13 +731,298 @@
 
                 track.appendChild(card);
 
+                // Prevenir drag nativo del navegador en la imagen
+                const imgElement = card.querySelector('img');
+                if (imgElement) {
+                    imgElement.addEventListener('dragstart', (e) => e.preventDefault());
+                    imgElement.addEventListener('contextmenu', (e) => e.preventDefault());
+                }
+
                 // Crear punto de progreso
                 const dot = document.createElement('div');
                 dot.className = 'progress-dot';
                 progressIndicator.appendChild(dot);
+
+                // Event listener para zoom por doble click
+                card.addEventListener('dblclick', (e) => {
+                    if (card.classList.contains('active')) {
+                        e.stopPropagation();
+                        toggleZoom(card);
+                    }
+                });
             });
 
             updateCarousel();
+        }
+
+        // Función para limitar el pan dentro de los bordes de la imagen
+        // Función para aplicar resistencia elástica al pan fuera de límites
+        function applyElasticResistance(value, max) {
+            const RESISTANCE = 0.3; // Factor de resistencia (menor = más resistencia)
+            
+            if (Math.abs(value) <= max) {
+                return value;
+            }
+            
+            const excess = Math.abs(value) - max;
+            const resistedExcess = excess * RESISTANCE;
+            return (value > 0 ? 1 : -1) * (max + resistedExcess);
+        }
+
+        // Función para calcular límites del pan y obtener valores con resistencia
+        function constrainPan(img, scale, panXVal, panYVal, applyResistance = false) {
+            if (scale <= MIN_SCALE) return { panX: 0, panY: 0, maxPanX: 0, maxPanY: 0 };
+            
+            // Obtener tamaños reales
+            const imgNaturalWidth = img.naturalWidth || img.width;
+            const imgNaturalHeight = img.naturalHeight || img.height;
+            
+            // Calcular el tamaño escalado de la imagen
+            const scaledWidth = imgNaturalWidth * scale;
+            const scaledHeight = imgNaturalHeight * scale;
+            
+            // Obtener el tamaño del viewport (contenedor visible)
+            const container = img.closest('.gallery-card');
+            const viewportWidth = container ? container.clientWidth : window.innerWidth;
+            const viewportHeight = container ? container.clientHeight : window.innerHeight;
+            
+            // Calcular cuánto podemos mover la imagen
+            // Permitir mucho más desplazamiento del necesario para mayor libertad
+            const maxPanX = Math.max(0, (scaledWidth - viewportWidth) / 2) * 2; // 2x más libertad horizontal
+            const maxPanY = Math.max(0, (scaledHeight - viewportHeight) / 2) * 4; // 4x más libertad vertical
+            
+            let finalPanX, finalPanY;
+            
+            if (applyResistance) {
+                // Durante el drag: aplicar resistencia elástica
+                finalPanX = applyElasticResistance(panXVal, maxPanX);
+                finalPanY = applyElasticResistance(panYVal, maxPanY);
+            } else {
+                // Para consultas (hardlimit): límite duro
+                finalPanX = Math.max(-maxPanX, Math.min(maxPanX, panXVal));
+                finalPanY = Math.max(-maxPanY, Math.min(maxPanY, panYVal));
+            }
+            
+            return {
+                panX: finalPanX,
+                panY: finalPanY,
+                maxPanX: maxPanX,
+                maxPanY: maxPanY
+            };
+        }
+
+        // Funciones de zoom focal
+        function applyFocalZoom(card, zoomFactor, mouseX, mouseY) {
+            const img = card.querySelector('img');
+            if (!img) return;
+            
+            const prevScale = currentScale;
+            currentScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, currentScale * zoomFactor));
+            
+            if (currentScale > MIN_SCALE) {
+                isZoomed = true;
+                card.classList.add('zoomed');
+                
+                // Calcular el punto focal relativo al tamaño de la imagen
+                const rect = img.getBoundingClientRect();
+                const imgCenterX = rect.width / 2;
+                const imgCenterY = rect.height / 2;
+                
+                // Ajustar el pan para mantener el punto focal
+                if (prevScale > MIN_SCALE) {
+                    const scaleDiff = currentScale / prevScale;
+                    panX = mouseX - imgCenterX - (mouseX - imgCenterX - panX) * scaleDiff;
+                    panY = mouseY - imgCenterY - (mouseY - imgCenterY - panY) * scaleDiff;
+                } else {
+                    panX = (mouseX - imgCenterX) * (1 - currentScale);
+                    panY = (mouseY - imgCenterY) * (1 - currentScale);
+                }
+                
+                // Aplicar límites al pan
+                const constrained = constrainPan(img, currentScale, panX, panY);
+                panX = constrained.panX;
+                panY = constrained.panY;
+                
+                // Interpolar hacia el centro SOLO durante zoom out
+                // Para zoom in, mantener el pan focal sin interpolación
+                let finalPanX = panX;
+                let finalPanY = panY;
+                
+                if (currentScale < prevScale) {
+                    // Zoom out: interpolar progresivamente hacia el centro
+                    const centerWeight = (MAX_SCALE - currentScale) / (MAX_SCALE - MIN_SCALE);
+                    finalPanX = panX * (1 - centerWeight);
+                    finalPanY = panY * (1 - centerWeight);
+                    
+                    // Actualizar panX y panY para mantener coherencia
+                    panX = finalPanX;
+                    panY = finalPanY;
+                }
+                
+                // Agregar transición suave e interpolada
+                img.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                img.style.transform = `scale(${currentScale}) translate(${finalPanX / currentScale}px, ${finalPanY / currentScale}px)`;
+                img.style.cursor = 'zoom-out';
+                
+                document.querySelector('.gallery-controls')?.classList.add('hidden');
+                document.querySelector('.overlay-words-layer')?.classList.add('hidden');
+                document.querySelector('.collection-info')?.classList.add('hidden');
+            } else {
+                resetZoom();
+            }
+        }
+
+        // Pinch zoom handlers
+        function handlePinchStart(e) {
+            e.preventDefault();
+            isPinching = true;
+            isDragging = false;
+            
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            
+            initialDistance = Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+            );
+            
+            initialScale = currentScale;
+            
+            // Calcular punto focal entre los dos dedos
+            pinchStartX = (touch1.clientX + touch2.clientX) / 2;
+            pinchStartY = (touch1.clientY + touch2.clientY) / 2;
+        }
+
+        function handlePinchMove(e) {
+            if (!isPinching) return;
+            e.preventDefault();
+            
+            const card = e.target.closest('.gallery-card');
+            if (!card || !card.classList.contains('active')) return;
+            
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            
+            const currentDistance = Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+            );
+            
+            const scale = (currentDistance / initialDistance) * initialScale;
+            currentScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+            
+            // Calcular punto focal actual
+            const currentFocalX = (touch1.clientX + touch2.clientX) / 2;
+            const currentFocalY = (touch1.clientY + touch2.clientY) / 2;
+            
+            const rect = card.getBoundingClientRect();
+            const relativeX = currentFocalX - rect.left;
+            const relativeY = currentFocalY - rect.top;
+            
+            if (currentScale > MIN_SCALE) {
+                isZoomed = true;
+                card.classList.add('zoomed');
+                document.body.classList.add('zoomed-mode');
+                document.body.classList.add('zoomed-mode');
+                
+                const img = card.querySelector('img');
+                if (img) {
+                    const imgRect = img.getBoundingClientRect();
+                    const imgCenterX = imgRect.width / 2;
+                    const imgCenterY = imgRect.height / 2;
+                    
+                    panX = (relativeX - imgCenterX) * (1 - currentScale);
+                    panY = (relativeY - imgCenterY) * (1 - currentScale);
+                    
+                    // Aplicar límites al pan
+                    const constrained = constrainPan(img, currentScale, panX, panY);
+                    panX = constrained.panX;
+                    panY = constrained.panY;
+                    
+                    // Interpolar hacia el centro SOLO durante zoom out (pinch in)
+                    let finalPanX = panX;
+                    let finalPanY = panY;
+                    
+                    if (currentScale < initialScale) {
+                        // Zoom out: interpolar progresivamente hacia el centro
+                        const centerWeight = (MAX_SCALE - currentScale) / (MAX_SCALE - MIN_SCALE);
+                        finalPanX = panX * (1 - centerWeight);
+                        finalPanY = panY * (1 - centerWeight);
+                        
+                        // Actualizar panX y panY con los valores interpolados
+                        panX = finalPanX;
+                        panY = finalPanY;
+                    }
+                    
+                    img.style.transition = 'none';
+                    img.style.transform = `scale(${currentScale}) translate(${finalPanX / currentScale}px, ${finalPanY / currentScale}px)`;
+                    
+                    document.querySelector('.gallery-controls')?.classList.add('hidden');
+                    document.querySelector('.overlay-words-layer')?.classList.add('hidden');
+                    document.querySelector('.collection-info')?.classList.add('hidden');
+                }
+            } else {
+                resetZoom();
+            }
+        }
+
+        function handlePinchEnd(e) {
+            if (isPinching) {
+                isPinching = false;
+                if (currentScale <= MIN_SCALE) {
+                    resetZoom();
+                }
+            }
+        }
+
+        function toggleZoom(card) {
+            if (isZoomed) {
+                resetZoom();
+            } else {
+                // Zoom simple al centro
+                currentScale = 2.5;
+                isZoomed = true;
+                card.classList.add('zoomed');
+                document.body.classList.add('zoomed-mode');
+                
+                const img = card.querySelector('img');
+                if (img) {
+                    panX = 0;
+                    panY = 0;
+                    img.style.transform = `scale(${currentScale})`;
+                    img.style.cursor = 'grab';
+                }
+                
+                document.querySelector('.gallery-controls')?.classList.add('hidden');
+                document.querySelector('.overlay-words-layer')?.classList.add('hidden');
+                document.querySelector('.collection-info')?.classList.add('hidden');
+            }
+        }
+
+        function resetZoom() {
+            isZoomed = false;
+            currentScale = MIN_SCALE;
+            panX = 0;
+            panY = 0;
+            document.body.classList.remove('zoomed-mode');
+            
+            const activeCard = document.querySelector('.gallery-card.zoomed');
+            if (activeCard) {
+                activeCard.classList.remove('zoomed');
+                const img = activeCard.querySelector('img');
+                if (img) {
+                    img.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    img.style.transform = '';
+                    img.style.cursor = '';
+                    setTimeout(() => {
+                        if (img) img.style.transition = '';
+                    }, 500);
+                }
+            }
+            
+            document.querySelector('.gallery-controls')?.classList.remove('hidden');
+            document.querySelector('.overlay-words-layer')?.classList.remove('hidden');
+            document.querySelector('.collection-info')?.classList.remove('hidden');
         }
 
         // Actualizar posiciones del carrusel
@@ -737,13 +1109,79 @@
 
         // Navegación
         function nextImage() {
+            if (isZoomed) return; // No navegar si está zoomed
+            
+            // Aplicar transiciones rápidas para botones
+            const cards = document.querySelectorAll('.gallery-card');
+            cards.forEach(card => {
+                card.style.transition = 'transform 0.35s cubic-bezier(0.4, 0.0, 0.2, 1), filter 0.35s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.35s cubic-bezier(0.4, 0.0, 0.2, 1), z-index 0s';
+            });
+            
             currentIndex = (currentIndex + 1) % galleryImages.length;
             updateCarousel();
         }
 
         function prevImage() {
+            if (isZoomed) return; // No navegar si está zoomed
+            
+            // Aplicar transiciones rápidas para botones
+            const cards = document.querySelectorAll('.gallery-card');
+            cards.forEach(card => {
+                card.style.transition = 'transform 0.35s cubic-bezier(0.4, 0.0, 0.2, 1), filter 0.35s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.35s cubic-bezier(0.4, 0.0, 0.2, 1), z-index 0s';
+            });
+            
             currentIndex = (currentIndex - 1 + galleryImages.length) % galleryImages.length;
             updateCarousel();
+        }
+
+        // Animación de rebote elástico cuando se suelta fuera de límites
+        function springBackAnimation() {
+            const activeCard = document.querySelector('.gallery-card.active');
+            const img = activeCard?.querySelector('img');
+            if (!img) return;
+            
+            // Obtener límites reales (sin resistencia)
+            const constrained = constrainPan(img, currentScale, panX, panY, false);
+            const targetPanX = constrained.panX;
+            const targetPanY = constrained.panY;
+            
+            // Si ya está dentro de límites, no animar
+            if (Math.abs(panX - targetPanX) < 0.5 && Math.abs(panY - targetPanY) < 0.5) {
+                panX = targetPanX;
+                panY = targetPanY;
+                return;
+            }
+            
+            // Animar con ease-out
+            const startPanX = panX;
+            const startPanY = panY;
+            const duration = 400; // ms
+            const startTime = performance.now();
+            
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Ease-out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                
+                panX = startPanX + (targetPanX - startPanX) * eased;
+                panY = startPanY + (targetPanY - startPanY) * eased;
+                
+                img.style.transition = 'none';
+                img.style.transform = `scale(${currentScale}) translate(${panX / currentScale}px, ${panY / currentScale}px)`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Asegurar valores finales exactos
+                    panX = targetPanX;
+                    panY = targetPanY;
+                    img.style.transform = `scale(${currentScale}) translate(${panX / currentScale}px, ${panY / currentScale}px)`;
+                }
+            }
+            
+            requestAnimationFrame(animate);
         }
 
         // Event listeners para botones
@@ -756,6 +1194,8 @@
                 nextImage();
             } else if (e.key === 'ArrowLeft') {
                 prevImage();
+            } else if (e.key === 'Escape' && isZoomed) {
+                resetZoom();
             }
         });
 
@@ -785,32 +1225,127 @@
         // Sistema de arrastre con física de inercia (ruleta)
         let isDragging = false;
         let startX = 0;
+        let startY = 0;
         let dragOffset = 0;
         let lastX = 0;
+        let lastY = 0;
         let lastTime = 0;
         let velocity = 0;
         let momentumAnimationId = null;
         let virtualPosition = 0; // Posición virtual continua del carrusel
         let transitionRemoved = false; // Flag para controlar cuándo quitar transiciones
         const galleryWrapper = document.querySelector('.gallery-wrapper');
-                // Mouse wheel navigation for carousel
+        
+        // Mouse wheel para zoom focal (reemplaza navegación)
         galleryWrapper.addEventListener('wheel', (e) => {
             e.preventDefault();
-            let delta = e.deltaY || e.deltaX || 0;
-            if (delta > 0) {
-                nextImage();
-            } else if (delta < 0) {
-                prevImage();
-            }
+            
+            const card = document.querySelector('.gallery-card.active');
+            if (!card) return;
+            
+            const zoomFactor = e.deltaY < 0 ? (1 + ZOOM_SPEED) : (1 - ZOOM_SPEED);
+            
+            // Obtener posición del mouse relativa al card
+            const rect = card.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            applyFocalZoom(card, zoomFactor, mouseX, mouseY);
         }, { passive: false });
+        
         const FRICTION = 0.92; // Fricción (0.95 = muy suave, 0.85 = más fricción)
         const MIN_VELOCITY = 0.5; // Velocidad mínima antes de detener
 
-        // Mouse events (Desktop)
-        galleryWrapper.addEventListener('mousedown', (e) => {
+        // Zoom drag a nivel de documento - permite arrastrar la imagen zoomeada desde cualquier punto
+        document.addEventListener('mousedown', (e) => {
+            if (!isZoomed) return;
+            if (isDragging) return;
+            if (e.target.closest('.side-menu') || e.target.closest('.menu-toggle')) return;
+            
+            const card = document.querySelector('.gallery-card.active');
+            if (!card) return;
+            
             isDragging = true;
             startX = e.clientX;
+            startY = e.clientY;
             lastX = e.clientX;
+            lastY = e.clientY;
+            startPanX = panX;
+            startPanY = panY;
+            
+            const img = card.querySelector('img');
+            if (img) img.style.transition = 'none';
+            
+            e.preventDefault();
+        });
+
+        document.addEventListener('touchstart', (e) => {
+            if (!isZoomed || e.touches.length !== 1) return;
+            if (isDragging) return;
+            if (e.target.closest('.side-menu') || e.target.closest('.menu-toggle')) return;
+            
+            const card = document.querySelector('.gallery-card.active');
+            if (!card) return;
+            
+            isDragging = true;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+            startPanX = panX;
+            startPanY = panY;
+            
+            const img = card.querySelector('img');
+            if (img) img.style.transition = 'none';
+        }, { passive: false });
+
+        // Mouse events (Desktop)
+        galleryWrapper.addEventListener('mousedown', (e) => {
+            // Si está zoomed, SIEMPRE buscar el card activo y permitir drag desde cualquier parte
+            if (isZoomed) {
+                const card = document.querySelector('.gallery-card.active');
+                if (card) {
+                    // Pan mientras está zoomed
+                    isDragging = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+                    startPanX = panX;
+                    startPanY = panY;
+                    
+                    // Quitar transición de la imagen para drag fluido
+                    const img = card.querySelector('img');
+                    if (img) img.style.transition = 'none';
+                    
+                    e.preventDefault();
+                    return;
+                }
+            }
+            
+            // Buscar el card para interacciones normales
+            let card = e.target.closest('.gallery-card');
+            if (!card) return;
+            
+            // Detectar doble click para zoom
+            const currentTime = Date.now();
+            const tapGap = currentTime - lastTapTime;
+            
+            if (tapGap < 300 && tapGap > 0 && card.classList.contains('active')) {
+                toggleZoom(card);
+                lastTapTime = 0;
+                return;
+            }
+            lastTapTime = currentTime;
+
+            // Drag normal del carrusel
+            if (isZoomed) return; // No navegar si está zoomed
+
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            lastX = e.clientX;
+            lastY = e.clientY;
             lastTime = Date.now();
             velocity = 0;
             dragOffset = 0;
@@ -835,6 +1370,33 @@
 
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
+            
+            // Prevenir drag nativo del navegador
+            e.preventDefault();
+            
+            // Guardar la última posición del mouse para mouseup
+            lastX = e.clientX;
+            lastY = e.clientY;
+            
+            if (isZoomed) {
+                // Pan mientras está zoomed
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                const newPanX = startPanX + deltaX;
+                const newPanY = startPanY + deltaY;
+                
+                const activeCard = document.querySelector('.gallery-card.active');
+                const img = activeCard?.querySelector('img');
+                if (img) {
+                    // Aplicar límites con resistencia elástica durante el drag para visual
+                    // pero NO sobrescribir panX/panY para mantener el tracking correcto
+                    const constrained = constrainPan(img, currentScale, newPanX, newPanY, true);
+                    
+                    img.style.transition = 'none';
+                    img.style.transform = `scale(${currentScale}) translate(${constrained.panX / currentScale}px, ${constrained.panY / currentScale}px)`;
+                }
+                return;
+            }
             
             const currentTime = Date.now();
             const deltaTime = currentTime - lastTime;
@@ -866,14 +1428,80 @@
             if (!isDragging) return;
             isDragging = false;
             galleryWrapper.style.cursor = 'grab';
+            
+            if (isZoomed) {
+                // Actualizar panX y panY con los valores finales después del drag
+                const deltaX = lastX - startX;
+                const deltaY = lastY - startY;
+                panX = startPanX + deltaX;
+                panY = startPanY + deltaY;
+                
+                // Animar de vuelta a los límites si está fuera
+                springBackAnimation();
+                return;
+            }
+            
             handleDragEnd();
         });
 
         // Touch events (Mobile)
         galleryWrapper.addEventListener('touchstart', (e) => {
+            // Si está zoomed, SIEMPRE buscar el card activo y permitir drag desde cualquier parte
+            if (isZoomed && e.touches.length === 1) {
+                const card = document.querySelector('.gallery-card.active');
+                if (card) {
+                    // Pan mientras está zoomed
+                    isDragging = true;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    lastX = e.touches[0].clientX;
+                    lastY = e.touches[0].clientY;
+                    startPanX = panX;
+                    startPanY = panY;
+                    
+                    // Quitar transición de la imagen para drag fluido
+                    const img = card.querySelector('img');
+                    if (img) img.style.transition = 'none';
+                    
+                    return;
+                }
+            }
+            
+            // Buscar el card para interacciones normales
+            let card = e.target.closest('.gallery-card');
+            if (!card) {
+                // Si es zoom pero no encontramos card, intentar con el activo
+                if (isZoomed) {
+                    card = document.querySelector('.gallery-card.active');
+                }
+                if (!card) return;
+            }
+            
+            // Detectar pinch (dos dedos)
+            if (e.touches.length === 2) {
+                handlePinchStart(e);
+                return;
+            }
+            
+            // Detectar doble tap para zoom
+            const currentTime = Date.now();
+            const tapGap = currentTime - lastTapTime;
+            
+            if (tapGap < 300 && tapGap > 0 && card.classList.contains('active')) {
+                toggleZoom(card);
+                lastTapTime = 0;
+                return;
+            }
+            lastTapTime = currentTime;
+
+            // Drag normal del carrusel
+            if (isZoomed) return;
+
             isDragging = true;
             startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
             lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
             lastTime = Date.now();
             velocity = 0;
             dragOffset = 0;
@@ -893,7 +1521,38 @@
         });
 
         galleryWrapper.addEventListener('touchmove', (e) => {
+            // Detectar pinch (dos dedos)
+            if (e.touches.length === 2) {
+                handlePinchMove(e);
+                return;
+            }
+            
             if (!isDragging) return;
+            
+            // Guardar la última posición del touch para touchend
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+            
+            if (isZoomed) {
+                // Pan mientras está zoomed
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = e.touches[0].clientY - startY;
+                const newPanX = startPanX + deltaX;
+                const newPanY = startPanY + deltaY;
+                
+                const activeCard = document.querySelector('.gallery-card.active');
+                const img = activeCard?.querySelector('img');
+                if (img) {
+                    // Aplicar límites con resistencia elástica durante el drag para visual
+                    // pero NO sobrescribir panX/panY para mantener el tracking correcto
+                    const constrained = constrainPan(img, currentScale, newPanX, newPanY, true);
+                    
+                    img.style.transition = 'none';
+                    img.style.transform = `scale(${currentScale}) translate(${constrained.panX / currentScale}px, ${constrained.panY / currentScale}px)`;
+                }
+                e.preventDefault();
+                return;
+            }
             
             const currentTime = Date.now();
             const deltaTime = currentTime - lastTime;
@@ -921,9 +1580,26 @@
             e.preventDefault();
         });
 
-        galleryWrapper.addEventListener('touchend', () => {
+        galleryWrapper.addEventListener('touchend', (e) => {
+            if (isPinching) {
+                handlePinchEnd(e);
+                return;
+            }
             if (!isDragging) return;
             isDragging = false;
+            
+            if (isZoomed) {
+                // Actualizar panX y panY con los valores finales después del drag
+                const deltaX = lastX - startX;
+                const deltaY = lastY - startY;
+                panX = startPanX + deltaX;
+                panY = startPanY + deltaY;
+                
+                // Animar de vuelta a los límites si está fuera
+                springBackAnimation();
+                return;
+            }
+            
             handleDragEnd();
         });
 
@@ -1177,7 +1853,75 @@
         // Fallback si alguna imagen tarda demasiado
         window.addEventListener('load', () => {
             setTimeout(hidePageLoader, 1500);
+            setupGalleryHoverEffects(); // Configurar efectos hover
         });
+        
+        // Prevenir drag nativo del navegador globalmente en las imágenes de galería
+        document.addEventListener('dragstart', (e) => {
+            if (e.target.closest('.gallery-wrapper') || e.target.closest('.gallery-container')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        document.addEventListener('drag', (e) => {
+            if (isZoomed || e.target.closest('.gallery-wrapper') || e.target.closest('.gallery-container')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Configurar efectos hover del cursor para gallery-cards
+        function setupGalleryHoverEffects() {
+            const observeCards = () => {
+                const cards = document.querySelectorAll('.gallery-card');
+                cards.forEach(card => {
+                    // Evitar agregar listeners duplicados
+                    if (card.dataset.hoverConfigured) return;
+                    card.dataset.hoverConfigured = 'true';
+                    
+                    card.addEventListener('mouseenter', (e) => {
+                        if (isZoomed) return; // No hover effect durante zoom
+                        
+                        // Activar efecto de cursor hover
+                        if (window.targetCenterDotScale !== undefined) {
+                            window.targetCenterDotScale = 1.6;
+                        }
+                        if (window.isHoveringElement !== undefined) {
+                            window.isHoveringElement = true;
+                        }
+                        
+                        // Efecto visual sutil en el card
+                        const currentFilter = card.style.filter || '';
+                        if (!currentFilter.includes('brightness')) {
+                            card.style.filter = currentFilter + ' brightness(1.05)';
+                        }
+                    });
+                    
+                    card.addEventListener('mouseleave', (e) => {
+                        // Desactivar efecto de cursor hover
+                        if (window.targetCenterDotScale !== undefined) {
+                            window.targetCenterDotScale = 1;
+                        }
+                        if (window.isHoveringElement !== undefined) {
+                            window.isHoveringElement = false;
+                        }
+                        
+                        // Restaurar filtro original (eliminar brightness hover)
+                        const currentFilter = card.style.filter || '';
+                        card.style.filter = currentFilter.replace(/brightness\([^)]*\)/g, '').trim();
+                    });
+                });
+            };
+            
+            // Observar cambios en el DOM para nuevas cards
+            observeCards();
+            const observer = new MutationObserver(observeCards);
+            const galleryTrack = document.querySelector('.gallery-track');
+            if (galleryTrack) {
+                observer.observe(galleryTrack, { childList: true, subtree: true });
+            }
+        }
 
         // Fade-in blanco al entrar
         window.addEventListener('load', function() {
