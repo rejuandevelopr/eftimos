@@ -1,5 +1,6 @@
 /**
  * Tooltip Nebula Effect - Dynamic grain/noise background that adapts to text size
+ * Optimized for mobile & low-end devices
  */
 
 class TooltipNebula {
@@ -9,7 +10,30 @@ class TooltipNebula {
         this.time = 0;
         this._paused = false;
         this._knownTooltips = new WeakSet(); // track tooltip elements we've already processed
+        this._particleSprites = null; // pre-rendered particle sprite cache
+        this._frameCount = 0; // for frame skipping
+
+        // Detect device capabilities once
+        this._isTouchDevice = (
+            (window.matchMedia && (window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches)) ||
+            ('ontouchstart' in window) ||
+            (navigator.maxTouchPoints > 0)
+        );
+        this._isLowEnd = this._detectLowEnd();
+        // Cap DPR: 1 on mobile/low-end, capped at 2 otherwise
+        this._dpr = this._isLowEnd ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+        // Frame skip: render every N frames on low-end (2 = 30fps effective)
+        this._frameSkip = this._isLowEnd ? 2 : 1;
+
         this.init();
+    }
+
+    _detectLowEnd() {
+        // Heuristic: touch device, or low core count, or low memory, or low devicePixelRatio with touch
+        if (this._isTouchDevice) return true;
+        if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) return true;
+        if (navigator.deviceMemory && navigator.deviceMemory <= 4) return true;
+        return false;
     }
 
     init() {
@@ -22,6 +46,9 @@ class TooltipNebula {
     }
 
     setup() {
+        // Pre-render particle sprite atlas for all glow sizes
+        this._buildParticleSpriteAtlas();
+
         // Setup hover detection via event delegation (works for dynamically cloned elements)
         this.setupHoverDimming();
 
@@ -45,6 +72,75 @@ class TooltipNebula {
         // Don't call animate() here — it will self-pause immediately.
         // Instead, animation is started on first hover via resumeIfNeeded().
         this._paused = true;
+    }
+
+    /**
+     * Pre-render particle glow sprites at discrete sizes into an offscreen atlas.
+     * Instead of creating a radialGradient per particle per frame, we drawImage() from this atlas.
+     * We render sprites at several quantized sizes; at draw time we pick the closest one.
+     */
+    _buildParticleSpriteAtlas() {
+        // Quantize glow sizes: particle.size ranges [0.4, 1.1], glowSize = size * 1.8 → [0.72, 1.98]
+        // We create sprites at integer-scaled sizes for fast lookup
+        const spriteResolution = this._isLowEnd ? 8 : 12; // px radius of largest sprite
+        const numSprites = 4; // 4 size buckets
+        const padding = 2;
+        const cellSize = (spriteResolution + padding) * 2;
+        const atlasWidth = cellSize * numSprites;
+        const atlasHeight = cellSize;
+
+        const atlas = document.createElement('canvas');
+        atlas.width = atlasWidth;
+        atlas.height = atlasHeight;
+        const actx = atlas.getContext('2d');
+
+        this._spriteAtlas = atlas;
+        this._spriteCells = [];
+
+        for (let i = 0; i < numSprites; i++) {
+            // Map i → glowSize in logical px
+            const t = i / (numSprites - 1); // 0..1
+            const glowSize = 0.72 + t * (1.98 - 0.72); // actual glow sizes
+            const renderRadius = spriteResolution * (0.4 + t * 0.6);
+
+            const cx = i * cellSize + cellSize / 2;
+            const cy = cellSize / 2;
+
+            // Draw a white radial gradient dot at full opacity — we modulate alpha via globalAlpha at draw time
+            const grad = actx.createRadialGradient(cx, cy, 0, cx, cy, renderRadius);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+            grad.addColorStop(0.6, 'rgba(240, 240, 240, 0.5)');
+            grad.addColorStop(1, 'rgba(220, 220, 220, 0)');
+
+            actx.fillStyle = grad;
+            actx.beginPath();
+            actx.arc(cx, cy, renderRadius, 0, Math.PI * 2);
+            actx.fill();
+
+            this._spriteCells.push({
+                sx: cx - renderRadius,
+                sy: cy - renderRadius,
+                sw: renderRadius * 2,
+                sh: renderRadius * 2,
+                renderRadius: renderRadius,
+                glowSize: glowSize
+            });
+        }
+    }
+
+    /**
+     * Pick the closest pre-rendered sprite for a given glowSize.
+     * Returns the sprite cell index.
+     */
+    _pickSprite(glowSize) {
+        const cells = this._spriteCells;
+        let best = 0;
+        let bestDist = Math.abs(cells[0].glowSize - glowSize);
+        for (let i = 1; i < cells.length; i++) {
+            const d = Math.abs(cells[i].glowSize - glowSize);
+            if (d < bestDist) { bestDist = d; best = i; }
+        }
+        return best;
     }
 
     setupHoverDimming() {
@@ -106,16 +202,10 @@ class TooltipNebula {
     }
 
     _setupMobileCenteredObserver(canvas) {
-        // Periodically check for mobile-centered items and sync nebula hover
-        const isTouchDevice = (
-            (window.matchMedia && (window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches)) ||
-            ('ontouchstart' in window) ||
-            (navigator.maxTouchPoints > 0)
-        );
-        if (!isTouchDevice) return;
+        // Use a MutationObserver instead of continuous RAF polling
+        if (!this._isTouchDevice) return;
 
-        let lastCentered = null;
-        const checkMobileCentered = () => {
+        const handleCenteredChange = () => {
             const centered = canvas.querySelector('.image-container.mobile-centered');
             if (centered) {
                 const link = centered.querySelector('.image-link, .video-link');
@@ -127,14 +217,40 @@ class TooltipNebula {
                     }
                     this.resumeIfNeeded();
                 }
-                lastCentered = centered;
-            } else if (lastCentered) {
-                this._hoveredLink = null;
-                lastCentered = null;
+            } else {
+                if (this._hoveredLink) {
+                    this._hoveredLink = null;
+                }
             }
-            requestAnimationFrame(checkMobileCentered);
         };
-        requestAnimationFrame(checkMobileCentered);
+
+        // MutationObserver watching for class attribute changes on .image-container elements
+        const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const target = mutation.target;
+                    if (target.classList && target.classList.contains('image-container')) {
+                        handleCenteredChange();
+                        return;
+                    }
+                }
+                // Also handle added/removed nodes that may carry mobile-centered
+                if (mutation.type === 'childList') {
+                    handleCenteredChange();
+                    return;
+                }
+            }
+        });
+
+        observer.observe(canvas, {
+            attributes: true,
+            attributeFilter: ['class'],
+            subtree: true,
+            childList: true
+        });
+
+        // Do a single initial check
+        handleCenteredChange();
     }
 
     /**
@@ -192,7 +308,7 @@ class TooltipNebula {
 
     updateCanvasSize(tooltipData) {
         const rect = tooltipData.element.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = this._dpr;
         
         // Padding asimétrico: horizontal amplio, vertical mínimo
         const paddingX = 24;
@@ -220,35 +336,40 @@ class TooltipNebula {
         const width = tooltipData.canvasWidth;
         const height = tooltipData.canvasHeight;
         
-        // Densidad muy alta con muchas partículas
-        const density = 1.8;
-        const particleCount = Math.min(Math.floor(width * height * density), 1200); // máximo 1200 partículas
+        // Reduce particle count on low-end devices
+        const density = this._isLowEnd ? 0.8 : 1.8;
+        const maxParticles = this._isLowEnd ? 400 : 1200;
+        const particleCount = Math.min(Math.floor(width * height * density), maxParticles);
         
         tooltipData.particles = [];
+
+        const centerX = width / 2;
+        const centerY = height / 2;
         
         for (let i = 0; i < particleCount; i++) {
             // Create particle concentrado horizontalmente (línea gruesa)
-            const centerX = width / 2;
-            const centerY = height / 2;
             
             // Distribución más amplia para cubrir más área del tooltip
             const xOffset = (Math.random() - 0.5) * width * 0.9; // casi todo el ancho
             const yOffset = (Math.random() - 0.5) * height * 1.4; // 140% de altura vertical
             
-            const distanceFromCenter = Math.sqrt(xOffset * xOffset + yOffset * yOffset);
             const angle = Math.atan2(yOffset, xOffset);
-            
+            const size = Math.random() * 0.7 + 0.4;
+            const glowSize = size * 1.8;
+
             tooltipData.particles.push({
                 x: centerX + xOffset,
                 y: centerY + yOffset,
                 baseX: centerX + xOffset,
                 baseY: centerY + yOffset,
-                size: Math.random() * 0.7 + 0.4, // tamaño ligeramente incrementado
+                size: size,
+                glowSize: glowSize,
+                spriteIdx: this._pickSprite(glowSize), // pre-computed sprite bucket
                 opacity: Math.random() * 0.6 + 0.8, // mayor opacidad
-                speed: Math.random() * 2 + 1,
                 angle: angle, // ángulo desde el centro
+                cosAngle: Math.cos(angle), // pre-computed
+                sinAngle: Math.sin(angle), // pre-computed
                 disperseSpeed: Math.random() * 0.4 + 0.2, // velocidad de dispersión
-                distanceFromCenter: distanceFromCenter,
                 wobbleSpeedX: Math.random() * 0.3 + 0.2,
                 wobbleSpeedY: Math.random() * 0.35 + 0.25,
                 wobbleAmount: Math.random() * 30 + 15, // amplitud reducida
@@ -259,17 +380,24 @@ class TooltipNebula {
 
     animate() {
         this.time += 0.06;
+        this._frameCount++;
+
+        // Frame skipping on low-end: compute positions but only render every N frames
+        const shouldRender = (this._frameCount % this._frameSkip) === 0;
 
         // Render the tooltip whose parent link is currently hovered
-        if (this._hoveredLink) {
-            this.tooltips.forEach(tooltipData => {
-                if (!tooltipData.initialized) return;
-                if (!tooltipData.element.isConnected) return;
+        if (this._hoveredLink && shouldRender) {
+            const tooltips = this.tooltips;
+            for (let i = 0, len = tooltips.length; i < len; i++) {
+                const tooltipData = tooltips[i];
+                if (!tooltipData.initialized) continue;
+                if (!tooltipData.element.isConnected) continue;
                 const parent = tooltipData.element.closest('.image-link, .video-link');
                 if (parent && parent === this._hoveredLink) {
                     this.renderNebula(tooltipData);
+                    break; // only one tooltip is hovered at a time
                 }
-            });
+            }
         }
 
         // Decide whether to keep running
@@ -290,87 +418,107 @@ class TooltipNebula {
     }
 
     renderNebula(tooltipData) {
-        const { ctx, canvas, particles, canvasWidth, canvasHeight } = tooltipData;
+        const { ctx, particles, canvasWidth, canvasHeight } = tooltipData;
         
         // Clear canvas - solo transparencia, sin fondo
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         
         const centerX = canvasWidth / 2;
         const centerY = canvasHeight / 2;
-        const maxRadius = Math.max(canvasWidth, canvasHeight) * 0.7;
+        const invWidthFade = 1 / (canvasWidth * 0.2);
+        const invHeightFade = 1 / (canvasHeight * 0.28);
+
+        const time = this.time;
+        const atlas = this._spriteAtlas;
+        const cells = this._spriteCells;
+        const isLowEnd = this._isLowEnd;
         
-        // Draw particles - optimizado
-        particles.forEach(particle => {
-            // Dispersión radial hacia el centro (como si se absorbieran hacia el texto)
-            const disperseOffset = Math.sin(this.time * particle.disperseSpeed) * 15;
-            const disperseX = Math.cos(particle.angle) * disperseOffset * -1; // invertido
-            const disperseY = Math.sin(particle.angle) * disperseOffset * -1; // invertido
+        // Draw particles - optimizado con sprite atlas
+        for (let i = 0, len = particles.length; i < len; i++) {
+            const particle = particles[i];
+
+            // Dispersión radial hacia el centro
+            const disperseOffset = Math.sin(time * particle.disperseSpeed) * 15;
+            const disperseX = particle.cosAngle * disperseOffset * -1;
+            const disperseY = particle.sinAngle * disperseOffset * -1;
             
-            // Movimiento agresivo tipo ruido blanco - múltiples frecuencias
-            const wobbleX = Math.sin(this.time * particle.wobbleSpeedX + particle.phase) * particle.wobbleAmount +
-                          Math.sin(this.time * particle.wobbleSpeedX * 3.7) * (particle.wobbleAmount * 0.3) +
-                          Math.sin(this.time * particle.wobbleSpeedX * 7.2) * (particle.wobbleAmount * 0.15);
+            // Movimiento tipo ruido blanco — reduced to 2 frequencies on low-end
+            const tWx = time * particle.wobbleSpeedX;
+            const tWy = time * particle.wobbleSpeedY;
+            const phase = particle.phase;
+            const wAmt = particle.wobbleAmount;
+
+            let wobbleX, wobbleY;
+            if (isLowEnd) {
+                // 2 frequencies instead of 3 — saves ~33% trig calls
+                wobbleX = Math.sin(tWx + phase) * wAmt +
+                          Math.sin(tWx * 3.7) * (wAmt * 0.3);
+                wobbleY = Math.cos(tWy + phase) * wAmt +
+                          Math.cos(tWy * 4.1) * (wAmt * 0.3);
+            } else {
+                wobbleX = Math.sin(tWx + phase) * wAmt +
+                          Math.sin(tWx * 3.7) * (wAmt * 0.3) +
+                          Math.sin(tWx * 7.2) * (wAmt * 0.15);
+                wobbleY = Math.cos(tWy + phase) * wAmt +
+                          Math.cos(tWy * 4.1) * (wAmt * 0.3) +
+                          Math.cos(tWy * 8.5) * (wAmt * 0.15);
+            }
             
-            const wobbleY = Math.cos(this.time * particle.wobbleSpeedY + particle.phase) * particle.wobbleAmount +
-                          Math.cos(this.time * particle.wobbleSpeedY * 4.1) * (particle.wobbleAmount * 0.3) +
-                          Math.cos(this.time * particle.wobbleSpeedY * 8.5) * (particle.wobbleAmount * 0.15);
+            const px = particle.baseX + wobbleX + disperseX;
+            const py = particle.baseY + wobbleY + disperseY;
             
-            particle.x = particle.baseX + wobbleX + disperseX;
-            particle.y = particle.baseY + wobbleY + disperseY;
-            
-            // Pulsación rápida y errática
-            const pulseOpacity = particle.opacity * (0.5 + 
-                Math.sin(this.time * 4 + particle.angle) * 0.3 +
-                Math.sin(this.time * 9.3 + particle.phase) * 0.2);
-            
-            // Calculate distance from center for fading suave - fade elíptico horizontal
-            const dx = particle.x - centerX;
-            const dy = particle.y - centerY;
-            
-            // Distancia elíptica: estrecha horizontalmente, amplia verticalmente
-            const normalizedDx = dx / (canvasWidth * 0.2); // área limpia estrecha horizontal
-            const normalizedDy = dy / (canvasHeight * 0.28); // área limpia vertical ligeramente reducida
+            // Fade elíptico — calculate distance from center
+            const dx = px - centerX;
+            const dy = py - centerY;
+            const normalizedDx = dx * invWidthFade;
+            const normalizedDy = dy * invHeightFade;
             const ellipticalDist = Math.sqrt(normalizedDx * normalizedDx + normalizedDy * normalizedDy);
             
-            // Fade con área visible expandida y espacio central sin partículas
+            // Fast fade calculation
             let distanceFade;
-            
             if (ellipticalDist < 1.1) {
-                // Centro muy amplio reservado para texto: sin partículas
                 distanceFade = 0;
             } else if (ellipticalDist < 1.3) {
-                // Transición gradual: opacidad aumenta hacia los bordes
-                const fadeProgress = (ellipticalDist - 1.1) / 0.2;
-                distanceFade = fadeProgress * 0.4; // Máximo 40% en esta zona
+                distanceFade = ((ellipticalDist - 1.1) * 5) * 0.4; // (x-1.1)/0.2 = (x-1.1)*5
             } else if (ellipticalDist < 1.6) {
-                // Bordes: máxima opacidad
-                const fadeProgress = (ellipticalDist - 1.3) / 0.3;
-                distanceFade = 0.4 + (fadeProgress * 0.6); // De 40% a 100%
+                distanceFade = 0.4 + (((ellipticalDist - 1.3) * 3.333) * 0.6); // (x-1.3)/0.3
             } else if (ellipticalDist < 1.9) {
-                // Transición hacia invisible en los límites extremos
-                const fadeProgress = (ellipticalDist - 1.6) / 0.3;
-                distanceFade = 1 - fadeProgress;
+                distanceFade = 1 - ((ellipticalDist - 1.6) * 3.333); // (x-1.6)/0.3
             } else {
-                // Fuera del rango: invisible
                 distanceFade = 0;
             }
             
-            // Partículas blancas con mínimo blur
-            const glowSize = particle.size * 1.8; // glow muy reducido
-            const glowGradient = ctx.createRadialGradient(
-                particle.x, particle.y, 0,
-                particle.x, particle.y, glowSize
+            // Skip invisible particles early
+            if (distanceFade < 0.01) continue;
+
+            // Pulsación rápida y errática (reduced on low-end)
+            let pulseOpacity;
+            if (isLowEnd) {
+                pulseOpacity = particle.opacity * (0.5 +
+                    Math.sin(time * 4 + particle.angle) * 0.4);
+            } else {
+                pulseOpacity = particle.opacity * (0.5 + 
+                    Math.sin(time * 4 + particle.angle) * 0.3 +
+                    Math.sin(time * 9.3 + phase) * 0.2);
+            }
+
+            const finalAlpha = pulseOpacity * distanceFade;
+            if (finalAlpha < 0.01) continue;
+
+            // Draw using pre-rendered sprite from atlas
+            const cell = cells[particle.spriteIdx];
+            const drawSize = particle.glowSize * 2;
+
+            ctx.globalAlpha = finalAlpha;
+            ctx.drawImage(
+                atlas,
+                cell.sx, cell.sy, cell.sw, cell.sh,
+                px - particle.glowSize, py - particle.glowSize, drawSize, drawSize
             );
-            // Tonos blancos con buena opacidad
-            glowGradient.addColorStop(0, `rgba(255, 255, 255, ${pulseOpacity * distanceFade * 0.95})`);
-            glowGradient.addColorStop(0.6, `rgba(240, 240, 240, ${pulseOpacity * distanceFade * 0.5})`);
-            glowGradient.addColorStop(1, 'rgba(220, 220, 220, 0)');
-            
-            ctx.fillStyle = glowGradient;
-            ctx.beginPath();
-            ctx.arc(particle.x, particle.y, glowSize, 0, Math.PI * 2);
-            ctx.fill();
-        });
+        }
+
+        // Reset globalAlpha
+        ctx.globalAlpha = 1;
     }
 
     observeTooltips() {

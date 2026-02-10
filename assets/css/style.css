@@ -35,8 +35,14 @@ body.preloader-active nav.blending-item *:not(input):not(textarea):not(select) {
 
 body:not(.preloader-active) nav.blending-item {
     opacity: 1;
-    pointer-events: auto;
+    pointer-events: auto !important;
     transition: opacity 0.7s cubic-bezier(.77, 0, .18, 1);
+}
+
+/* Ensure nav children are interactive after preloader */
+body:not(.preloader-active) nav.blending-item .menu-toggle,
+body:not(.preloader-active) nav.blending-item .logo {
+    pointer-events: auto !important;
 }
 
 /* --- Preloader toggles y notificación en margen inferior --- */
@@ -994,7 +1000,8 @@ nav {
     background: transparent;
     z-index: 200000 !important;
     padding: 10px 0;
-    isolation: isolate;
+    /* isolation: isolate — REMOVED: breaks mix-blend-mode:difference on iOS Safari
+       by sealing the blending group against a transparent background */
     touch-action: auto;
     -webkit-tap-highlight-color: transparent;
 }
@@ -1618,16 +1625,20 @@ body.visual-effects-disabled .blending-item {
     mix-blend-mode: normal;
 }
 
-/* iOS Safari: mix-blend-mode: difference blocks touch events on the nav.
-   Disable it on touch devices and invert children individually instead. */
+/* iOS Safari: mix-blend-mode: difference on a parent <nav> blocks touch events.
+   On touch devices we keep mix-blend-mode: difference on the <nav> itself
+   (it does NOT block touches as long as isolation/contain are not set).
+   We force pointer-events on interactive children for safety. */
 @media (hover: none) and (pointer: coarse) {
     nav.blending-item {
-        mix-blend-mode: normal;
-        isolation: auto;
+        mix-blend-mode: difference;
+        isolation: auto !important;
+        contain: none !important;
         -webkit-transform: translateZ(0);
         transform: translateZ(0);
         touch-action: auto !important;
         -webkit-tap-highlight-color: transparent;
+        pointer-events: auto !important;
     }
     nav.blending-item .nav-container {
         touch-action: auto !important;
@@ -1637,21 +1648,20 @@ body.visual-effects-disabled .blending-item {
         touch-action: manipulation !important;
         pointer-events: auto !important;
         -webkit-tap-highlight-color: transparent;
+        position: relative;
+        z-index: 210001;
     }
     nav.blending-item .menu-toggle span {
-        mix-blend-mode: difference;
         pointer-events: none;
     }
     nav.blending-item .logo {
         touch-action: manipulation !important;
         pointer-events: auto !important;
+        position: relative;
+        z-index: 210001;
     }
     nav.blending-item .logo img {
-        mix-blend-mode: difference;
         pointer-events: none;
-    }
-    nav.blending-item .menu-toggle.active span {
-        mix-blend-mode: normal;
     }
 }
 
@@ -2751,9 +2761,8 @@ body.visual-effects-disabled .volume-slider {
         contain: layout style;
     }
 
-    nav {
-        contain: layout style;
-    }
+    /* nav contain: layout style — REMOVED: breaks iOS Safari touch hit-testing
+       on position:fixed elements. Nav is lightweight, no perf benefit. */
 
     body.menu-open nav .logo img {
         filter: invert(1) brightness(0) !important;
