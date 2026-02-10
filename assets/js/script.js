@@ -51,9 +51,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Mostrar solo en la primera visita
     if (localStorage.getItem('eftimosPreloaderShown')) {
-        preloader.style.display = 'none';
+        // Preloader already hidden by inline <script> in <head> (html.preloader-done).
+        // Just set up state and return.
         document.body.classList.remove('preloader-active');
-        // Mostrar hamburguesa inmediatamente
         var menuToggle = document.getElementById('menuToggle');
         if (menuToggle) {
             menuToggle.style.opacity = '1';
@@ -900,6 +900,8 @@ function updateImagePositions() {
                 tooltip.style.transform = 'translateX(-50%) scale(1)';
                 tooltip.style.display = 'inline-block';
                 element.classList.add('mobile-centered');
+                // Drive ::after shadow opacity via CSS custom property (CSS transition handles smoothness)
+                element.style.setProperty('--shadow-opacity', '1');
                 if (imgTag) {
                     imgTag.style.filter = 'none';
                     imgTag.style.webkitFilter = 'none';
@@ -911,6 +913,8 @@ function updateImagePositions() {
                 tooltip.style.transform = '';
                 tooltip.style.display = '';
                 element.classList.remove('mobile-centered');
+                // Fade out shadow smoothly via CSS transition
+                element.style.setProperty('--shadow-opacity', '0');
                 if (imgTag) {
                     imgTag.style.filter = 'grayscale(1)';
                     imgTag.style.webkitFilter = 'grayscale(1)';

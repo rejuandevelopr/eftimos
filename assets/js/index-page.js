@@ -54,6 +54,35 @@ document.addEventListener('DOMContentLoaded', function () {
     }, { passive: true });
 });
 
+// --- LOGO CLICK: WHITE FADE TRANSITION TO INDEX ---
+document.addEventListener('DOMContentLoaded', function () {
+    var logoLink = document.querySelector('a.logo.shared-logo');
+    if (!logoLink) return;
+
+    logoLink.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        // Fade out ambient sounds
+        if (typeof window.fadeOutAmbientSounds === 'function') {
+            window.fadeOutAmbientSounds(250);
+        }
+
+        // Create white overlay
+        var overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;background:#fff;z-index:2147483647;pointer-events:auto;opacity:0;transition:opacity 0.35s cubic-bezier(.77,0,.18,1)';
+        document.body.appendChild(overlay);
+
+        // Force reflow then fade in
+        void overlay.offsetWidth;
+        overlay.style.opacity = '1';
+
+        // Navigate after fade completes
+        setTimeout(function () {
+            window.location.href = logoLink.href;
+        }, 350);
+    });
+});
+
 // --- WHISPERS SOUND LOGIC ---
 (function () {
     var whispersSound = document.getElementById('whispersSound');
@@ -249,6 +278,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (preloaderShown) {
                 window.preloaderEnterPressed = true;
+                // Safety: if intro zoom doesn't run, lift the CSS cover after 1.5s
+                setTimeout(function() {
+                    if (!document.documentElement.classList.contains('cover-lifted')) {
+                        document.documentElement.classList.add('cover-lifted');
+                        setTimeout(function() { document.documentElement.classList.add('cover-removed'); }, 500);
+                    }
+                }, 1500);
             } else {
                 var enterBtn = document.getElementById('preloaderEnterBtn');
                 if (enterBtn) {
@@ -428,7 +464,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var targetElement = mapGroup || canvas;
 
         var preloader = document.getElementById('preloader');
-        if (preloader && preloader.style.display !== 'none') {
+        var isCoverOnly = preloader && preloader.getAttribute('data-cover-only') === '1';
+        var isPreloaderDone = document.documentElement.classList.contains('preloader-done');
+        if (preloader && preloader.style.display !== 'none' && !isCoverOnly && !isPreloaderDone) {
             setTimeout(function () { triggerIntroZoomFromReferrer(eventType); }, 200);
             return;
         }
@@ -442,10 +480,22 @@ document.addEventListener('DOMContentLoaded', function () {
             isAnimating = true;
             lastAnimationTime = Date.now();
 
+            // Ensure background content is visible behind the overlay
+            var vb = document.getElementById('videos-background');
+            var gc = document.getElementById('grainCanvas');
+            if (vb) { vb.style.visibility = ''; vb.style.opacity = '1'; }
+            if (gc) { gc.style.visibility = ''; gc.style.opacity = '1'; }
+
             var wasHandheldActive = typeof window.freezeHandheldCamera === 'function';
             if (wasHandheldActive) {
                 window.freezeHandheldCamera();
             }
+
+            // Check if the preloader was skipped (returning visit)
+            var coverPreloader = document.getElementById('preloader');
+            var fromCover = document.documentElement.classList.contains('preloader-done')
+                || (coverPreloader && coverPreloader.getAttribute('data-cover-only') === '1'
+                    && coverPreloader.style.display !== 'none');
 
             var overlay = document.createElement('div');
             Object.assign(overlay.style, {
@@ -454,10 +504,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 background: '#fff',
                 zIndex: '2147483646',
                 pointerEvents: 'none',
-                opacity: '0.85',
+                opacity: fromCover ? '1' : '0.85',
                 transition: 'opacity ' + DURATION + 'ms ' + EASING
             });
             document.body.appendChild(overlay);
+
+            // Lift the CSS cover — the overlay now takes over
+            document.documentElement.classList.add('cover-lifted');
+            setTimeout(function() { document.documentElement.classList.add('cover-removed'); }, 500);
+
+            // If transitioning from the preloader cover, hide it now — the overlay takes over seamlessly
+            if (coverPreloader && coverPreloader.getAttribute('data-cover-only') === '1') {
+                coverPreloader.style.display = 'none';
+                coverPreloader.style.visibility = 'hidden';
+                coverPreloader.removeAttribute('data-cover-only');
+            }
 
             var originX = '50%', originY = '50%';
             try {

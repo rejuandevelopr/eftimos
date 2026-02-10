@@ -29,13 +29,19 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luxurious+Script&family=Herr+Von+Muellerhoff&family=Romanesco&family=Tangerine:wght@400;700&family=Ballet&display=swap"></noscript>
 
     <!-- Critical CSS (inline for instant preloader render) -->
+    <script>if(localStorage.getItem('eftimosPreloaderShown')){document.documentElement.classList.add('preloader-done')}</script>
     <style>
         @font-face{font-family:'Helvetica Neue Condensed Bold';src:url('assets/fonts/Helvetica-Neue-Condensed-Bold.ttf') format('truetype');font-display:swap}
         @font-face{font-family:'Helvetica';src:url('assets/fonts/Helvetica.ttf') format('truetype');font-weight:400;font-display:swap}
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{width:100%;height:100%;overflow:hidden;overscroll-behavior:none}
         body{background:#F0F0F0;font-family:'Helvetica Neue Condensed Bold','Helvetica',sans-serif;overflow:hidden;position:relative}
-        .preloader{position:fixed;inset:0;width:100vw;height:100vh;min-width:100vw;min-height:100vh;background:#fff!important;z-index:50000!important;display:flex;align-items:center;justify-content:center;opacity:1}
+        html.preloader-done body{background:#fff}
+        html.preloader-done .preloader{display:none!important}
+        html.preloader-done::after{content:'';position:fixed;inset:0;background:#fff;z-index:2147483647;pointer-events:none}
+        html.preloader-done.cover-lifted::after{opacity:0;transition:opacity 0.4s ease;pointer-events:none}
+        html.cover-removed::after{display:none!important}
+        .preloader{position:fixed;inset:0;width:100vw;height:100vh;min-width:100vw;min-height:100vh;background:#fff!important;z-index:250000!important;display:flex;align-items:center;justify-content:center;opacity:1}
         .preloader-content{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:400px;padding:0 20px}
         .preloader-logo{display:flex;justify-content:center;align-items:center}
         .preloader-logo img{width:280px;height:auto;opacity:0;animation:logoFadeIn 1.2s ease forwards}
@@ -59,6 +65,7 @@
         .preloader-enter-btn.show{opacity:1;pointer-events:auto}
         .preloader-enter-btn:disabled{cursor:not-allowed;opacity:0.4}
         body.preloader-active nav.blending-item{opacity:0!important;pointer-events:none!important;visibility:hidden!important}
+        nav.blending-item{opacity:0}
         @media(max-width:600px){.preloader-sober{max-width:98vw;padding:1.2rem 0.5rem;border-radius:0}.preloader-logo img{width:80px}.preloader-bar-bg{height:10px}.preloader-bar-text{font-size:0.95rem}}
     </style>
     <!-- Full CSS (async, non-render-blocking) -->
@@ -68,7 +75,7 @@
 
 <body class="canvas-body index-page">
     <!-- PRELOADER -->
-    <div id="preloader" class="preloader" style="z-index:1000; position:fixed; inset:0; background:#fff;">
+    <div id="preloader" class="preloader" style="z-index:250000; position:fixed; inset:0; background:#fff;">
         <div class="preloader-content preloader-sober">
             <!-- Logo de la marca -->
             <div class="preloader-logo">
@@ -83,7 +90,8 @@
             </div>
             <div class="preloader-toggles-bottom">
                 <div class="sidebar-control-buttons">
-                    <button class="sidebar-control-btn" id="preloaderVisualToggle" title="Toggle Visual Effects">
+                    <!-- Visual Effects toggle disabled (hidden, not deleted) -->
+                    <button class="sidebar-control-btn" id="preloaderVisualToggle" title="Toggle Visual Effects" style="display:none;">
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -179,7 +187,8 @@
             <!-- Control Icons in Sidebar -->
             <div class="sidebar-controls">
                 <div class="sidebar-control-buttons">
-                    <button class="sidebar-control-btn" id="visualToggle" title="Toggle Visual Effects">
+                    <!-- Visual Effects toggle disabled (hidden, not deleted) -->
+                    <button class="sidebar-control-btn" id="visualToggle" title="Toggle Visual Effects" style="display:none;">
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <!-- Icono de ojo abierto -->
