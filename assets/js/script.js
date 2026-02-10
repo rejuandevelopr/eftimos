@@ -497,7 +497,7 @@ const minVelocity = 0.1;
 
 window.scale = 1;
 window.targetScale = 1;
-window.minScale = 0.4;
+window.minScale = 0.6;
 window.maxScale = 1.2;
 window.zoomSpeed = 0.1;
 window.zoomSmoothness = 0.15;
@@ -756,9 +756,9 @@ function updateImagePositions() {
     const blurThreshold = blurRadiusScaled;
 
     const len = images.length;
-    // Fade out trail once per frame (not per image)
-    if (window.fadeOutTrail) window.fadeOutTrail();
-    if (window.smoothClearTrail) window.smoothClearTrail();
+    // Trail fade is handled by cursor-effect.js animation loop.
+    // Do NOT call smoothClearTrail/fadeOutTrail here — this runs every frame
+    // and would spawn dozens of concurrent fade animations causing flicker.
 
     for (let i = 0; i < len; i++) {
         const img = images[i];

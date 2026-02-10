@@ -7,6 +7,8 @@ class TooltipNebula {
         this.tooltips = [];
         this.animationId = null;
         this.time = 0;
+        this._paused = false;
+        this._knownTooltips = new WeakSet(); // track tooltip elements we've already processed
         this.init();
     }
 
@@ -20,14 +22,8 @@ class TooltipNebula {
     }
 
     setup() {
-        // Find all tooltips and create canvas for each
-        this.createCanvasForTooltips();
-        
-        // Setup hover dimming effect
+        // Setup hover detection via event delegation (works for dynamically cloned elements)
         this.setupHoverDimming();
-        
-        // Start animation loop
-        this.animate();
 
         // Pause/resume on tab visibility
         const self = this;
@@ -40,74 +36,102 @@ class TooltipNebula {
             }
         });
 
-        // Observe for new tooltips (if dynamically added)
+        // Observe for new tooltips (dynamically cloned from templates)
         this.observeTooltips();
+
+        // Initial scan (may find tooltips already in DOM)
+        this.scanForNewTooltips();
+
+        // Don't call animate() here — it will self-pause immediately.
+        // Instead, animation is started on first hover via resumeIfNeeded().
+        this._paused = true;
     }
 
     setupHoverDimming() {
-        // Get the canvas container
+        // Use mouseover/mouseout (which bubble!) for event delegation on #canvas
         const canvas = document.getElementById('canvas');
         if (!canvas) return;
-        
-        // Add event listeners to all image-link and video-link elements
-        const links = document.querySelectorAll('.image-link, .video-link');
-        
-        links.forEach(link => {
-            const container = link.closest('.image-container');
-            
-            link.addEventListener('mouseenter', () => {
-                canvas.classList.add('has-hover');
-                if (container) {
-                    container.classList.add('is-hovered');
+
+        this._hoveredLink = null;
+
+        canvas.addEventListener('mouseover', (e) => {
+            const mapItem = e.target.closest('.image-link, .video-link');
+            if (mapItem && mapItem !== this._hoveredLink) {
+                this._hoveredLink = mapItem;
+                // Lazy-initialize the tooltip if needed
+                const tooltip = mapItem.querySelector('.tooltip');
+                if (tooltip) {
+                    this.initializeTooltip(tooltip);
                 }
-                // Resume nebula animation if it was paused
+                // Resume nebula animation
                 this.resumeIfNeeded();
-            });
-            
-            link.addEventListener('mouseleave', () => {
-                canvas.classList.remove('has-hover');
-                if (container) {
-                    container.classList.remove('is-hovered');
-                }
-            });
+            }
         });
+
+        canvas.addEventListener('mouseout', (e) => {
+            if (!this._hoveredLink) return;
+            const related = e.relatedTarget;
+            // Only clear hover if cursor left the link entirely (not moving to a child)
+            if (!related || !this._hoveredLink.contains(related)) {
+                this._hoveredLink = null;
+            }
+        });
+
+        // Mobile support: resume on touch
+        canvas.addEventListener('touchstart', (e) => {
+            const mapItem = e.target.closest('.image-link, .video-link');
+            if (mapItem) {
+                this._hoveredLink = mapItem;
+                const tooltip = mapItem.querySelector('.tooltip');
+                if (tooltip) {
+                    this.initializeTooltip(tooltip);
+                }
+                this.resumeIfNeeded();
+            }
+        }, { passive: true });
+
+        canvas.addEventListener('touchend', () => {
+            this._hoveredLink = null;
+        }, { passive: true });
     }
 
-    createCanvasForTooltips() {
-        const tooltips = document.querySelectorAll('.tooltip');
-        
-        tooltips.forEach(tooltip => {
-            // Skip if already has canvas
-            if (tooltip.querySelector('.nebula-canvas')) return;
+    /**
+     * Scan the DOM for tooltip elements we haven't processed yet,
+     * create canvas + tracking data for each.
+     */
+    scanForNewTooltips() {
+        const allTooltips = document.querySelectorAll('#canvas .tooltip');
 
-            // Create canvas element
-            const canvas = document.createElement('canvas');
-            canvas.className = 'nebula-canvas';
-            
-            // Insert canvas as first child
-            tooltip.insertBefore(canvas, tooltip.firstChild);
+        allTooltips.forEach(tooltip => {
+            // Skip if we already track this exact element
+            if (this._knownTooltips.has(tooltip)) return;
+            this._knownTooltips.add(tooltip);
 
-            const ctx = canvas.getContext('2d', { 
+            // If it was cloned from a template it may already have a nebula-canvas;
+            // remove the stale one so we create a fresh, properly wired canvas.
+            const staleCanvas = tooltip.querySelector('.nebula-canvas');
+            if (staleCanvas) staleCanvas.remove();
+
+            // Create a new canvas
+            const canvasEl = document.createElement('canvas');
+            canvasEl.className = 'nebula-canvas';
+            tooltip.insertBefore(canvasEl, tooltip.firstChild);
+
+            const ctx = canvasEl.getContext('2d', {
                 alpha: true,
-                desynchronized: true, // mejor rendimiento
+                desynchronized: true,
                 willReadFrequently: false
             });
-            
-            // Store tooltip data
-            this.tooltips.push({
-                element: tooltip,
-                canvas: canvas,
-                ctx: ctx,
-                particles: []
-            });
 
-            // Initialize on first hover
-            const parent = tooltip.closest('.image-link, .video-link');
-            if (parent) {
-                parent.addEventListener('mouseenter', () => {
-                    this.initializeTooltip(tooltip);
-                }, { once: true });
-            }
+            const tooltipData = {
+                element: tooltip,
+                canvas: canvasEl,
+                ctx: ctx,
+                particles: [],
+                initialized: false
+            };
+
+            this.tooltips.push(tooltipData);
         });
     }
 
@@ -193,36 +217,34 @@ class TooltipNebula {
 
     animate() {
         this.time += 0.06;
-        
-        let hasVisibleTooltip = false;
-        
-        this.tooltips.forEach(tooltipData => {
-            if (!tooltipData.initialized) return;
-            
-            // Check if tooltip is visible
-            const opacity = parseFloat(window.getComputedStyle(tooltipData.element).opacity);
-            if (opacity > 0) {
-                hasVisibleTooltip = true;
-                this.renderNebula(tooltipData);
-            }
-        });
 
-        // Only continue loop if there are visible tooltips or page is visible
-        if (document.hidden) return;
-        if (!hasVisibleTooltip) {
+        // Render the tooltip whose parent link is currently hovered
+        if (this._hoveredLink) {
+            this.tooltips.forEach(tooltipData => {
+                if (!tooltipData.initialized) return;
+                if (!tooltipData.element.isConnected) return;
+                const parent = tooltipData.element.closest('.image-link, .video-link');
+                if (parent && parent === this._hoveredLink) {
+                    this.renderNebula(tooltipData);
+                }
+            });
+        }
+
+        // Decide whether to keep running
+        if (document.hidden || !this._hoveredLink) {
             this._paused = true;
+            this.animationId = null;
             return;
         }
-        this._paused = false;
         this.animationId = requestAnimationFrame(() => this.animate());
     }
 
-    // Resume animation loop when a tooltip becomes visible
+    // Resume animation loop when a link is hovered
     resumeIfNeeded() {
-        if (this._paused && !document.hidden) {
-            this._paused = false;
-            this.animationId = requestAnimationFrame(() => this.animate());
-        }
+        if (!this._paused || document.hidden) return;
+        this._paused = false;
+        if (this.animationId) cancelAnimationFrame(this.animationId);
+        this.animationId = requestAnimationFrame(() => this.animate());
     }
 
     renderNebula(tooltipData) {
@@ -310,25 +332,30 @@ class TooltipNebula {
     }
 
     observeTooltips() {
-        // Observe for dynamically added tooltips
+        // Watch #canvas for new .image-container elements (cloned from templates)
+        const canvasEl = document.getElementById('canvas');
+        const target = canvasEl || document.body;
+
         const observer = new MutationObserver((mutations) => {
-            mutations.forEach(mutation => {
-                mutation.addedNodes.forEach(node => {
-                    if (node.nodeType === 1) {
-                        if (node.classList && node.classList.contains('tooltip')) {
-                            this.createCanvasForTooltips();
-                        } else if (node.querySelectorAll) {
-                            const tooltips = node.querySelectorAll('.tooltip');
-                            if (tooltips.length > 0) {
-                                this.createCanvasForTooltips();
-                            }
-                        }
+            let needsScan = false;
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType !== 1) continue;
+                    if ((node.classList && node.classList.contains('tooltip')) ||
+                        (node.querySelector && node.querySelector('.tooltip'))) {
+                        needsScan = true;
+                        break;
                     }
-                });
-            });
+                }
+                if (needsScan) break;
+            }
+            if (needsScan) {
+                // Defer slightly so the cloned elements are fully in the DOM
+                requestAnimationFrame(() => this.scanForNewTooltips());
+            }
         });
 
-        observer.observe(document.body, {
+        observer.observe(target, {
             childList: true,
             subtree: true
         });

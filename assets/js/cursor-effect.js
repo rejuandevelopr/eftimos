@@ -1,6 +1,9 @@
 // Limpieza suave del trail canvas al hacer zoom
+// Guarded against concurrent calls — only one fade animation can run at a time
 window.smoothClearTrail = function (duration = 400) {
   if (!window.trailCanvas || !window.trailCtx) return;
+  if (window._smoothClearRunning) return; // prevent stacking
+  window._smoothClearRunning = true;
   const ctx = window.trailCtx;
   const canvas = window.trailCanvas;
   const start = performance.now();
@@ -13,6 +16,8 @@ window.smoothClearTrail = function (duration = 400) {
     ctx.globalCompositeOperation = 'source-over';
     if (t < 1) {
       requestAnimationFrame(fadeStep);
+    } else {
+      window._smoothClearRunning = false;
     }
   }
   requestAnimationFrame(fadeStep);
@@ -450,10 +455,6 @@ function animateCursor() {
     document.body.classList.remove('show-default-cursor');
   }
 
-  const delayFactor = 0.3;
-  smoothPos.x += (mouse.x - smoothPos.x) * delayFactor;
-  smoothPos.y += (mouse.y - smoothPos.y) * delayFactor;
-
   // FPS throttling for cursor animation (60 FPS max on desktop)
   if (!window._lastCursorFrame) window._lastCursorFrame = 0;
   const now = performance.now();
@@ -465,6 +466,11 @@ function animateCursor() {
     return;
   }
   window._lastCursorFrame = now;
+
+  // Update smoothPos AFTER throttle to avoid frame-rate-dependent trail jumps
+  const delayFactor = 0.3;
+  smoothPos.x += (mouse.x - smoothPos.x) * delayFactor;
+  smoothPos.y += (mouse.y - smoothPos.y) * delayFactor;
   // Update center dot position + scale via single transform (avoids layout thrash)
   var _cdScale = (window._cdScale || 1);
   _cdScale += (targetCenterDotScale - _cdScale) * 0.15;
@@ -518,7 +524,16 @@ function animateCursor() {
       trailCtx.fillStyle = 'rgba(0, 0, 0, 0.10)';
       trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
     } else {
-      const fadeAlpha = 0.03;
+      // Fade acelerado: empieza lento, luego se acelera exponencialmente.
+      // El trail se desvanece continuamente, incluso con movimiento (más lento).
+      if (!window._trailFadeAccel) window._trailFadeAccel = 0;
+      if (smoothedSpeedIntensity > 0.05 || isHoveringMapItem) {
+        window._trailFadeAccel += 0.3; // sigue acelerando pero más lento con movimiento
+      } else {
+        window._trailFadeAccel += 1; // acelera normal sin movimiento
+      }
+      // 0.003 base + curva cuadrática → lingere ~1s, luego desaparece rápido
+      const fadeAlpha = 0.003 + Math.min(0.12, window._trailFadeAccel * window._trailFadeAccel * 0.000025);
       trailCtx.fillStyle = `rgba(0, 0, 0, ${fadeAlpha})`;
       trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
     }
@@ -533,6 +548,21 @@ function animateCursor() {
 
   // --- Trail logic (desktop only, if enabled) ---
   if (!isMobile && window.visualEffectsEnabled !== false) {
+    // Debounce hover state: stay "hovering" for a few frames after mouseleave
+    // to prevent flicker when moving between adjacent map elements
+    if (!window._hoverDebounceFrames) window._hoverDebounceFrames = 0;
+    if (isHoveringMapItem) {
+      window._effectiveHover = true;
+      window._hoverDebounceFrames = 10; // hold hover for 10 frames (~166ms)
+    } else {
+      if (window._hoverDebounceFrames > 0) {
+        window._hoverDebounceFrames--;
+      } else {
+        window._effectiveHover = false;
+      }
+    }
+    const effectiveHover = !!window._effectiveHover;
+
     let targetTrailX, targetTrailY;
     let interp = 0.15;
     // Inverse trail for drag
@@ -604,7 +634,7 @@ function animateCursor() {
       // Suavizar transiciones entre estados con interpolación más lenta
       if (!window._trailInterp) window._trailInterp = 0.06;
       
-      if (isHoveringMapItem) {
+      if (effectiveHover) {
         targetTrailX = (mouse.x + hoveredItemCenter.x) / 2;
         targetTrailY = (mouse.y + hoveredItemCenter.y) / 2;
         // Trail radius relativo a zoom: min en minScale, max en maxScale
@@ -613,13 +643,13 @@ function animateCursor() {
         const minTrail = 120; // más grande para difuminar
         const maxTrail = 260;
         targetTrailRadius = minTrail + (maxTrail - minTrail) * zoom;
-        targetTrailOpacity = 0.38; // punto medio entre los dos valores anteriores
-        interp = 0.09; // Reducido de 0.13 para transición más suave
+        targetTrailOpacity = 0.03;
+        interp = 0.09;
       } else {
         targetTrailX = smoothPos.x;
         targetTrailY = smoothPos.y;
         const speedIntensity = smoothedSpeedIntensity;
-        targetTrailOpacity = 0.1 * speedIntensity; // más opaco/denso en movimiento normal
+        targetTrailOpacity = 0.06 * speedIntensity;
         targetTrailRadius = 90;
         interp = 0.06 + (0.04 * speedIntensity); // Reducido para más suavidad
       }
@@ -637,7 +667,7 @@ function animateCursor() {
         // Gradiente unificado con transición suave entre estados
         // Usar factor de blend basado en si estamos en hover
         if (!window._hoverBlend) window._hoverBlend = 0;
-        const targetBlend = isHoveringMapItem ? 1 : 0;
+        const targetBlend = effectiveHover ? 1 : 0;
         window._hoverBlend += (targetBlend - window._hoverBlend) * 0.08; // Transición muy suave
         
         const blend = window._hoverBlend;
