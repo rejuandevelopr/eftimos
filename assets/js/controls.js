@@ -17,6 +17,8 @@ if (typeof window.preloaderEnterPressed === 'undefined') {
 // mix-blend-mode other than 'normal'. Instead of removing the blend mode,
 // we create invisible proxy buttons that sit ABOVE the nav (higher z-index,
 // no blend-mode) and forward taps to the real menu toggle and logo.
+// We also create a full-sidebar proxy overlay that covers the dropdown menu
+// when open, using elementFromPoint to forward taps to the correct item.
 (function () {
     var isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
     if (!isTouchDevice) return;
@@ -24,6 +26,7 @@ if (typeof window.preloaderEnterPressed === 'undefined') {
     var proxiesCreated = false;
     var hamburgerProxy = null;
     var logoProxy = null;
+    var sidebarProxy = null;
 
     function createTouchProxies() {
         if (proxiesCreated) return;
@@ -67,6 +70,84 @@ if (typeof window.preloaderEnterPressed === 'undefined') {
             logoEl.click();
         }, { passive: false });
 
+        // --- Sidebar menu proxy ---
+        // One large transparent overlay covering the entire dropdown menu.
+        // On touch, we temporarily hide it, use elementFromPoint to find
+        // the real element underneath, then forward the tap.
+        sidebarProxy = document.createElement('div');
+        sidebarProxy.className = 'nav-touch-proxy sidebar-touch-proxy';
+        sidebarProxy.id = 'navTouchProxySidebar';
+        document.body.appendChild(sidebarProxy);
+
+        // Track touch position for scroll support inside the proxy
+        var touchStartY = 0;
+        var touchStartX = 0;
+        var isTouchScrolling = false;
+
+        sidebarProxy.addEventListener('touchstart', function (e) {
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                isTouchScrolling = false;
+            }
+        }, { passive: true });
+
+        sidebarProxy.addEventListener('touchmove', function (e) {
+            // If user is scrolling (moved > 10px vertically), let it scroll
+            if (e.touches.length === 1) {
+                var dy = Math.abs(e.touches[0].clientY - touchStartY);
+                var dx = Math.abs(e.touches[0].clientX - touchStartX);
+                if (dy > 10 || dx > 10) {
+                    isTouchScrolling = true;
+                }
+            }
+        }, { passive: true });
+
+        sidebarProxy.addEventListener('touchend', function (e) {
+            if (isTouchScrolling) return; // Was a scroll, not a tap
+            e.preventDefault();
+            e.stopPropagation();
+
+            var touch = e.changedTouches[0];
+            if (!touch) return;
+
+            // Temporarily hide proxy to reveal real elements underneath
+            sidebarProxy.style.pointerEvents = 'none';
+            var target = document.elementFromPoint(touch.clientX, touch.clientY);
+            sidebarProxy.style.pointerEvents = 'auto';
+
+            if (!target) return;
+
+            // Walk up to find the closest interactive element
+            var interactive = target.closest('a, button, [role="button"], input, select, textarea, label');
+            if (interactive) {
+                interactive.click();
+            } else {
+                // Might have tapped on SVG path/circle inside a button
+                var parent = target.closest('.sidebar-control-btn, .dropdown-link, .dropdown-toggle, .submenu-link');
+                if (parent) {
+                    parent.click();
+                }
+            }
+        }, { passive: false });
+
+        // Also handle click for safety (some Android browsers)
+        sidebarProxy.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            sidebarProxy.style.pointerEvents = 'none';
+            var target = document.elementFromPoint(e.clientX, e.clientY);
+            sidebarProxy.style.pointerEvents = 'auto';
+            if (!target) return;
+            var interactive = target.closest('a, button, [role="button"], input, select, textarea, label');
+            if (interactive) {
+                interactive.click();
+            } else {
+                var parent = target.closest('.sidebar-control-btn, .dropdown-link, .dropdown-toggle, .submenu-link');
+                if (parent) parent.click();
+            }
+        });
+
         syncProxyPositions();
     }
 
@@ -99,6 +180,29 @@ if (typeof window.preloaderEnterPressed === 'undefined') {
             'z-index:250001;background:transparent;border:none;padding:0;margin:0;' +
             'touch-action:manipulation;-webkit-tap-highlight-color:transparent;' +
             'pointer-events:auto;cursor:pointer;outline:none;';
+
+        // Sidebar proxy: match the dropdown-menu dimensions
+        syncSidebarProxy();
+    }
+
+    function syncSidebarProxy() {
+        if (!sidebarProxy) return;
+        var dropdown = document.getElementById('dropdownMenu');
+        if (!dropdown) return;
+
+        var menuOpen = document.body.classList.contains('menu-open');
+        if (!menuOpen) {
+            sidebarProxy.style.display = 'none';
+            return;
+        }
+
+        var rect = dropdown.getBoundingClientRect();
+        sidebarProxy.style.cssText =
+            'position:fixed;top:' + rect.top + 'px;left:' + rect.left + 'px;' +
+            'width:' + rect.width + 'px;height:' + rect.height + 'px;' +
+            'z-index:250001;background:transparent;border:none;padding:0;margin:0;' +
+            'touch-action:manipulation;-webkit-tap-highlight-color:transparent;' +
+            'pointer-events:auto;cursor:pointer;outline:none;display:block;';
     }
 
     function updateProxyVisibility() {
@@ -108,6 +212,8 @@ if (typeof window.preloaderEnterPressed === 'undefined') {
         if (logoProxy) {
             logoProxy.style.pointerEvents = menuOpen ? 'none' : 'auto';
         }
+        // Show/hide sidebar proxy based on menu state
+        syncSidebarProxy();
     }
 
     // Observe body class changes (menu-open toggle)

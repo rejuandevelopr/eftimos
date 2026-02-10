@@ -394,7 +394,7 @@
     <script defer src="assets/js/cursor-effect.js"></script>
     <script defer src="assets/js/parallax-title-reveal.js"></script>
     <script src="assets/js/tooltip-nebula.js"></script>
-    <script src="assets/js/controls.js?v=20260210c"></script>
+    <script src="assets/js/controls.js?v=20260210d"></script>
 
     <script>
     // Fade-in blanco rápido al entrar
@@ -609,64 +609,68 @@
         scrollContent.dispatchEvent(new Event('scroll'));
 
         // ============================================
-        // DRAG TO SCROLL FUNCTIONALITY
+        // DRAG TO SCROLL FUNCTIONALITY (solo para dispositivos no táctiles)
         // ============================================
-        let isDown = false;
-        let startY;
-        let scrollTop;
-        let velocity = 0;
-        let momentumID;
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        
+        if (!isTouchDevice) {
+            let isDown = false;
+            let startY;
+            let scrollTop;
+            let velocity = 0;
+            let momentumID;
 
-        scrollContent.addEventListener('mousedown', (e) => {
-            isDown = true;
-            scrollContent.style.cursor = 'grabbing';
-            scrollContent.style.userSelect = 'none';
-            startY = e.pageY - scrollContent.offsetTop;
-            scrollTop = scrollContent.scrollTop;
-            cancelMomentumTracking();
-        });
+            scrollContent.addEventListener('mousedown', (e) => {
+                isDown = true;
+                scrollContent.style.cursor = 'grabbing';
+                scrollContent.style.userSelect = 'none';
+                startY = e.pageY - scrollContent.offsetTop;
+                scrollTop = scrollContent.scrollTop;
+                cancelMomentumTracking();
+            });
 
-        scrollContent.addEventListener('mouseleave', () => {
-            isDown = false;
-            scrollContent.style.cursor = 'grab';
-        });
+            scrollContent.addEventListener('mouseleave', () => {
+                isDown = false;
+                scrollContent.style.cursor = 'grab';
+            });
 
-        scrollContent.addEventListener('mouseup', () => {
-            isDown = false;
-            scrollContent.style.cursor = 'grab';
-            beginMomentumTracking();
-        });
+            scrollContent.addEventListener('mouseup', () => {
+                isDown = false;
+                scrollContent.style.cursor = 'grab';
+                beginMomentumTracking();
+            });
 
-        scrollContent.addEventListener('mousemove', (e) => {
-            if (!isDown) return;
-            e.preventDefault();
-            const y = e.pageY - scrollContent.offsetTop;
-            const walk = (y - startY) * 2;
-            const prevScrollTop = scrollContent.scrollTop;
-            scrollContent.scrollTop = scrollTop - walk;
-            velocity = scrollContent.scrollTop - prevScrollTop;
-        });
+            scrollContent.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const y = e.pageY - scrollContent.offsetTop;
+                const walk = (y - startY) * 2;
+                const prevScrollTop = scrollContent.scrollTop;
+                scrollContent.scrollTop = scrollTop - walk;
+                velocity = scrollContent.scrollTop - prevScrollTop;
+            });
 
-        // Momentum scrolling
-        function beginMomentumTracking() {
-            cancelMomentumTracking();
-            momentumID = requestAnimationFrame(momentumLoop);
-        }
-
-        function cancelMomentumTracking() {
-            cancelAnimationFrame(momentumID);
-        }
-
-        function momentumLoop() {
-            scrollContent.scrollTop -= velocity;
-            velocity *= 0.95;
-            if (Math.abs(velocity) > 0.5) {
+            // Momentum scrolling
+            function beginMomentumTracking() {
+                cancelMomentumTracking();
                 momentumID = requestAnimationFrame(momentumLoop);
             }
-        }
 
-        // Set cursor style
-        scrollContent.style.cursor = 'grab';
+            function cancelMomentumTracking() {
+                cancelAnimationFrame(momentumID);
+            }
+
+            function momentumLoop() {
+                scrollContent.scrollTop -= velocity;
+                velocity *= 0.95;
+                if (Math.abs(velocity) > 0.5) {
+                    momentumID = requestAnimationFrame(momentumLoop);
+                }
+            }
+
+            // Set cursor style
+            scrollContent.style.cursor = 'grab';
+        }
     });
     </script>
 </body>

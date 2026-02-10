@@ -1644,6 +1644,12 @@ body.visual-effects-disabled .blending-item {
         pointer-events: auto !important;
         /* No mix-blend-mode — this is the key: these receive touches */
     }
+    /* Sidebar overlay proxy: covers the entire dropdown menu when open */
+    .sidebar-touch-proxy {
+        display: none;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 }
 
 body.visual-effects-disabled .dropdown-menu {
