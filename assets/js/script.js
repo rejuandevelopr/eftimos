@@ -814,7 +814,14 @@ function isImageCentered(x, y, imageSizeScaled) {
     }
 
     const dy = y - centerY;
-    return Math.abs(dx) < threshold && Math.abs(dy) < threshold;
+
+    // On mobile, give more vertical tolerance (especially below center)
+    // so the user doesn't need to scroll the element so far up to trigger the tooltip
+    const isMobileDevice = window.innerWidth <= 900 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const thresholdUp = threshold; // above center: keep standard 35%
+    const thresholdDown = isMobileDevice ? imageSizeScaled * 0.55 : threshold; // below center: 55% on mobile
+
+    return Math.abs(dx) < threshold && dy > -thresholdUp && dy < thresholdDown;
 }
 
 function updateImagePositions() {

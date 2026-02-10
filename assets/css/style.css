@@ -792,7 +792,7 @@ body.visual-effects-disabled .image-container video {
 #canvas.has-hover .image-container {
     opacity: 0.7;
     /* Antes 0.35, ahora menos transparente */
-    transition: opacity 0.3s ease;
+    transition: opacity 0.8s cubic-bezier(.25, .1, .25, 1);
 }
 
 #canvas.has-hover .image-container.is-hovered {
@@ -803,7 +803,7 @@ body.visual-effects-disabled .image-container video {
 .image-container.is-hovered,
 .image-container.mobile-centered {
     box-shadow: 0 0 120px 80px rgba(0, 0, 0, 0.3);
-    transition: opacity 0.3s ease, box-shadow 0.4s ease;
+    transition: opacity 0.8s cubic-bezier(.25, .1, .25, 1), box-shadow 1s cubic-bezier(.25, .1, .25, 1);
 }
 
 .image-container img {
@@ -2089,7 +2089,9 @@ a {
 .tooltip::before,
 .tooltip::after {
     opacity: 0;
-    filter: none;
+    /* Keep blur filter from initial declarations instead of resetting to none.
+       Prevents compositing flash on iOS (black rectangle before blur applies). */
+    transition: opacity 1s cubic-bezier(.25, .1, .25, 1);
 }
 
 .tooltip span {
@@ -2133,11 +2135,19 @@ a {
     /* Tooltip pseudo-element shadows visible on mobile when centered */
     .image-container.mobile-centered .tooltip::before {
         opacity: 6.0;
-        filter: blur(50px);
     }
     .image-container.mobile-centered .tooltip::after {
         opacity: 6.5;
-        filter: blur(42px);
+    }
+}
+
+/* iPhone 13 mini & small screens: disable pseudo-element shadows to avoid
+   compositing flash (translucent black rectangle before blur applies).
+   Box-shadow on .mobile-centered provides sufficient shading. */
+@media (hover: none) and (max-width: 430px), (pointer: coarse) and (max-width: 430px) {
+    .tooltip::before,
+    .tooltip::after {
+        display: none !important;
     }
 }
 
@@ -2870,7 +2880,7 @@ body.visual-effects-disabled .volume-slider {
     /* On touch: by default no CSS-hover opacity dimming, but allow JS-driven mobile-centered dimming */
     #canvas.has-hover .image-container {
         opacity: 0.7;
-        transition: opacity 0.3s ease;
+        transition: opacity 0.8s cubic-bezier(.25, .1, .25, 1);
     }
 
     #canvas.has-hover .image-container.is-hovered,
@@ -2882,7 +2892,7 @@ body.visual-effects-disabled .volume-slider {
     .image-container.is-hovered,
     .image-container.mobile-centered {
         box-shadow: 0 0 120px 80px rgba(0, 0, 0, 0.18);
-        transition: opacity 0.5s ease, box-shadow 0.6s ease;
+        transition: opacity 0.8s cubic-bezier(.25, .1, .25, 1), box-shadow 1s cubic-bezier(.25, .1, .25, 1);
     }
 }
 
