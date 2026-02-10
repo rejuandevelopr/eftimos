@@ -85,19 +85,20 @@ document.addEventListener('DOMContentLoaded', function () {
         'assets/images/g-1.webp',
         'assets/images/g-2.webp',
         'assets/images/g-14.avif',
-        'assets/images/g-20.avif'
+        'assets/images/g-20.avif',
+        'assets/vid/reels-mixed-vid.mp4' // Video de fondo - CRÍTICO
     ];
 
     // Assets no críticos se cargarán después de mostrar el contenido
     const nonCriticalAssets = [
-        'assets/vid/reels-mixed-vid.mp4',
         'assets/sounds/white-noise.mp3',
         'assets/sounds/whispers.mp3',
         'assets/sounds/locked-in-oneself.mp3'
     ];
 
     let loaded = 0;
-    const total = assets.length;
+    // Añadimos 2 elementos más al total: video DOM y grain effect
+    const total = assets.length + 2;
 
     // Variables para animación suave de la barra y el porcentaje
     let displayedPercent = 0;
@@ -323,6 +324,35 @@ document.addEventListener('DOMContentLoaded', function () {
             img.onerror = assetLoaded;
         }
     });
+
+    // Verificar también los elementos del DOM (video de fondo y audio white-noise)
+    // Video de fondo del DOM
+    const backgroundVideo = document.querySelector('#videos-background video');
+    if (backgroundVideo) {
+        if (backgroundVideo.readyState >= 3) { // HAVE_FUTURE_DATA o más
+            assetLoaded();
+        } else {
+            backgroundVideo.addEventListener('canplaythrough', assetLoaded, { once: true });
+            backgroundVideo.addEventListener('error', assetLoaded, { once: true });
+        }
+    } else {
+        // Si no existe el video, contarlo de todas formas para no bloquear
+        assetLoaded();
+    }
+
+    // Grain effect - verificar que esté listo
+    if (window.grainEffectReady) {
+        assetLoaded();
+    } else {
+        window.addEventListener('grainEffectReady', assetLoaded, { once: true });
+        // Timeout de seguridad en caso de que el grain no se cargue
+        setTimeout(() => {
+            if (loaded < total) {
+                console.warn('[PRELOADER] Grain effect timeout, continuing anyway');
+                assetLoaded();
+            }
+        }, 5000);
+    }
 
     // Lazy load de assets no críticos después de que el usuario entre
     function loadNonCriticalAssets() {

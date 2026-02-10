@@ -334,3 +334,13 @@ if (shouldStartGrain) {
     requestAnimationFrame(animateGrain);
 }
 
+// ========================================
+// NOTIFY THAT GRAIN IS READY
+// ========================================
+window.grainEffectReady = true;
+try {
+    window.dispatchEvent(new Event('grainEffectReady'));
+} catch (e) {
+    console.error('[GRAIN] Error dispatching grainEffectReady event:', e);
+}
+

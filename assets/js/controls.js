@@ -12,6 +12,145 @@ if (typeof window.preloaderEnterPressed === 'undefined') {
     window.preloaderEnterPressed = false;
 }
 
+// ========== iOS TOUCH PROXY OVERLAY ==========
+// iOS WebKit blocks ALL touch events on position:fixed elements with
+// mix-blend-mode other than 'normal'. Instead of removing the blend mode,
+// we create invisible proxy buttons that sit ABOVE the nav (higher z-index,
+// no blend-mode) and forward taps to the real menu toggle and logo.
+(function () {
+    var isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+    if (!isTouchDevice) return;
+
+    var proxiesCreated = false;
+    var hamburgerProxy = null;
+    var logoProxy = null;
+
+    function createTouchProxies() {
+        if (proxiesCreated) return;
+        var menuToggle = document.getElementById('menuToggle');
+        var logoEl = document.querySelector('nav.blending-item .logo');
+        if (!menuToggle || !logoEl) return;
+
+        proxiesCreated = true;
+
+        // --- Hamburger proxy ---
+        hamburgerProxy = document.createElement('button');
+        hamburgerProxy.className = 'nav-touch-proxy';
+        hamburgerProxy.setAttribute('aria-label', 'Menu');
+        hamburgerProxy.id = 'navTouchProxyHamburger';
+        document.body.appendChild(hamburgerProxy);
+
+        hamburgerProxy.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            menuToggle.click();
+        });
+        hamburgerProxy.addEventListener('touchend', function (e) {
+            e.preventDefault();
+            menuToggle.click();
+        }, { passive: false });
+
+        // --- Logo proxy ---
+        logoProxy = document.createElement('button');
+        logoProxy.className = 'nav-touch-proxy';
+        logoProxy.setAttribute('aria-label', 'Home');
+        logoProxy.id = 'navTouchProxyLogo';
+        document.body.appendChild(logoProxy);
+
+        logoProxy.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            logoEl.click();
+        });
+        logoProxy.addEventListener('touchend', function (e) {
+            e.preventDefault();
+            logoEl.click();
+        }, { passive: false });
+
+        syncProxyPositions();
+    }
+
+    function syncProxyPositions() {
+        if (!hamburgerProxy || !logoProxy) return;
+
+        var menuToggle = document.getElementById('menuToggle');
+        var logoEl = document.querySelector('nav.blending-item .logo');
+        if (!menuToggle || !logoEl) return;
+
+        var mtRect = menuToggle.getBoundingClientRect();
+        var logoRect = logoEl.getBoundingClientRect();
+
+        // Ensure minimum 48px tap target (Apple HIG)
+        var mtW = Math.max(mtRect.width, 48);
+        var mtH = Math.max(mtRect.height, 48);
+        var mtLeft = mtRect.left - (mtW - mtRect.width) / 2;
+        var mtTop = mtRect.top - (mtH - mtRect.height) / 2;
+
+        hamburgerProxy.style.cssText =
+            'position:fixed;top:' + mtTop + 'px;left:' + mtLeft + 'px;' +
+            'width:' + mtW + 'px;height:' + mtH + 'px;' +
+            'z-index:250001;background:transparent;border:none;padding:0;margin:0;' +
+            'touch-action:manipulation;-webkit-tap-highlight-color:transparent;' +
+            'pointer-events:auto;cursor:pointer;outline:none;';
+
+        logoProxy.style.cssText =
+            'position:fixed;top:' + logoRect.top + 'px;left:' + logoRect.left + 'px;' +
+            'width:' + logoRect.width + 'px;height:' + logoRect.height + 'px;' +
+            'z-index:250001;background:transparent;border:none;padding:0;margin:0;' +
+            'touch-action:manipulation;-webkit-tap-highlight-color:transparent;' +
+            'pointer-events:auto;cursor:pointer;outline:none;';
+    }
+
+    function updateProxyVisibility() {
+        if (!hamburgerProxy) return;
+        var menuOpen = document.body.classList.contains('menu-open');
+        // Hide logo proxy when sidebar menu is open
+        if (logoProxy) {
+            logoProxy.style.pointerEvents = menuOpen ? 'none' : 'auto';
+        }
+    }
+
+    // Observe body class changes (menu-open toggle)
+    var bodyObserver = new MutationObserver(function () {
+        updateProxyVisibility();
+        requestAnimationFrame(syncProxyPositions);
+    });
+
+    function initProxies() {
+        createTouchProxies();
+        window.addEventListener('resize', function () {
+            requestAnimationFrame(syncProxyPositions);
+        });
+        window.addEventListener('orientationchange', function () {
+            setTimeout(syncProxyPositions, 300);
+        });
+        bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Try to init after preloader is finished (index.html dispatches this event)
+    window.addEventListener('preloaderFinished', function () {
+        setTimeout(initProxies, 100);
+    });
+    // Fallback for pages without preloader
+    if (document.readyState === 'complete') {
+        setTimeout(initProxies, 200);
+    } else {
+        window.addEventListener('load', function () {
+            setTimeout(initProxies, 600);
+        });
+    }
+    // Final safety-net timeout
+    setTimeout(initProxies, 3500);
+
+    // Re-init on bfcache restore
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) setTimeout(initProxies, 200);
+    });
+
+    console.log('[CONTROLS] iOS touch proxy system registered');
+})();
+// ========== END iOS TOUCH PROXY OVERLAY ==========
+
 function initializeControls() {
     // ========== NAVBAR & MENU CONTROLS ==========
 

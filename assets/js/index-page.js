@@ -3,6 +3,8 @@
  * Extracted from inline <script> blocks for cacheability and non-blocking parse.
  * Contains: map hover darkening, whispers sound, bfcache restoration,
  *           preloader logic, and intro-zoom animation.
+ *
+ * NOTE: iOS touch proxy overlay system is in controls.js (shared across all pages).
  */
 
 // --- MAP HOVER DARKENING ---

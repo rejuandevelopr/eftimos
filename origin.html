@@ -369,6 +369,7 @@
             <!-- Contenido de texto scrolleable -->
             <div class="scroll-content" id="scrollContent">
                 <div class="origin-text">
+                    <div style="height: 10vh;"></div>
                     <p>INSIDE THE MIND OF EAFTIMOS, CREATIVE DIRECTION BELONGS TO ERIK BRUCCIA (LEÓN, 2001), RAISED IN BENAVENTE. HIS STORY COMES FROM A FAMILY ROOTED IN THE CRAFT: A GREAT-GRANDMOTHER WHO WAS A DRESSMAKER, A GREAT-GRANDFATHER WHO SOLD CLOTHES DOOR-TO-DOOR, AND HIS GRANDMOTHER MINERVA—"MIMI"—A LIFELONG SEAMSTRESS. MIMI BECAME HIS FIRST REFERENCE POINT, TEACHING HIM THE EARLIEST GESTURES OF THE TRADE WHEN ERIK WAS A CHILD: GARMENTS THAT REACHED HIS HANDS TO BE ALTERED, CUT, RE-FITTED, RESHAPED. HIS MOTHER, THE OWNER OF A LOCAL FASHION STORE IN HIS HOMETOWN, SHOWED HIM FROM THE INSIDE HOW THE INDUSTRY WORKS—AND WHAT IT MEANS TO SUSTAIN A BUSINESS.</p>
 
                     <p>DURING THE PANDEMIC, ERIK BEGAN DESIGNING SELF-TAUGHT AND LAUNCHED HIS FIRST STREETWEAR PROJECT WITH A CLOSE GROUP OF FRIENDS. A YEAR LATER HE MOVED TO MADRID TO TRAIN FURTHER, STEPPING AWAY FROM THAT ACTIVE PROJECT TO BUILD HIS OWN RUNWAY VISION. AFTER A PERIOD OF INTROSPECTION, HE FOUNDED EAFTIMOS: A UNIVERSE WHERE SHADOW, INNER VOICE, AND EMOTIONAL REFUGE ARE TRANSLATED INTO CLOTHING.</p>
@@ -397,7 +398,7 @@
     <script defer src="assets/js/cursor-effect.js"></script>
     <script defer src="assets/js/parallax-title-reveal.js"></script>
     <script src="assets/js/tooltip-nebula.js"></script>
-    <script src="assets/js/controls.js"></script>
+    <script src="assets/js/controls.js?v=20260210c"></script>
 
     <script>
     // Fade-in blanco rápido al entrar
@@ -610,6 +611,66 @@
         
         // Ejecutar al cargar para establecer el estado inicial
         scrollContent.dispatchEvent(new Event('scroll'));
+
+        // ============================================
+        // DRAG TO SCROLL FUNCTIONALITY
+        // ============================================
+        let isDown = false;
+        let startY;
+        let scrollTop;
+        let velocity = 0;
+        let momentumID;
+
+        scrollContent.addEventListener('mousedown', (e) => {
+            isDown = true;
+            scrollContent.style.cursor = 'grabbing';
+            scrollContent.style.userSelect = 'none';
+            startY = e.pageY - scrollContent.offsetTop;
+            scrollTop = scrollContent.scrollTop;
+            cancelMomentumTracking();
+        });
+
+        scrollContent.addEventListener('mouseleave', () => {
+            isDown = false;
+            scrollContent.style.cursor = 'grab';
+        });
+
+        scrollContent.addEventListener('mouseup', () => {
+            isDown = false;
+            scrollContent.style.cursor = 'grab';
+            beginMomentumTracking();
+        });
+
+        scrollContent.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const y = e.pageY - scrollContent.offsetTop;
+            const walk = (y - startY) * 2;
+            const prevScrollTop = scrollContent.scrollTop;
+            scrollContent.scrollTop = scrollTop - walk;
+            velocity = scrollContent.scrollTop - prevScrollTop;
+        });
+
+        // Momentum scrolling
+        function beginMomentumTracking() {
+            cancelMomentumTracking();
+            momentumID = requestAnimationFrame(momentumLoop);
+        }
+
+        function cancelMomentumTracking() {
+            cancelAnimationFrame(momentumID);
+        }
+
+        function momentumLoop() {
+            scrollContent.scrollTop -= velocity;
+            velocity *= 0.95;
+            if (Math.abs(velocity) > 0.5) {
+                momentumID = requestAnimationFrame(momentumLoop);
+            }
+        }
+
+        // Set cursor style
+        scrollContent.style.cursor = 'grab';
     });
     </script>
 </body>

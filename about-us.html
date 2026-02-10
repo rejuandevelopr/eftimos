@@ -367,6 +367,7 @@
             <!-- Contenido de texto scrolleable -->
             <div class="scroll-content" id="scrollContent">
                 <div class="origin-text">
+                    <div style="height: 10vh;"></div>
                     <p>EAFTIMOS IS THE SHADOW THAT LIVES WITHIN US. A FASHION STUDIO FOUNDED IN 2022 AND BASED IN MADRID, WORKING THROUGH INTROSPECTION AND CRAFTSMANSHIP TO TURN CLOTHING INTO AN ACT OF PRESENCE. WE DON'T CHASE TRENDS: WE CHOOSE A STANCE. WE CHOOSE ARCHIVE. WE WORK SLOWLY, WITH FULL CONTROL OVER MATERIALS AND PROCESS.</p>
 
                     <p>WE DESIGN, CUT, SEW, AND DYE BY HAND. WE PRODUCE MADE-TO-ORDER, IN LIMITED SERIES, USING EUROPEAN-SOURCED FABRICS AND FUNCTIONAL HARDWARE. OUR LANGUAGE IS SOBER AND QUIET; BLACK IS AN OBSESSION. AS YOHJI YAMAMOTO WROTE: "BLACK IS MODEST AND ARROGANT AT THE SAME TIME… ABOVE ALL, BLACK SAYS: 'I DON'T BOTHER YOU — DON'T BOTHER ME'."</p>
@@ -393,7 +394,7 @@
     <script defer src="assets/js/cursor-effect.js"></script>
     <script defer src="assets/js/parallax-title-reveal.js"></script>
     <script src="assets/js/tooltip-nebula.js"></script>
-    <script src="assets/js/controls.js"></script>
+    <script src="assets/js/controls.js?v=20260210c"></script>
 
     <script>
     // Fade-in blanco rápido al entrar
@@ -606,6 +607,66 @@
         
         // Ejecutar al cargar para establecer el estado inicial
         scrollContent.dispatchEvent(new Event('scroll'));
+
+        // ============================================
+        // DRAG TO SCROLL FUNCTIONALITY
+        // ============================================
+        let isDown = false;
+        let startY;
+        let scrollTop;
+        let velocity = 0;
+        let momentumID;
+
+        scrollContent.addEventListener('mousedown', (e) => {
+            isDown = true;
+            scrollContent.style.cursor = 'grabbing';
+            scrollContent.style.userSelect = 'none';
+            startY = e.pageY - scrollContent.offsetTop;
+            scrollTop = scrollContent.scrollTop;
+            cancelMomentumTracking();
+        });
+
+        scrollContent.addEventListener('mouseleave', () => {
+            isDown = false;
+            scrollContent.style.cursor = 'grab';
+        });
+
+        scrollContent.addEventListener('mouseup', () => {
+            isDown = false;
+            scrollContent.style.cursor = 'grab';
+            beginMomentumTracking();
+        });
+
+        scrollContent.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const y = e.pageY - scrollContent.offsetTop;
+            const walk = (y - startY) * 2;
+            const prevScrollTop = scrollContent.scrollTop;
+            scrollContent.scrollTop = scrollTop - walk;
+            velocity = scrollContent.scrollTop - prevScrollTop;
+        });
+
+        // Momentum scrolling
+        function beginMomentumTracking() {
+            cancelMomentumTracking();
+            momentumID = requestAnimationFrame(momentumLoop);
+        }
+
+        function cancelMomentumTracking() {
+            cancelAnimationFrame(momentumID);
+        }
+
+        function momentumLoop() {
+            scrollContent.scrollTop -= velocity;
+            velocity *= 0.95;
+            if (Math.abs(velocity) > 0.5) {
+                momentumID = requestAnimationFrame(momentumLoop);
+            }
+        }
+
+        // Set cursor style
+        scrollContent.style.cursor = 'grab';
     });
     </script>
 </body>

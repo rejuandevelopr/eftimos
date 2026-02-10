@@ -681,11 +681,6 @@ body.index-page.menu-open::after {
 .canvas-body {
     overflow: hidden;
     touch-action: manipulation;
-    /* touch-action was 'none' here, but that caused iOS Safari to compute
-       effective touch-action: none for the nav via ancestor intersection,
-       blocking synthetic click events on nav children (hamburger, logo).
-       'manipulation' still prevents double-tap-zoom while allowing taps.
-       Full 'none' is now on #canvas only. */
 }
 
 #canvas {
@@ -1631,43 +1626,23 @@ body.visual-effects-disabled .blending-item {
     mix-blend-mode: normal;
 }
 
-/* iOS Safari: mix-blend-mode: difference on a parent <nav> blocks touch events.
-   On touch devices we keep mix-blend-mode: difference on the <nav> itself
-   (it does NOT block touches as long as isolation/contain are not set).
-   We force pointer-events on interactive children for safety. */
+/* iOS WebKit: mix-blend-mode on position:fixed blocks touch events.
+   We keep the blend mode for visuals and use a JS touch-proxy overlay instead.
+   These styles support the overlay approach. */
 @media (hover: none) and (pointer: coarse) {
-    nav.blending-item {
-        mix-blend-mode: difference;
-        isolation: auto !important;
-        contain: none !important;
-        -webkit-transform: translateZ(0);
-        transform: translateZ(0);
-        touch-action: auto !important;
+    /* Touch overlay proxies: invisible buttons above the blended nav */
+    .nav-touch-proxy {
+        position: fixed;
+        z-index: 250001 !important;
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
         pointer-events: auto !important;
-    }
-    nav.blending-item .nav-container {
-        touch-action: auto !important;
-        pointer-events: auto !important;
-    }
-    nav.blending-item .menu-toggle {
-        touch-action: manipulation !important;
-        pointer-events: auto !important;
-        -webkit-tap-highlight-color: transparent;
-        position: relative;
-        z-index: 210001;
-    }
-    nav.blending-item .menu-toggle span {
-        pointer-events: none;
-    }
-    nav.blending-item .logo {
-        touch-action: manipulation !important;
-        pointer-events: auto !important;
-        position: relative;
-        z-index: 210001;
-    }
-    nav.blending-item .logo img {
-        pointer-events: none;
+        /* No mix-blend-mode — this is the key: these receive touches */
     }
 }
 
