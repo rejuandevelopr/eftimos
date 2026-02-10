@@ -716,11 +716,12 @@ body.index-page.menu-open::after {
     position: absolute;
     width: 170px;
     height: auto;
-    transition: filter 0.15s ease, opacity 0.3s ease;
+    transition: filter 0.15s ease, opacity 0.3s ease, box-shadow 1.2s cubic-bezier(.22, .08, .25, 1);
     pointer-events: auto;
     transform: translateZ(0);
     backface-visibility: hidden;
     transform-style: preserve-3d;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
 }
 
 /* Parallax titles */

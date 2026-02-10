@@ -803,8 +803,13 @@ function closeCinema() {
 // ✨ OPTIMIZED: Using transform3d for GPU acceleration (30-40% smoother!)
 // Utility: Check if an image is 100% centered (focused) on screen
 function isImageCentered(x, y, imageSizeScaled) {
+    // During active pinch zoom, nothing counts as centered
+    if (isPinching) return false;
+
     // Consider centered if the image center is within a small threshold of the screen center
-    const threshold = imageSizeScaled * 0.35; // 35% of image size
+    // Cap the threshold to a max absolute pixel value so zooming in doesn't keep it "centered" forever
+    const maxAbsoluteThreshold = Math.min(window.innerWidth, window.innerHeight) * 0.25;
+    const threshold = Math.min(imageSizeScaled * 0.35, maxAbsoluteThreshold); // 35% of image size, capped
     const dx = x - centerX;
 
     // --- NUEVO: Forzar reposicionamiento del mapa según cámara en mano ---
@@ -819,7 +824,7 @@ function isImageCentered(x, y, imageSizeScaled) {
     // so the user doesn't need to scroll the element so far up to trigger the tooltip
     const isMobileDevice = window.innerWidth <= 900 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     const thresholdUp = threshold; // above center: keep standard 35%
-    const thresholdDown = isMobileDevice ? imageSizeScaled * 0.7 : threshold; // below center: 70% on mobile
+    const thresholdDown = isMobileDevice ? Math.min(imageSizeScaled * 0.7, maxAbsoluteThreshold * 1.5) : threshold;
 
     return Math.abs(dx) < threshold && dy > -thresholdUp && dy < thresholdDown;
 }
