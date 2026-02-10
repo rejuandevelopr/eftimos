@@ -118,6 +118,7 @@
         /* Cursor específico cuando hay zoom */
         body.zoomed-mode .gallery-wrapper {
             cursor: grab;
+            overflow: visible;
         }
 
         body.zoomed-mode .gallery-wrapper:active {
@@ -298,12 +299,13 @@
 
         .overlay-word {
             position: absolute;
-            font-family: Georgia, 'Times New Roman', serif;
+            font-family: 'Tangerine', 'Times New Roman', serif;
             font-size: 5rem;
             font-weight: bold;
             color: transparent;
-            -webkit-text-stroke: 2px #ffffff;
-            text-stroke: 2px #ffffff;
+            -webkit-text-stroke: 0.2px #ffffff;
+            text-stroke: 0.2px #ffffff;
+            text-transform: lowercase;
             mix-blend-mode: difference;
             white-space: nowrap;
             will-change: transform, filter, opacity;
@@ -395,7 +397,7 @@
         @media (max-width: 768px) {
             .gallery-controls {
                 gap: 1.5rem;
-                bottom: -70px;
+                bottom: 10px;
             }
 
             .gallery-btn {
@@ -622,7 +624,7 @@
     <script defer src="assets/js/ui-sounds.js"></script>
     <script defer src="assets/js/cursor-effect.js"></script>
     <script src="assets/js/tooltip-nebula.js"></script>
-    <script src="assets/js/controls.js?v=20260210d"></script>
+    <script src="assets/js/controls.js?v=20260210e"></script>
 
     <script>
         // Configuración de la galería - Aquí puedes agregar tus propias imágenes BTS
@@ -1257,8 +1259,8 @@
             applyFocalZoom(card, zoomFactor, mouseX, mouseY);
         }, { passive: false });
         
-        const FRICTION = 0.92; // Fricción (0.95 = muy suave, 0.85 = más fricción)
-        const MIN_VELOCITY = 0.5; // Velocidad mínima antes de detener
+        const FRICTION = 0.94; // Fricción (0.95 = muy suave, 0.85 = más fricción)
+        const MIN_VELOCITY = 0.3; // Velocidad mínima antes de detener
 
         // Zoom drag a nivel de documento - permite arrastrar la imagen zoomeada desde cualquier punto
         document.addEventListener('mousedown', (e) => {
@@ -1745,6 +1747,7 @@
                 animateMomentum();
             } else {
                 // Velocidad muy baja, hacer snap directo
+                virtualPosition = dragOffset;
                 cards.forEach(card => card.style.transition = '');
                 snapToNearest();
             }

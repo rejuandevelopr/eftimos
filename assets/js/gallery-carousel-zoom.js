@@ -34,8 +34,8 @@ let isPinching = false;
 let pinchStartX = 0;
 let pinchStartY = 0;
 
-const FRICTION = 0.92;
-const MIN_VELOCITY = 0.5;
+const FRICTION = 0.94;
+const MIN_VELOCITY = 0.3;
 
 // Función para aplicar resistencia elástica al pan fuera de límites
 function applyElasticResistance(value, max) {
@@ -525,6 +525,7 @@ function handleDragEnd() {
         virtualPosition = dragOffset;
         animateMomentum();
     } else {
+        virtualPosition = dragOffset;
         cards.forEach(card => card.style.transition = '');
         snapToNearest();
     }
