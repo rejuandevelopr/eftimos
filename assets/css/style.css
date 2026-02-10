@@ -724,6 +724,26 @@ body.index-page.menu-open::after {
     box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
 }
 
+/* Shadow glow pseudo-element for mobile (iOS can't transition box-shadow on composited layers) */
+.image-container::after {
+    content: "";
+    display: none; /* hidden on desktop — box-shadow is used instead */
+    position: absolute;
+    inset: -80px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center,
+        rgba(0, 0, 0, 0.38) 0%,
+        rgba(0, 0, 0, 0.28) 25%,
+        rgba(0, 0, 0, 0.15) 50%,
+        rgba(0, 0, 0, 0.05) 75%,
+        rgba(0, 0, 0, 0) 100%);
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 1.2s cubic-bezier(.22, .08, .25, 1);
+    will-change: opacity;
+}
+
 /* Parallax titles */
 .parallax-titles-layer {
     position: fixed;
@@ -2140,6 +2160,11 @@ a {
     .image-container.mobile-centered .tooltip::after {
         opacity: 6.5;
     }
+
+    /* Override mobile-centered box-shadow with none — ::after handles it */
+    .image-container.mobile-centered {
+        box-shadow: none !important;
+    }
 }
 
 /* iPhone 13 mini & small screens: disable pseudo-element shadows to avoid
@@ -2892,8 +2917,18 @@ body.visual-effects-disabled .volume-slider {
     /* Stronger shadow and slower transitions for mobile devices */
     .image-container.is-hovered,
     .image-container.mobile-centered {
-        box-shadow: 0 0 140px 100px rgba(0, 0, 0, 0.35);
-        transition: opacity 1.2s cubic-bezier(.22, .08, .25, 1), box-shadow 1.4s cubic-bezier(.22, .08, .25, 1);
+        /* No box-shadow on mobile — use ::after pseudo-element instead (iOS compositing bug) */
+        box-shadow: none;
+        transition: opacity 1.2s cubic-bezier(.22, .08, .25, 1);
+    }
+
+    /* Enable and show the ::after shadow glow on mobile */
+    .image-container::after {
+        display: block;
+    }
+    .image-container.is-hovered::after,
+    .image-container.mobile-centered::after {
+        opacity: 1;
     }
 }
 
