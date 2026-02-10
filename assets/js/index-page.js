@@ -160,8 +160,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             var vidBg = document.getElementById('videos-background');
             var grain = document.getElementById('grainCanvas');
-            if (vidBg) vidBg.style.visibility = '';
-            if (grain) { grain.style.visibility = ''; grain.style.opacity = ''; }
+            if (vidBg) { vidBg.style.visibility = ''; vidBg.style.opacity = '1'; }
+            if (grain) { grain.style.visibility = ''; grain.style.opacity = '1'; }
 
             var cvs = document.getElementById('canvas');
             if (cvs) { cvs.style.transition = 'none'; cvs.style.opacity = '1'; cvs.style.visibility = ''; }
@@ -225,8 +225,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function showBackground() {
         var vb = document.getElementById('videos-background');
         var gc = document.getElementById('grainCanvas');
-        if (vb) vb.style.visibility = '';
-        if (gc) gc.style.visibility = '';
+        if (vb) { vb.style.visibility = ''; vb.style.opacity = '1'; }
+        if (gc) { gc.style.visibility = ''; gc.style.opacity = '1'; }
     }
 
     function forceHidePreloader(preloader) {

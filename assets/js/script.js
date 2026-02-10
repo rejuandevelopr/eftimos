@@ -803,8 +803,13 @@ function closeCinema() {
 // ✨ OPTIMIZED: Using transform3d for GPU acceleration (30-40% smoother!)
 // Utility: Check if an image is 100% centered (focused) on screen
 function isImageCentered(x, y, imageSizeScaled) {
-    // During active pinch zoom, nothing counts as centered
-    if (isPinching) return false;
+    // During active pinch zoom or cooldown after pinch, nothing counts as centered
+    if (isPinching || _pinchCooldownUntil > Date.now()) return false;
+
+    // If scale is still animating (user just zoomed), don't consider anything centered
+    // This prevents the element from staying "selected" after zoom-in
+    const scaleDiff = Math.abs(targetScale - scale);
+    if (scaleDiff > 0.02) return false;
 
     // Consider centered if the image center is within a small threshold of the screen center
     // Cap the threshold to a max absolute pixel value so zooming in doesn't keep it "centered" forever
@@ -1053,6 +1058,7 @@ let hasMoved = false;
 
 let isPinching = false;
 let initialPinchDistance = 0;
+let _pinchCooldownUntil = 0; // timestamp: nothing counts as "centered" until this time
 let initialPinchScale = 1;
 
 function getTouchDistance(touch1, touch2) {
@@ -2073,6 +2079,10 @@ canvas.addEventListener('touchmove', (e) => {
 
 canvas.addEventListener('touchend', (e) => {
     if (e.touches.length < 2) {
+        if (isPinching) {
+            // Set cooldown so element doesn't immediately re-select after pinch
+            _pinchCooldownUntil = Date.now() + 400;
+        }
         isPinching = false;
         initialPinchDistance = 0;
     }

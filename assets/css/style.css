@@ -729,13 +729,14 @@ body.index-page.menu-open::after {
     content: "";
     display: none; /* hidden on desktop — box-shadow is used instead */
     position: absolute;
-    inset: -80px;
+    inset: -120px;
     border-radius: 50%;
     background: radial-gradient(ellipse at center,
-        rgba(0, 0, 0, 0.38) 0%,
-        rgba(0, 0, 0, 0.28) 25%,
-        rgba(0, 0, 0, 0.15) 50%,
-        rgba(0, 0, 0, 0.05) 75%,
+        rgba(0, 0, 0, 0.52) 0%,
+        rgba(0, 0, 0, 0.40) 15%,
+        rgba(0, 0, 0, 0.25) 35%,
+        rgba(0, 0, 0, 0.12) 55%,
+        rgba(0, 0, 0, 0.04) 75%,
         rgba(0, 0, 0, 0) 100%);
     pointer-events: none;
     z-index: -1;
@@ -933,7 +934,7 @@ body.visual-effects-disabled .image-container video {
     z-index: -2;
     overflow: hidden;
     background-color: white;
-    transition: opacity 0.5s ease;
+    transition: opacity 1.2s cubic-bezier(.22,1,.36,1);
 }
 
 
@@ -2225,7 +2226,7 @@ body.unloading {
     height: 100%;
     pointer-events: none;
     z-index: -1;
-    opacity: 1 !important;
+    transition: opacity 1.4s cubic-bezier(.22,1,.36,1);
 }
 
 body.unloading #grainCanvas {
@@ -2922,7 +2923,7 @@ body.visual-effects-disabled .volume-slider {
         transition: opacity 1.2s cubic-bezier(.22, .08, .25, 1);
     }
 
-    /* Enable and show the ::after shadow glow on mobile */
+    /* Enable the ::after shadow glow on mobile (always block so fade-out transition works) */
     .image-container::after {
         display: block;
     }
