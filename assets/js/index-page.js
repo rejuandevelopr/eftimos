@@ -34,6 +34,22 @@ document.addEventListener('DOMContentLoaded', function () {
         var prev = canvas.querySelector('.image-container.is-hovered');
         if (prev) prev.classList.remove('is-hovered');
     });
+
+    // --- MOBILE TOUCH: Replicate hover darkening for touch events ---
+    canvas.addEventListener('touchstart', function (e) {
+        var touch = e.touches[0];
+        if (!touch) return;
+        var target = document.elementFromPoint(touch.clientX, touch.clientY);
+        var mapItem = target ? target.closest('.image-link, .video-link') : null;
+        if (mapItem) {
+            canvas.classList.add('has-hover');
+            videosBackground.classList.add('map-item-hovered');
+            var container = mapItem.closest('.image-container');
+            var prev = canvas.querySelector('.image-container.is-hovered');
+            if (prev && prev !== container) prev.classList.remove('is-hovered');
+            if (container) container.classList.add('is-hovered');
+        }
+    }, { passive: true });
 });
 
 // --- WHISPERS SOUND LOGIC ---

@@ -91,8 +91,50 @@ class TooltipNebula {
         }, { passive: true });
 
         canvas.addEventListener('touchend', () => {
-            this._hoveredLink = null;
+            // Don't clear hover immediately on mobile — let mobile-centered logic manage it
+            // Only clear if no mobile-centered item exists
+            setTimeout(() => {
+                const centered = canvas.querySelector('.image-container.mobile-centered');
+                if (!centered) {
+                    this._hoveredLink = null;
+                }
+            }, 100);
         }, { passive: true });
+
+        // Mobile: observe mobile-centered class changes to keep nebula alive
+        this._setupMobileCenteredObserver(canvas);
+    }
+
+    _setupMobileCenteredObserver(canvas) {
+        // Periodically check for mobile-centered items and sync nebula hover
+        const isTouchDevice = (
+            (window.matchMedia && (window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches)) ||
+            ('ontouchstart' in window) ||
+            (navigator.maxTouchPoints > 0)
+        );
+        if (!isTouchDevice) return;
+
+        let lastCentered = null;
+        const checkMobileCentered = () => {
+            const centered = canvas.querySelector('.image-container.mobile-centered');
+            if (centered) {
+                const link = centered.querySelector('.image-link, .video-link');
+                if (link && link !== this._hoveredLink) {
+                    this._hoveredLink = link;
+                    const tooltip = link.querySelector('.tooltip');
+                    if (tooltip) {
+                        this.initializeTooltip(tooltip);
+                    }
+                    this.resumeIfNeeded();
+                }
+                lastCentered = centered;
+            } else if (lastCentered) {
+                this._hoveredLink = null;
+                lastCentered = null;
+            }
+            requestAnimationFrame(checkMobileCentered);
+        };
+        requestAnimationFrame(checkMobileCentered);
     }
 
     /**

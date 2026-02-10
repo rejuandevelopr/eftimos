@@ -630,6 +630,11 @@ function createImageElement(imageIndex, gridX, gridY) {
         container.dataset.text = template.dataset.text || 'HIDDEN TEXT';
     }
 
+    // Mark if it's an initial-center element (like origin)
+    if (template.classList.contains('initial-center')) {
+        container.classList.add('initial-center');
+    }
+
     container.appendChild(clonedContent.firstElementChild);
 
     mapGroup.appendChild(container);
@@ -638,7 +643,8 @@ function createImageElement(imageIndex, gridX, gridY) {
         element: container,
         gridX: gridX,
         gridY: gridY,
-        imageIndex: imageIndex
+        imageIndex: imageIndex,
+        isInitialCenter: template.classList.contains('initial-center')
     };
 }
 
@@ -682,8 +688,13 @@ function getInitialCenterPosition() {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     images.forEach(img => {
         const randomOffset = getRandomOffset(img.gridX, img.gridY);
-        const x = img.gridX * gridSpacing + randomOffset.x;
-        const y = img.gridY * gridSpacing + randomOffset.y;
+        // Reduce offset for initial-center elements (like origin)
+        const offsetMultiplier = img.isInitialCenter ? 0.3 : 1;
+        // Add additional offset for origin: move right and down in large resolutions
+        const additionalOffsetX = img.isInitialCenter && windowWidth >= 992 ? 70 : 0;
+        const additionalOffsetY = img.isInitialCenter && windowWidth >= 992 ? 120 : 0;
+        const x = img.gridX * gridSpacing + (randomOffset.x * offsetMultiplier) + additionalOffsetX;
+        const y = img.gridY * gridSpacing + (randomOffset.y * offsetMultiplier) + additionalOffsetY;
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
         if (y < minY) minY = y;
@@ -764,8 +775,13 @@ function updateImagePositions() {
         const img = images[i];
         const randomOffset = getRandomOffset(img.gridX, img.gridY);
 
-        const baseX = img.gridX * gridSpacing + randomOffset.x;
-        const baseY = img.gridY * gridSpacing + randomOffset.y;
+        // Reduce offset for initial-center elements (like origin) to keep them closer to center
+        const offsetMultiplier = img.isInitialCenter ? 0.3 : 1;
+        // Add additional offset for origin: move right and down in large resolutions
+        const additionalOffsetX = img.isInitialCenter && windowWidth >= 992 ? 70 : 0;
+        const additionalOffsetY = img.isInitialCenter && windowWidth >= 992 ? 120 : 0;
+        const baseX = img.gridX * gridSpacing + (randomOffset.x * offsetMultiplier) + additionalOffsetX;
+        const baseY = img.gridY * gridSpacing + (randomOffset.y * offsetMultiplier) + additionalOffsetY;
 
         const x = baseX * scale + offsetXScaled + centerX;
         const y = baseY * scale + offsetYScaled + centerY;
@@ -2512,8 +2528,13 @@ window.restoreMapPositioning = function () {
 
         // Calculate target normal position
         const randomOffset = getRandomOffset(img.gridX, img.gridY);
-        const baseX = img.gridX * gridSpacing + randomOffset.x;
-        const baseY = img.gridY * gridSpacing + randomOffset.y;
+        // Reduce offset for initial-center elements (like origin)
+        const offsetMultiplier = img.isInitialCenter ? 0.3 : 1;
+        // Add additional offset for origin: move right and down in large resolutions
+        const additionalOffsetX = img.isInitialCenter && windowWidth >= 992 ? 70 : 0;
+        const additionalOffsetY = img.isInitialCenter && windowWidth >= 992 ? 120 : 0;
+        const baseX = img.gridX * gridSpacing + (randomOffset.x * offsetMultiplier) + additionalOffsetX;
+        const baseY = img.gridY * gridSpacing + (randomOffset.y * offsetMultiplier) + additionalOffsetY;
 
         const offsetXScaled = offsetX * scale;
         const offsetYScaled = offsetY * scale;

@@ -648,34 +648,27 @@ body.menu-open #canvas * {
     pointer-events: none !important;
 }
 
-/* Efecto blur en el fondo al abrir menú lateral */
-body.menu-open main,
-body.menu-open #videos-background,
-body.menu-open #canvas,
-body.menu-open #grainCanvas,
-body.menu-open .gallery-container,
-body.menu-open .gallery-wrapper {
-    filter: blur(8px);
-    transition: filter 0.4s ease;
+/* Efecto blur en el fondo al abrir menú lateral.
+   Usamos backdrop-filter en un pseudo-elemento en vez de filter en los contenedores,
+   porque filter crea un nuevo containing block y rompe position:fixed de los hijos. */
+body.menu-open::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+    pointer-events: none;
+    transition: backdrop-filter 0.4s ease, -webkit-backdrop-filter 0.4s ease;
 }
 
 /* Sin blur en index.html */
-body.index-page.menu-open main,
-body.index-page.menu-open #videos-background,
-body.index-page.menu-open #canvas,
-body.index-page.menu-open #grainCanvas,
-body.index-page.menu-open .gallery-container,
-body.index-page.menu-open .gallery-wrapper {
-    filter: blur(0px);
-}
-
-main,
-#videos-background,
-#canvas,
-#grainCanvas,
-.gallery-container,
-.gallery-wrapper {
-    transition: filter 0.4s ease;
+body.index-page.menu-open::after {
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
 }
 
 
@@ -800,7 +793,8 @@ body.visual-effects-disabled .image-container video {
 }
 
 /* Radial shadow glow behind hovered map item */
-.image-container.is-hovered {
+.image-container.is-hovered,
+.image-container.mobile-centered {
     box-shadow: 0 0 120px 80px rgba(0, 0, 0, 0.3);
     transition: opacity 0.3s ease, box-shadow 0.4s ease;
 }
@@ -1001,6 +995,8 @@ nav {
     z-index: 200000 !important;
     padding: 10px 0;
     isolation: isolate;
+    touch-action: auto;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .nav-container {
@@ -1535,6 +1531,8 @@ body.visual-effects-disabled .contact-close {
     text-align: center;
     margin-bottom: 30px;
     letter-spacing: 0.05em;
+    mix-blend-mode: difference;
+    color: #fff;
 }
 
 .form-group {
@@ -1626,12 +1624,31 @@ body.visual-effects-disabled .blending-item {
     nav.blending-item {
         mix-blend-mode: normal;
         isolation: auto;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        touch-action: auto !important;
+        -webkit-tap-highlight-color: transparent;
+    }
+    nav.blending-item .nav-container {
+        touch-action: auto !important;
+        pointer-events: auto !important;
+    }
+    nav.blending-item .menu-toggle {
+        touch-action: manipulation !important;
+        pointer-events: auto !important;
+        -webkit-tap-highlight-color: transparent;
     }
     nav.blending-item .menu-toggle span {
         mix-blend-mode: difference;
+        pointer-events: none;
+    }
+    nav.blending-item .logo {
+        touch-action: manipulation !important;
+        pointer-events: auto !important;
     }
     nav.blending-item .logo img {
         mix-blend-mode: difference;
+        pointer-events: none;
     }
     nav.blending-item .menu-toggle.active span {
         mix-blend-mode: normal;
@@ -2104,6 +2121,16 @@ a {
         z-index: 2000;
         overflow: visible;
         contain: none;
+    }
+
+    /* Tooltip pseudo-element shadows visible on mobile when centered */
+    .image-container.mobile-centered .tooltip::before {
+        opacity: 6.0;
+        filter: blur(50px);
+    }
+    .image-container.mobile-centered .tooltip::after {
+        opacity: 6.5;
+        filter: blur(42px);
     }
 }
 
@@ -2834,8 +2861,14 @@ body.visual-effects-disabled .volume-slider {
         filter: grayscale(1);
     }
 
-    /* Disable hover-based opacity changes */
+    /* On touch: by default no CSS-hover opacity dimming, but allow JS-driven mobile-centered dimming */
     #canvas.has-hover .image-container {
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+
+    #canvas.has-hover .image-container.is-hovered,
+    #canvas.has-hover .image-container.mobile-centered {
         opacity: 1;
     }
 }

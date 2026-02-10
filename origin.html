@@ -312,7 +312,7 @@
         <div class="contact-modal-content">
             <button class="contact-close" id="contactClose">&times;</button>
             <h2>CONTACT US</h2>
-            <form id="contactForm" action="https://formsubmit.co/beastnirvana.csn@gmail.com" method="POST">
+            <form id="contactForm" action="https://formsubmit.co/contact@eaftimos.com" method="POST">
                 <!-- FormSubmit Configuration -->
                 <input type="hidden" name="_subject" value="New contact from Eftimos Origin">
                 <input type="hidden" name="_captcha" value="false">
@@ -323,6 +323,16 @@
                 </div>
                 <div class="form-group">
                     <input type="email" id="email" name="email" placeholder="EMAIL" required data-shape="cross">
+                </div>
+                <div class="form-group">
+                    <select id="queryType" name="queryType" required data-shape="cross">
+                        <option value="" disabled selected>QUERY TYPE</option>
+                        <option value="Atelier (Custom Clothing)">ATELIER (CUSTOM CLOTHING)</option>
+                        <option value="Styling">STYLING</option>
+                        <option value="Press">PRESS</option>
+                        <option value="Social Media">SOCIAL MEDIA</option>
+                        <option value="Other">OTHER</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <textarea id="message" name="message" placeholder="MESSAGE" rows="5" required data-shape="cross"></textarea>

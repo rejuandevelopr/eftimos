@@ -591,6 +591,7 @@ function initializeControls() {
     const contactModal = document.getElementById('contactModal');
     const contactClose = document.getElementById('contactClose');
     const contactForm = document.getElementById('contactForm');
+    const queryTypeSelect = document.getElementById('queryType');
 
     if (contactBtn && contactModal) {
         contactBtn.addEventListener('click', (e) => {
@@ -627,6 +628,18 @@ function initializeControls() {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && contactModal.classList.contains('active')) {
                 contactModal.classList.remove('active');
+            }
+        });
+    }
+
+    // Dynamic email routing based on query type
+    if (queryTypeSelect && contactForm) {
+        queryTypeSelect.addEventListener('change', (e) => {
+            const selectedValue = e.target.value;
+            if (selectedValue === 'Press') {
+                contactForm.action = 'https://formsubmit.co/press@eaftimos.com';
+            } else {
+                contactForm.action = 'https://formsubmit.co/contact@eaftimos.com';
             }
         });
     }
