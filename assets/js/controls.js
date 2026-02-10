@@ -624,11 +624,28 @@ function initializeControls() {
     }
 
     if (menuToggle && dropdownMenu) {
+        // Timer for delayed blend-mode restoration on menu close
+        var _menuBlendTimer = null;
+
         menuToggle.addEventListener('click', (e) => {
             e.stopPropagation();
             menuToggle.classList.toggle('active');
             dropdownMenu.classList.toggle('active');
             document.body.classList.toggle('menu-open');
+
+            // iOS touch fix: add/remove blend-mode override class.
+            // On open: add immediately so sidebar items are tappable.
+            // On close: delay removal until sidebar slide-out finishes (400ms transition).
+            var isOpening = dropdownMenu.classList.contains('active');
+            if (isOpening) {
+                clearTimeout(_menuBlendTimer);
+                document.body.classList.add('menu-blend-override');
+            } else {
+                clearTimeout(_menuBlendTimer);
+                _menuBlendTimer = setTimeout(function () {
+                    document.body.classList.remove('menu-blend-override');
+                }, 450); // slightly longer than the 400ms CSS transition
+            }
             
             // Update menu state in script.js for blur control
             if (window.isMenuActive !== undefined) {

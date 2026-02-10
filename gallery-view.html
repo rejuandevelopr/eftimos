@@ -396,7 +396,7 @@
         @media (max-width: 768px) {
             .gallery-controls {
                 gap: 1.5rem;
-                bottom: 10px;
+                bottom: -70px;
             }
 
             .gallery-btn {
@@ -623,7 +623,7 @@
     <script defer src="assets/js/ui-sounds.js"></script>
     <script defer src="assets/js/cursor-effect.js"></script>
     <script src="assets/js/tooltip-nebula.js"></script>
-    <script src="assets/js/controls.js?v=20260210e"></script>
+    <script src="assets/js/controls.js?v=20260210f"></script>
 
     <script>
         // Configuración de la galería - Colección RESILIENCE AW24
@@ -651,6 +651,780 @@
     <script src="assets/js/gallery-carousel-zoom.js"></script>
 
     <script>
+        // Fade-in blanco al entrar
+        window.addEventListener('load', function() {
+            var overlay = document.getElementById('entryWhiteOverlay');
+            if (overlay) {
+                setTimeout(function() {
+                    overlay.style.opacity = '0';
+                    setTimeout(function() {
+                        overlay.parentNode && overlay.parentNode.removeChild(overlay);
+                    }, 380);
+                }, 10);
+            }
+        });
+
+        // Overlay fade blanco al hacer click en el logo
+        document.addEventListener('DOMContentLoaded', function() {
+            var logoLink = document.querySelector('a.logo');
+            if (logoLink) {
+                logoLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Fade out del audio
+                    const noiseSound = document.getElementById('noiseSound');
+                    const whispersSound = document.getElementById('whispersSound');
+                    const fadeDuration = 300;
+                    const startTime = performance.now();
+                    
+                    function fadeOutAudio() {
+                        const elapsed = performance.now() - startTime;
+                        const progress = Math.min(1, elapsed / fadeDuration);
+                        const eased = 1 - Math.pow(1 - progress, 3);
+                        const volume = 1 - eased;
+                        
+                        if (noiseSound && window.noiseGain) {
+                            window.noiseGain.gain.value *= volume;
+                        }
+                        
+                        if (whispersSound && window.whispersGain) {
+                            window.whispersGain.gain.value *= volume;
+                        }
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(fadeOutAudio);
+                        } else {
+                            if (noiseSound) noiseSound.pause();
+                            if (whispersSound) whispersSound.pause();
+                        }
+                    }
+                    
+                    fadeOutAudio();
+                    
+                    // Crear overlay blanco
+                    var overlay = document.createElement('div');
+                    overlay.style.position = 'fixed';
+                    overlay.style.top = '0';
+                    overlay.style.left = '0';
+                    overlay.style.width = '100vw';
+                    overlay.style.height = '100vh';
+                    overlay.style.background = '#fff';
+                    overlay.style.zIndex = '250000';
+                    overlay.style.pointerEvents = 'auto';
+                    overlay.style.transition = 'opacity 0.38s cubic-bezier(.77,0,.18,1)';
+                    overlay.style.opacity = '0';
+                    document.body.appendChild(overlay);
+                    void overlay.offsetWidth;
+                    overlay.style.opacity = '1';
+                    
+                    setTimeout(function() {
+                        window.location.href = logoLink.href;
+                    }, 320);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
+        let panX = 0;
+        let panY = 0;
+        const MAX_SCALE = 3;
+        const MIN_SCALE = 1;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let currentX = 0;
+        let currentY = 0;
+        let dragOffset = 0;
+        let currentScale = 1;
+        let isZoomed = false;
+        let lastTapTime = 0;
+        let panX = 0;
+        let panY = 0;
+        let startPanX = 0;
+        let startPanY = 0;
+        const SWIPE_THRESHOLD = 100; // Píxeles mínimos para cambiar de imagen
+        const MAX_SCALE = 3;
+        const MIN_SCALE = 1;
+
+        let pageLoaderHidden = false;
+
+        // Only show the loader if loading takes longer than 300ms
+        const pageLoaderShowTimer = setTimeout(() => {
+            const loader = document.getElementById('pageLoader');
+            if (loader && !pageLoaderHidden) {
+                loader.classList.remove('page-loader-pending');
+            }
+        }, 300);
+
+        function hidePageLoader() {
+            clearTimeout(pageLoaderShowTimer);
+            if (pageLoaderHidden) return;
+            const loader = document.getElementById('pageLoader');
+            if (!loader) return;
+            pageLoaderHidden = true;
+            loader.classList.add('hidden');
+            loader.setAttribute('aria-busy', 'false');
+            setTimeout(() => {
+                if (loader.parentNode) loader.parentNode.removeChild(loader);
+            }, 600);
+        }
+
+        function waitForGalleryImages() {
+            const images = Array.from(document.querySelectorAll('#galleryTrack img'));
+            if (!images.length) return Promise.resolve();
+
+            const promises = images.map((img) => {
+                if (img.complete) return Promise.resolve();
+                return new Promise((resolve) => {
+                    const done = () => {
+                        img.removeEventListener('load', done);
+                        img.removeEventListener('error', done);
+                        resolve();
+                    };
+                    img.addEventListener('load', done);
+                    img.addEventListener('error', done);
+                });
+            });
+
+            return Promise.all(promises);
+        }
+
+        // Generar tarjetas de galería
+        function initGallery() {
+            const track = document.getElementById('galleryTrack');
+            const progressIndicator = document.getElementById('progressIndicator');
+
+            galleryImages.forEach((image, index) => {
+                // Crear tarjeta
+                const card = document.createElement('div');
+                card.className = 'gallery-card';
+                if (index === 0) card.classList.add('active');
+                else if (index === 1) card.classList.add('next');
+                else card.classList.add('hidden');
+
+                card.innerHTML = `
+                    <img src="${image.src}" alt="${image.caption}" draggable="false">
+                `;
+
+                track.appendChild(card);
+                
+                // Prevenir completamente el arrastre nativo de la imagen
+                const img = card.querySelector('img');
+                if (img) {
+                    img.ondragstart = () => false;
+                    img.addEventListener('dragstart', (e) => e.preventDefault());
+                    img.addEventListener('contextmenu', (e) => e.preventDefault());
+                }
+
+                // Crear punto de progreso
+                const dot = document.createElement('div');
+                dot.className = 'progress-dot';
+                if (index === 0) dot.classList.add('active');
+                progressIndicator.appendChild(dot);
+
+                // Event listeners para drag
+                card.addEventListener('mousedown', startDrag);
+                card.addEventListener('touchstart', startDrag);
+            });
+
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, { passive: false });
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchend', endDrag);
+
+            // Event listeners para pinch zoom
+            track.addEventListener('touchstart', handleTouchStart, { passive: false });
+            track.addEventListener('touchmove', handleTouchMove, { passive: false });
+            track.addEventListener('touchend', handleTouchEnd);
+            
+            // Event listener para zoom con rueda del ratón
+            track.addEventListener('wheel', handleWheel, { passive: false });
+            
+            // Prevenir arrastre nativo del navegador en todo el wrapper
+            track.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+            
+            // Prevenir arrastre a nivel de documento para la galería
+            document.addEventListener('dragstart', (e) => {
+                if (e.target.closest('.gallery-wrapper') || e.target.closest('.gallery-container')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            document.addEventListener('drag', (e) => {
+                if (e.target.closest('.gallery-wrapper') || e.target.closest('.gallery-container')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            // Zoom drag a nivel de documento - permite arrastrar la imagen zoomeada desde cualquier punto
+            document.addEventListener('mousedown', (e) => {
+                if (!isZoomed) return;
+                if (isDragging) return;
+                if (e.target.closest('.side-menu') || e.target.closest('.menu-toggle')) return;
+                
+                const card = document.querySelector('.gallery-card.active');
+                if (!card) return;
+                
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startPanX = panX;
+                startPanY = panY;
+                
+                const img = card.querySelector('img');
+                if (img) img.style.transition = 'none';
+                
+                card.style.cursor = 'grabbing';
+                document.body.style.cursor = 'grabbing';
+                document.body.style.userSelect = 'none';
+                
+                e.preventDefault();
+            });
+
+            document.addEventListener('touchstart', (e) => {
+                if (!isZoomed || e.touches.length !== 1) return;
+                if (isDragging) return;
+                if (e.target.closest('.side-menu') || e.target.closest('.menu-toggle')) return;
+                
+                const card = document.querySelector('.gallery-card.active');
+                if (!card) return;
+                
+                isDragging = true;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                startPanX = panX;
+                startPanY = panY;
+                
+                const img = card.querySelector('img');
+                if (img) img.style.transition = 'none';
+            }, { passive: false });
+        }
+
+        // Funciones de drag y zoom
+        function startDrag(e) {
+            const card = e.target.closest('.gallery-card');
+            if (card && card.classList.contains('active')) {
+                // Prevenir comportamiento nativo del navegador
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Detectar doble tap para zoom
+                const currentTime = Date.now();
+                const tapGap = currentTime - lastTapTime;
+                
+                if (tapGap < 300 && tapGap > 0) {
+                    // Doble tap detectado
+                    toggleZoom(card);
+                    lastTapTime = 0;
+                    return;
+                }
+                lastTapTime = currentTime;
+
+                isDragging = true;
+                startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+                
+                // Cambiar cursor
+                card.style.cursor = 'grabbing';
+                document.body.style.cursor = 'grabbing';
+                document.body.style.userSelect = 'none';
+                
+                if (isZoomed) {
+                    // Si está zoomeada, guardar posición actual del pan
+                    startPanX = panX;
+                    startPanY = panY;
+                } else {
+                    card.classList.add('dragging');
+                }
+            }
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+
+            e.preventDefault();
+
+            currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            currentY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+            
+            if (isZoomed) {
+                // Si está zoomeada, hacer pan
+                panX = startPanX + (currentX - startX);
+                panY = startPanY + (currentY - startY);
+                
+                const activeCard = document.querySelector('.gallery-card.active');
+                const img = activeCard?.querySelector('img');
+                if (img) {
+                    img.style.transform = `scale(${currentScale}) translate(${panX / currentScale}px, ${panY / currentScale}px)`;
+                }
+            } else {
+                // Si no está zoomeada, swipe normal
+                dragOffset = currentX - startX;
+
+                const activeCard = document.querySelector('.gallery-card.active');
+                if (activeCard) {
+                    const rotation = dragOffset * 0.05;
+                    activeCard.style.transform = `translate(-50%, -50%) translateX(${dragOffset}px) rotate(${rotation}deg)`;
+                }
+            }
+        }
+
+        function endDrag(e) {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            // Restaurar cursor
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (activeCard) {
+                activeCard.style.cursor = '';
+            }
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            
+            if (isZoomed) {
+                // Si está zoomeada, solo terminar el pan
+                return;
+            }
+
+            if (activeCard) {
+                activeCard.classList.remove('dragging');
+
+                // Solo cambiar de imagen si supera el threshold
+                if (Math.abs(dragOffset) > SWIPE_THRESHOLD) {
+                    if (dragOffset < 0) {
+                        // Swipe izquierda (siguiente)
+                        activeCard.classList.add('swiping-left');
+                        setTimeout(() => nextImage(), 250);
+                    } else {
+                        // Swipe derecha (también siguiente)
+                        activeCard.classList.add('swiping-right');
+                        setTimeout(() => nextImage(), 250);
+                    }
+                } else {
+                    // Volver al centro con animación elástica
+                    activeCard.classList.add('returning');
+                    activeCard.style.transform = 'translate(-50%, -50%)';
+                    setTimeout(() => {
+                        activeCard.classList.remove('returning');
+                    }, 400);
+                }
+            }
+
+            dragOffset = 0;
+        }
+
+        // Funciones de zoom
+        function toggleZoom(card) {
+            if (isZoomed) {
+                resetZoom();
+            } else {
+                applyZoom(card);
+            }
+        }
+
+        function applyZoom(card, scale) {
+            isZoomed = true;
+            if (scale !== undefined) {
+                currentScale = scale;
+            } else {
+                currentScale = 2;
+            }
+            const img = card ? card.querySelector('img') : document.querySelector('.gallery-card.active img');
+            if (img) {
+                img.style.transform = `scale(${currentScale})`;
+                if (card) card.classList.add('zoomed');
+            }
+            hideUIElements();
+        }
+
+        function resetZoom() {
+            isZoomed = false;
+            currentScale = 1;
+            panX = 0;
+            panY = 0;
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (activeCard) {
+                const img = activeCard.querySelector('img');
+                if (img) {
+                    img.style.transform = `scale(1)`;
+                }
+                activeCard.classList.remove('zoomed');
+            }
+            showUIElements();
+        }
+
+        function hideUIElements() {
+            document.querySelector('.gallery-controls')?.classList.add('hidden');
+            document.querySelector('.overlay-words-layer')?.classList.add('hidden');
+            document.querySelector('.collection-info')?.classList.add('hidden');
+            document.querySelector('.progress-indicator')?.classList.add('hidden');
+        }
+
+        function showUIElements() {
+            document.querySelector('.gallery-controls')?.classList.remove('hidden');
+            document.querySelector('.overlay-words-layer')?.classList.remove('hidden');
+            document.querySelector('.collection-info')?.classList.remove('hidden');
+            document.querySelector('.progress-indicator')?.classList.remove('hidden');
+        }
+
+        // Soporte para pinch zoom en móviles
+        let initialDistance = 0;
+        let initialScale = 1;
+
+        function handleTouchStart(e) {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                initialDistance = getDistance(e.touches[0], e.touches[1]);
+                initialScale = currentScale;
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const currentDistance = getDistance(e.touches[0], e.touches[1]);
+                const scale = (currentDistance / initialDistance) * initialScale;
+                
+                currentScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+                
+                const activeCard = document.querySelector('.gallery-card.active');
+                if (activeCard) {
+                    const img = activeCard.querySelector('img');
+                    if (img) {
+                        img.style.transform = `scale(${currentScale})`;
+                    }
+                    
+                    if (currentScale > 1.1 && !isZoomed) {
+                        isZoomed = true;
+                        activeCard.classList.add('zoomed');
+                        hideUIElements();
+                    } else if (currentScale <= 1.05 && isZoomed) {
+                        resetZoom();
+                    }
+                }
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (e.touches.length < 2) {
+                initialDistance = 0;
+                if (currentScale < 1.1) {
+                    resetZoom();
+                }
+            }
+        }
+
+        function getDistance(touch1, touch2) {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function handleWheel(e) {
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (!activeCard) return;
+            
+            const img = activeCard.querySelector('img');
+            if (!img) return;
+            
+            e.preventDefault();
+            
+            // Obtener posición del cursor relativa a la imagen
+            const rect = img.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // Normalizar coordenadas (0 a 1)
+            const normalizedX = mouseX / rect.width;
+            const normalizedY = mouseY / rect.height;
+            
+            // Guardar escala anterior
+            const oldScale = currentScale;
+            
+            // Determinar dirección del scroll (positivo = zoom out, negativo = zoom in)
+            const delta = e.deltaY;
+            const zoomStep = 0.15; // Mayor sensibilidad
+            
+            if (delta < 0) {
+                // Scroll up = zoom in
+                if (currentScale < MAX_SCALE) {
+                    // Calcular nuevo scale
+                    const newScale = Math.min(currentScale + zoomStep, MAX_SCALE);
+                    
+                    // Zoom focal: mantener el punto bajo el cursor fijo
+                    // Obtener el punto del cursor relativo al centro de la imagen en pantalla
+                    const imgCenterX = rect.width / 2;
+                    const imgCenterY = rect.height / 2;
+                    const offsetX = mouseX - imgCenterX;
+                    const offsetY = mouseY - imgCenterY;
+                    
+                    // Fórmula correcta para zoom focal:
+                    // new_pan = (cursor_offset - old_pan) * (new_scale / old_scale) + old_pan - cursor_offset * (new_scale - old_scale)
+                    // Simplificado: new_pan = old_pan - cursor_offset * (new_scale / old_scale - 1)
+                    const scaleRatio = newScale / currentScale;
+                    panX = panX - offsetX * (scaleRatio - 1);
+                    panY = panY - offsetY * (scaleRatio - 1);
+                    
+                    currentScale = newScale;
+                    
+                    img.style.transform = `scale(${currentScale}) translate(${panX / currentScale}px, ${panY / currentScale}px)`;
+                    isZoomed = true;
+                    activeCard.classList.add('zoomed');
+                    if (currentScale > MIN_SCALE) {
+                        hideUIElements();
+                    }
+                }
+            } else {
+                // Scroll down = zoom out
+                if (currentScale > MIN_SCALE) {
+                    const oldScale = currentScale;
+                    currentScale = Math.max(currentScale - zoomStep, MIN_SCALE);
+                    const newScale = currentScale;
+                    
+                    // Obtener posición del cursor relativa a la imagen
+                    const imgRect = img.getBoundingClientRect();
+                    const mouseX = e.clientX - imgRect.left;
+                    const mouseY = e.clientY - imgRect.top;
+                    
+                    // Centro de la imagen
+                    const imgCenterX = imgRect.width / 2;
+                    const imgCenterY = imgRect.height / 2;
+                    
+                    // Offset desde el centro hasta el cursor
+                    const offsetX = mouseX - imgCenterX;
+                    const offsetY = mouseY - imgCenterY;
+                    
+                    // Aplicar fórmula focal point
+                    const scaleRatio = newScale / oldScale;
+                    const focalPanX = panX - offsetX * (scaleRatio - 1);
+                    const focalPanY = panY - offsetY * (scaleRatio - 1);
+                    
+                    // Factor de interpolación: 0 cuando está cerca de MIN_SCALE, 1 cuando está cerca de MAX_SCALE
+                    const zoomRange = MAX_SCALE - MIN_SCALE;
+                    const currentZoomOffset = currentScale - MIN_SCALE;
+                    const interpolationFactor = Math.pow(currentZoomOffset / zoomRange, 1.5); // Exponente para suavizar transición
+                    
+                    // Interpolar entre focal point y centro (0, 0)
+                    panX = focalPanX * interpolationFactor;
+                    panY = focalPanY * interpolationFactor;
+                    
+                    img.style.transform = `scale(${currentScale}) translate(${panX / currentScale}px, ${panY / currentScale}px)`;
+                    if (currentScale <= MIN_SCALE) {
+                        isZoomed = false;
+                        activeCard.classList.remove('zoomed');
+                        panX = 0;
+                        panY = 0;
+                        img.style.transform = `scale(1)`;
+                        showUIElements();
+                    }
+                }
+            }
+        }
+
+        // Navegación
+        function updateCards() {
+            // Resetear zoom al cambiar de imagen
+            resetZoom();
+
+            const cards = document.querySelectorAll('.gallery-card');
+            const dots = document.querySelectorAll('.progress-dot');
+
+            cards.forEach((card, index) => {
+                card.classList.remove('active', 'next', 'hidden', 'swiping-left', 'swiping-right', 'returning', 'coming-from-back', 'moving-forward', 'moving-to-back');
+                card.style.transform = 'translate(-50%, -50%)';
+                
+                // Resetear zoom de la imagen
+                const img = card.querySelector('img');
+                if (img) {
+                    img.style.transform = 'scale(1)';
+                }
+
+                if (index === currentIndex) {
+                    card.classList.add('active');
+                } else if (index === currentIndex + 1 || (currentIndex === galleryImages.length - 1 && index === 0)) {
+                    card.classList.add('next');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+
+            // Actualizar el caption
+            const captionElement = document.getElementById('galleryCaption');
+            if (captionElement && galleryImages[currentIndex]) {
+                captionElement.textContent = galleryImages[currentIndex].caption;
+            }
+        }
+
+        function nextImage() {
+            currentIndex = (currentIndex + 1) % galleryImages.length;
+            updateCards();
+        }
+
+        function prevImage() {
+            // Calcular el índice de la imagen anterior
+            const prevIndex = (currentIndex - 1 + galleryImages.length) % galleryImages.length;
+            const cards = document.querySelectorAll('.gallery-card');
+            const prevCard = cards[prevIndex];
+            const oldCurrentIndex = currentIndex;
+            const currentCard = cards[oldCurrentIndex];
+            
+            // Convertir inmediatamente la tarjeta actual a "next" sin animación
+            currentCard.style.transition = 'none';
+            currentCard.classList.remove('active');
+            currentCard.classList.add('next');
+            currentCard.offsetHeight; // Force reflow
+            
+            // Preparar la tarjeta anterior con estado inicial (pequeña, a la izquierda, rotada, desde atrás)
+            prevCard.classList.remove('hidden', 'next');
+            prevCard.classList.add('coming-from-back');
+            
+            // Forzar reflow para que la transición funcione
+            prevCard.offsetHeight;
+            
+            // Actualizar el índice
+            currentIndex = prevIndex;
+            
+            // Animar la tarjeta hacia adelante desde la izquierda con rotación
+            setTimeout(() => {
+                prevCard.classList.add('moving-forward', 'active');
+                
+                // Restaurar transiciones de la tarjeta que ahora es "next"
+                setTimeout(() => {
+                    currentCard.style.transition = '';
+                }, 50);
+                
+                // Actualizar el resto de tarjetas después de la animación
+                setTimeout(() => {
+                    // Limpiar clases de animación de la tarjeta que acaba de llegar
+                    prevCard.classList.remove('coming-from-back', 'moving-forward');
+                    
+                    // Actualizar solo las tarjetas restantes que necesitan cambiar de estado
+                    cards.forEach((card, index) => {
+                        // Excluir la tarjeta actual (nueva activa) y la que era la activa (ahora next)
+                        if (index !== currentIndex && index !== oldCurrentIndex) {
+                            // Remover clases de animación
+                            card.classList.remove('active', 'coming-from-back', 'moving-forward', 'moving-to-back');
+                            
+                            // Determinar el nuevo estado correcto
+                            const shouldBeNext = (index === currentIndex + 1) || (currentIndex === galleryImages.length - 1 && index === 0);
+                            const isNext = card.classList.contains('next');
+                            const isHidden = card.classList.contains('hidden');
+                            
+                            // Solo cambiar estado si es necesario y desactivar transiciones temporalmente
+                            if (shouldBeNext && !isNext) {
+                                // Cambiar de hidden a next
+                                card.style.transition = 'none';
+                                card.classList.remove('hidden');
+                                card.classList.add('next');
+                                card.offsetHeight; // Force reflow
+                                card.style.transition = '';
+                            } else if (!shouldBeNext && !isHidden) {
+                                // Cambiar de next a hidden
+                                card.style.transition = 'none';
+                                card.classList.remove('next');
+                                card.classList.add('hidden');
+                                card.offsetHeight; // Force reflow
+                                card.style.transition = '';
+                            }
+                        }
+                    });
+                }, 500);
+                
+                // Actualizar dots
+                const dots = document.querySelectorAll('.progress-dot');
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentIndex);
+                });
+                
+                // Actualizar caption
+                const captionElement = document.getElementById('galleryCaption');
+                if (captionElement && galleryImages[currentIndex]) {
+                    captionElement.textContent = galleryImages[currentIndex].caption;
+                }
+            }, 20);
+        }
+
+        // Event listeners para botones
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (activeCard) {
+                activeCard.classList.add('swiping-right');
+                setTimeout(() => nextImage(), 250);
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            const activeCard = document.querySelector('.gallery-card.active');
+            if (activeCard) {
+                activeCard.classList.add('swiping-left');
+                setTimeout(() => prevImage(), 250);
+            }
+        });
+
+        // Soporte para teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                document.getElementById('nextBtn').click();
+            } else if (e.key === 'ArrowLeft') {
+                document.getElementById('prevBtn').click();
+            }
+        });
+
+        // Animación de textos overlay
+        function animateOverlayWords() {
+            const words = document.querySelectorAll('.overlay-word');
+            let currentWordIndex = 0;
+
+            function showNextWord() {
+                // Desvanecer la palabra actual
+                words.forEach(word => {
+                    if (word.classList.contains('active')) {
+                        word.classList.remove('active');
+                        word.classList.add('fading');
+                    }
+                });
+
+                // Mostrar la siguiente palabra
+                setTimeout(() => {
+                    words.forEach(word => word.classList.remove('fading'));
+                    words[currentWordIndex].classList.add('active');
+                    currentWordIndex = (currentWordIndex + 1) % words.length;
+                }, 600);
+            }
+
+            // Mostrar primera palabra inmediatamente
+            words[0].classList.add('active');
+            currentWordIndex = 1;
+
+            // Ciclo de animación
+            setInterval(showNextWord, 4000);
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            initGallery();
+            animateOverlayWords();
+            waitForGalleryImages().then(() => {
+                requestAnimationFrame(hidePageLoader);
+            });
+        });
+
+        // Fallback si alguna imagen tarda demasiado
+        window.addEventListener('load', () => {
+            setTimeout(hidePageLoader, 1500);
+        });
+
         // Fade-in blanco al entrar
         window.addEventListener('load', function() {
             var overlay = document.getElementById('entryWhiteOverlay');

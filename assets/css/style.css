@@ -1648,17 +1648,16 @@ body.visual-effects-disabled .blending-item {
     /* When menu is open on touch devices, REMOVE blend mode from the nav.
        This lets real touch events work on all sidebar items (links, buttons,
        toggles) without needing proxy overlays for every element.
-       The blend mode is only needed when the nav overlays the main content
-       (menu closed). When the sidebar is open, the white ::before background
-       provides the correct visual context anyway. */
-    body.menu-open nav.blending-item {
+       Uses a dedicated class that is removed AFTER the close transition
+       finishes (450ms) to avoid a visual pop/flash. */
+    body.menu-blend-override nav.blending-item {
         mix-blend-mode: normal !important;
     }
 
     /* Hamburger X is already black via .menu-toggle.active span — visible
        on white sidebar. Logo needs to be darkened since blend mode no longer
        inverts it against the white sidebar background. */
-    body.menu-open nav.blending-item .logo img {
+    body.menu-blend-override nav.blending-item .logo img {
         filter: brightness(0);
     }
 }
