@@ -819,7 +819,7 @@ function isImageCentered(x, y, imageSizeScaled) {
     // so the user doesn't need to scroll the element so far up to trigger the tooltip
     const isMobileDevice = window.innerWidth <= 900 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     const thresholdUp = threshold; // above center: keep standard 35%
-    const thresholdDown = isMobileDevice ? imageSizeScaled * 0.55 : threshold; // below center: 55% on mobile
+    const thresholdDown = isMobileDevice ? imageSizeScaled * 0.7 : threshold; // below center: 70% on mobile
 
     return Math.abs(dx) < threshold && dy > -thresholdUp && dy < thresholdDown;
 }

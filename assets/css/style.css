@@ -2880,7 +2880,7 @@ body.visual-effects-disabled .volume-slider {
     /* On touch: by default no CSS-hover opacity dimming, but allow JS-driven mobile-centered dimming */
     #canvas.has-hover .image-container {
         opacity: 0.7;
-        transition: opacity 0.8s cubic-bezier(.25, .1, .25, 1);
+        transition: opacity 1.2s cubic-bezier(.22, .08, .25, 1);
     }
 
     #canvas.has-hover .image-container.is-hovered,
@@ -2888,11 +2888,11 @@ body.visual-effects-disabled .volume-slider {
         opacity: 1;
     }
 
-    /* Reduce shadow opacity and smooth transitions for mobile devices */
+    /* Stronger shadow and slower transitions for mobile devices */
     .image-container.is-hovered,
     .image-container.mobile-centered {
-        box-shadow: 0 0 120px 80px rgba(0, 0, 0, 0.18);
-        transition: opacity 0.8s cubic-bezier(.25, .1, .25, 1), box-shadow 1s cubic-bezier(.25, .1, .25, 1);
+        box-shadow: 0 0 140px 100px rgba(0, 0, 0, 0.35);
+        transition: opacity 1.2s cubic-bezier(.22, .08, .25, 1), box-shadow 1.4s cubic-bezier(.22, .08, .25, 1);
     }
 }
 
