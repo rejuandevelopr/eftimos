@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Variables para animación suave de la barra y el porcentaje
     let displayedPercent = 0;
+    let currentTargetPercent = 0; // Siempre refleja el último porcentaje objetivo
     let animatingBar = false;
     function lerp(a, b, t) {
         return a + (b - a) * t;
@@ -236,14 +237,32 @@ document.addEventListener('DOMContentLoaded', function () {
     syncMenuToggles();
 
     function updateBar() {
-        const percent = Math.round((loaded / total) * 100);
+        currentTargetPercent = Math.min(100, Math.round((loaded / total) * 100));
         if (!animatingBar) {
             animatingBar = true;
-            animateBar(percent);
+            animateBar();
         }
     }
 
-    function animateBar(targetPercent) {
+    function showEnterButton() {
+        if (loadingComplete) return;
+        loadingComplete = true;
+        const preloaderBarContainer = document.querySelector('.preloader-bar-container');
+        preloader.classList.add('loaded');
+        preloaderBar.classList.add('hide');
+        preloaderBarText.classList.add('hide');
+        if (preloaderBarContainer) preloaderBarContainer.style.display = 'none';
+        setTimeout(() => {
+            preloaderEnterBtn.textContent = 'Enter';
+            preloaderEnterBtn.classList.add('show');
+            preloaderEnterBtn.disabled = false;
+            preloaderEnterBtn.style.display = 'flex';
+        }, 500);
+    }
+
+    function animateBar() {
+        // Siempre lee el target más reciente (no el que se pasó como argumento)
+        const targetPercent = currentTargetPercent;
         // Suaviza el valor mostrado
         displayedPercent = lerp(displayedPercent, targetPercent, 0.18);
         // Si está muy cerca, lo iguala
@@ -251,48 +270,22 @@ document.addEventListener('DOMContentLoaded', function () {
         preloaderBar.style.width = displayedPercent + '%';
         preloaderBarText.textContent = Math.round(displayedPercent) + '%';
         updatePreloaderBg(displayedPercent);
-        const preloaderBarContainer = document.querySelector('.preloader-bar-container');
-        // Permitir avanzar aunque no se llegue a 100% después de cierto tiempo
-        if ((targetPercent >= 100 && displayedPercent >= 100 && !loadingComplete) || (loaded >= total && !loadingComplete)) {
-            loadingComplete = true;
-            // Agregar clase 'loaded' al preloader para hacerlo translúcido
-            preloader.classList.add('loaded');
-            preloaderBar.classList.add('hide');
-            preloaderBarText.classList.add('hide');
-            if (preloaderBarContainer) preloaderBarContainer.style.display = 'none';
-            setTimeout(() => {
-                preloaderEnterBtn.textContent = 'Enter';
-                preloaderEnterBtn.classList.add('show');
-                preloaderEnterBtn.disabled = false;
-                preloaderEnterBtn.style.display = 'flex';
-            }, 500);
+
+        // Comprobar si carga completa
+        if (loaded >= total && displayedPercent >= 100) {
+            showEnterButton();
             animatingBar = false;
-        } else if (targetPercent < 100 && loaded < total) {
-            loadingComplete = false;
-            preloaderBar.classList.remove('hide');
-            preloaderBarText.classList.remove('hide');
-            if (preloaderBarContainer) preloaderBarContainer.style.display = '';
-            preloaderEnterBtn.classList.remove('show');
-            preloaderEnterBtn.disabled = true;
-            preloaderEnterBtn.style.display = 'none';
+            return;
         }
-        if (displayedPercent !== targetPercent) {
-            requestAnimationFrame(() => animateBar(targetPercent));
+
+        // Seguir animando si no hemos llegado al target actual
+        // o si el target podría cambiar (aún faltan assets)
+        if (displayedPercent !== targetPercent || loaded < total) {
+            requestAnimationFrame(() => animateBar());
         } else {
-            // Si por algún motivo no se llegó a 100% pero ya se intentó cargar todo, permitir avanzar
-            if (!loadingComplete && loaded >= total) {
-                loadingComplete = true;
-                // Agregar clase 'loaded' al preloader para hacerlo translúcido
-                preloader.classList.add('loaded');
-                preloaderBar.classList.add('hide');
-                preloaderBarText.classList.add('hide');
-                if (preloaderBarContainer) preloaderBarContainer.style.display = 'none';
-                setTimeout(() => {
-                    preloaderEnterBtn.textContent = 'Enter';
-                    preloaderEnterBtn.classList.add('show');
-                    preloaderEnterBtn.disabled = false;
-                    preloaderEnterBtn.style.display = 'flex';
-                }, 500);
+            // Animación alcanzó el target y todos los assets cargados
+            if (loaded >= total) {
+                showEnterButton();
             }
             animatingBar = false;
         }
@@ -303,56 +296,96 @@ document.addEventListener('DOMContentLoaded', function () {
         updateBar();
     }
 
+    // Helper para evitar doble conteo de un mismo asset
+    function createSafeAssetCallback(label) {
+        let called = false;
+        return function() {
+            if (called) return;
+            called = true;
+            console.log('[PRELOADER] Asset loaded:', label);
+            assetLoaded();
+        };
+    }
+
     // Cargar imágenes críticas primero
     assets.forEach(src => {
+        const onDone = createSafeAssetCallback(src);
         if (src.endsWith('.mp3')) {
             const audio = new Audio();
             audio.src = src;
             audio.preload = 'auto';
-            audio.addEventListener('canplaythrough', assetLoaded, { once: true });
-            audio.addEventListener('error', assetLoaded, { once: true });
+            audio.addEventListener('canplaythrough', onDone, { once: true });
+            audio.addEventListener('error', onDone, { once: true });
+            // Timeout: audio puede no disparar eventos en algunos navegadores
+            setTimeout(onDone, 8000);
         } else if (src.endsWith('.mp4')) {
             const video = document.createElement('video');
             video.src = src;
             video.preload = 'auto';
-            video.addEventListener('canplaythrough', assetLoaded, { once: true });
-            video.addEventListener('error', assetLoaded, { once: true });
+            video.muted = true; // iOS Safari requiere muted para preload
+            video.playsInline = true;
+            video.addEventListener('canplaythrough', onDone, { once: true });
+            video.addEventListener('loadeddata', onDone, { once: true }); // Fallback: se dispara antes que canplaythrough
+            video.addEventListener('error', onDone, { once: true });
+            // iOS Safari a menudo ignora preload en videos; timeout de seguridad
+            setTimeout(onDone, 6000);
         } else {
             const img = new Image();
             img.src = src;
-            img.onload = assetLoaded;
-            img.onerror = assetLoaded;
+            img.onload = onDone;
+            img.onerror = onDone;
+            // Timeout por si la imagen nunca responde
+            setTimeout(onDone, 8000);
         }
     });
 
     // Verificar también los elementos del DOM (video de fondo y audio white-noise)
     // Video de fondo del DOM
     const backgroundVideo = document.querySelector('#videos-background video');
+    const bgVideoCallback = createSafeAssetCallback('background-video-dom');
     if (backgroundVideo) {
         if (backgroundVideo.readyState >= 3) { // HAVE_FUTURE_DATA o más
-            assetLoaded();
+            bgVideoCallback();
         } else {
-            backgroundVideo.addEventListener('canplaythrough', assetLoaded, { once: true });
-            backgroundVideo.addEventListener('error', assetLoaded, { once: true });
+            backgroundVideo.addEventListener('canplaythrough', bgVideoCallback, { once: true });
+            backgroundVideo.addEventListener('loadeddata', bgVideoCallback, { once: true }); // Fallback iOS
+            backgroundVideo.addEventListener('error', bgVideoCallback, { once: true });
+            // iOS Safari puede no disparar canplaythrough para videos del DOM; timeout de seguridad
+            setTimeout(bgVideoCallback, 6000);
         }
     } else {
         // Si no existe el video, contarlo de todas formas para no bloquear
-        assetLoaded();
+        bgVideoCallback();
     }
 
     // Grain effect - verificar que esté listo
+    const grainCallback = createSafeAssetCallback('grain-effect');
     if (window.grainEffectReady) {
-        assetLoaded();
+        grainCallback();
     } else {
-        window.addEventListener('grainEffectReady', assetLoaded, { once: true });
+        window.addEventListener('grainEffectReady', grainCallback, { once: true });
         // Timeout de seguridad en caso de que el grain no se cargue
         setTimeout(() => {
-            if (loaded < total) {
-                console.warn('[PRELOADER] Grain effect timeout, continuing anyway');
-                assetLoaded();
-            }
+            console.warn('[PRELOADER] Grain effect timeout, continuing anyway');
+            grainCallback();
         }, 5000);
     }
+
+    // ======= TIMEOUT GLOBAL DE SEGURIDAD =======
+    // Si después de 15s la barra sigue sin llegar a 100%, forzar completación
+    setTimeout(() => {
+        if (!loadingComplete) {
+            console.warn('[PRELOADER] Global safety timeout reached. Forcing completion. loaded=' + loaded + '/' + total);
+            loaded = total;
+            updateBar();
+            // Forzar mostrar botón Enter si la animación no lo hizo
+            setTimeout(() => {
+                if (!loadingComplete) {
+                    showEnterButton();
+                }
+            }, 600);
+        }
+    }, 15000);
 
     // Lazy load de assets no críticos después de que el usuario entre
     function loadNonCriticalAssets() {
