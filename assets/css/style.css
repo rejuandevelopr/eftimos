@@ -680,7 +680,12 @@ body.index-page.menu-open::after {
 
 .canvas-body {
     overflow: hidden;
-    touch-action: none;
+    touch-action: manipulation;
+    /* touch-action was 'none' here, but that caused iOS Safari to compute
+       effective touch-action: none for the nav via ancestor intersection,
+       blocking synthetic click events on nav children (hamburger, logo).
+       'manipulation' still prevents double-tap-zoom while allowing taps.
+       Full 'none' is now on #canvas only. */
 }
 
 #canvas {
@@ -690,6 +695,7 @@ body.index-page.menu-open::after {
     position: relative;
     overflow: hidden;
     z-index: 11;
+    touch-action: none;
 }
 
 /* Darkening overlay behind map items on hover */
