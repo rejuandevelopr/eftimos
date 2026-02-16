@@ -12,6 +12,103 @@ if (typeof window.preloaderEnterPressed === 'undefined') {
     window.preloaderEnterPressed = false;
 }
 
+// ========== PAGE LOADER PROGRESS ENHANCER ==========
+// Enhances page-loader with real progress tracking based on gallery image loading.
+// Coordinates entry overlay fadeout with content readiness instead of window.load.
+// Invisible for fast/cached loads thanks to the existing page-loader-pending gate.
+(function() {
+    var loader = document.getElementById('pageLoader');
+    if (!loader) return;
+
+    var bar = loader.querySelector('.page-loader-bar');
+    var entryOverlay = document.getElementById('entryWhiteOverlay');
+    var overlayFaded = false;
+
+    // Switch bar from indeterminate animation to determinate width-based progress
+    if (bar) {
+        bar.style.animation = 'none';
+        bar.style.transform = 'none';
+        bar.style.width = '0%';
+        bar.style.transition = 'width 0.45s cubic-bezier(.77, 0, .18, 1)';
+    }
+
+    var progress = 0;
+    function setProgress(value) {
+        progress = Math.max(progress, Math.min(value, 100));
+        if (bar) bar.style.width = progress + '%';
+    }
+
+    // Small initial bump — DOM is being parsed
+    setProgress(5);
+
+    // Fade entry overlay (called once, when content is ready)
+    function fadeEntryOverlay() {
+        if (overlayFaded || !entryOverlay) return;
+        overlayFaded = true;
+        entryOverlay.style.opacity = '0';
+        setTimeout(function() {
+            if (entryOverlay && entryOverlay.parentNode) {
+                entryOverlay.parentNode.removeChild(entryOverlay);
+            }
+        }, 420);
+    }
+
+    // Observe page-loader for hidden class → fade overlay immediately
+    var loaderObserver = new MutationObserver(function() {
+        if (loader.classList.contains('hidden')) {
+            fadeEntryOverlay();
+            loaderObserver.disconnect();
+        }
+    });
+    loaderObserver.observe(loader, { attributes: true, attributeFilter: ['class'] });
+
+    // On DOMContentLoaded, watch galleryTrack for images and track their load progress
+    document.addEventListener('DOMContentLoaded', function() {
+        setProgress(20);
+
+        var track = document.getElementById('galleryTrack');
+        if (!track) {
+            setProgress(100);
+            return;
+        }
+
+        function trackImageLoading(images) {
+            var total = images.length;
+            var loaded = 0;
+
+            function onImageReady() {
+                loaded++;
+                // 20% reserved for DOM, remaining 80% distributed across images
+                setProgress(20 + (loaded / total) * 80);
+            }
+
+            Array.prototype.forEach.call(images, function(img) {
+                if (img.complete) {
+                    onImageReady();
+                } else {
+                    img.addEventListener('load', onImageReady);
+                    img.addEventListener('error', onImageReady);
+                }
+            });
+        }
+
+        // Images are created dynamically by initGallery(), so watch for them
+        var existingImages = track.querySelectorAll('img');
+        if (existingImages.length > 0) {
+            trackImageLoading(existingImages);
+        } else {
+            var trackObserver = new MutationObserver(function() {
+                var images = track.querySelectorAll('img');
+                if (!images.length) return;
+                trackObserver.disconnect();
+                trackImageLoading(images);
+            });
+            trackObserver.observe(track, { childList: true, subtree: true });
+        }
+    });
+})();
+// ========== END PAGE LOADER PROGRESS ENHANCER ==========
+
 // ========== iOS TOUCH PROXY OVERLAY ==========
 // iOS WebKit blocks ALL touch events on position:fixed elements with
 // mix-blend-mode other than 'normal'. Instead of removing the blend mode
@@ -717,6 +814,65 @@ function initializeControls() {
                 restoreLowPassFilter(500);
             }
         });
+
+        // ========== iOS TOUCH FIX FOR DROPDOWN MENU ITEMS ==========
+        // On iOS Safari, mix-blend-mode:difference on position:fixed ancestors
+        // blocks synthetic click events after touchend, even when the CSS
+        // menu-blend-override removes the blend mode (the @media query may not
+        // match all iOS configurations). This handler programmatically triggers
+        // navigation/actions on touchend, bypassing the bug entirely.
+        var _isTouchCapable = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+        if (_isTouchCapable) {
+            var _menuTouchStartX = 0;
+            var _menuTouchStartY = 0;
+            var _menuTouchMoved = false;
+
+            dropdownMenu.addEventListener('touchstart', function (e) {
+                if (!e.touches || !e.touches.length) return;
+                _menuTouchStartX = e.touches[0].clientX;
+                _menuTouchStartY = e.touches[0].clientY;
+                _menuTouchMoved = false;
+            }, { passive: true });
+
+            dropdownMenu.addEventListener('touchmove', function (e) {
+                if (!e.touches || !e.touches.length) return;
+                var dx = Math.abs(e.touches[0].clientX - _menuTouchStartX);
+                var dy = Math.abs(e.touches[0].clientY - _menuTouchStartY);
+                if (dx > 10 || dy > 10) {
+                    _menuTouchMoved = true;
+                }
+            }, { passive: true });
+
+            dropdownMenu.addEventListener('touchend', function (e) {
+                if (_menuTouchMoved) return;
+                if (!e.changedTouches || !e.changedTouches.length) return;
+
+                var touch = e.changedTouches[0];
+                var target = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (!target) return;
+
+                // <a> links (SHOP, INSTAGRAM, TIKTOK, etc.)
+                var link = target.closest('a.dropdown-link, a.submenu-link');
+                if (link && link.href) {
+                    e.preventDefault();
+                    if (link.target === '_blank') {
+                        window.open(link.href, '_blank', 'noopener,noreferrer');
+                    } else {
+                        window.location.href = link.href;
+                    }
+                    return;
+                }
+
+                // <button> elements (CONTACT, SOCIAL MEDIA toggle, COLLECTIONS toggle, sidebar controls)
+                var btn = target.closest('button.dropdown-link, button.dropdown-toggle, button.sidebar-control-btn');
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                    return;
+                }
+            }, { passive: false });
+        }
+        // ========== END iOS TOUCH FIX ==========
     }
 
     // ========== COLLECTIONS SUBMENU ==========
