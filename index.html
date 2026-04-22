@@ -118,6 +118,77 @@
                 style="display:none;">Enter</button>
         </div>
     </div>
+    
+    <!-- FINAL DAYS COUNTDOWN POPUP -->
+    <div id="finalDaysPopup" class="final-days-popup" style="display:none; opacity:0;">
+        <div class="final-days-container">
+            <!-- Close Button -->
+            <button id="finalDaysClose" class="final-days-close">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            
+            <!-- Countdown Timer -->
+            <div class="final-days-countdown">
+                <div class="countdown-item">
+                    <span class="countdown-value" id="countdownDays">0</span>
+                    <span class="countdown-label">DAYS</span>
+                </div>
+                <span class="countdown-separator">:</span>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="countdownHours">0</span>
+                    <span class="countdown-label">HOURS</span>
+                </div>
+                <span class="countdown-separator">:</span>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="countdownMinutes">0</span>
+                    <span class="countdown-label">MINUTES</span>
+                </div>
+                <span class="countdown-separator">:</span>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="countdownSeconds">0</span>
+                    <span class="countdown-label">SECONDS</span>
+                </div>
+            </div>
+            
+            <!-- Text Content -->
+            <div class="final-days-text">
+                <p class="final-days-quote">Sometimes you have to let things go.</p>
+                <h1 class="final-days-title">ARCHIVE — THE FINAL DAYS</h1>
+                <p class="final-days-subtitle">The first chapter ends.</p>
+                <p class="final-days-note">No restocks.</p>
+            </div>
+            
+            <!-- Action Button -->
+            <button id="finalDaysShopBtn" class="final-days-shop-btn">VISIT SHOP</button>
+        </div>
+    </div>
+
+    <!-- FINAL DAYS COUNTDOWN BACKGROUND (shown from start) -->
+    <div id="finalDaysCountdownBackground" class="final-days-countdown-background">
+        <div class="countdown-item">
+            <span class="countdown-value" id="countdownDaysBg">0</span>
+            <span class="countdown-label">DAYS</span>
+        </div>
+        <span class="countdown-separator">:</span>
+        <div class="countdown-item">
+            <span class="countdown-value" id="countdownHoursBg">0</span>
+            <span class="countdown-label">HOURS</span>
+        </div>
+        <span class="countdown-separator">:</span>
+        <div class="countdown-item">
+            <span class="countdown-value" id="countdownMinutesBg">0</span>
+            <span class="countdown-label">MINUTES</span>
+        </div>
+        <span class="countdown-separator">:</span>
+        <div class="countdown-item">
+            <span class="countdown-value" id="countdownSecondsBg">0</span>
+            <span class="countdown-label">SECONDS</span>
+        </div>
+    </div>
+    
     <!-- Grain Canvas -->
     <canvas id="grainCanvas" style="opacity:0;"></canvas>
 
@@ -291,8 +362,8 @@
                 <span class="tooltip">RESiLiENCE AW24 BTS</span>
             </a>
         </div>
-        <div class="image-template reveal-text-template" data-text="DISCOVER THE SECRETS"
-            data-sound="locked-in-oneself">
+        <div class="image-template reveal-text-template" data-text=" "</div> <!-- DISCOVER THE SECRETS -->
+            data-sound="locked-in-oneself" style="display: none;">
             <div class="reveal-text-container">
                 <canvas class="reveal-text-canvas"></canvas>
             </div>
@@ -340,6 +411,7 @@
     <script defer src="assets/js/tooltip-nebula.js"></script>
     <script defer src="assets/js/contact-nebula.js"></script>
     <script defer src="assets/js/reveal-text.js"></script>
+    <script defer src="assets/js/final-days-popup.js"></script>
 
 </body>
 </html>

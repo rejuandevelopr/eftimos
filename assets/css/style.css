@@ -2988,3 +2988,395 @@ body.visual-effects-disabled .volume-slider {
         transform: translateX(280%);
     }
 }
+
+/* --- FINAL DAYS POPUP STYLES --- */
+.final-days-popup {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 40000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    transition: opacity 0.6s cubic-bezier(.77, 0, .18, 1), display 0s 0.6s;
+    will-change: opacity;
+}
+
+.final-days-popup[style*="display: none"] {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.final-days-container {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4rem;
+    padding: 60px 40px;
+    animation: finalDaysFadeIn 0.8s cubic-bezier(.2, .9, .2, 1) forwards;
+    will-change: transform, opacity;
+}
+
+@keyframes finalDaysFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.95) translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Close Button */
+.final-days-close {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ffffff;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    width: 48px;
+    height: 48px;
+    z-index: 10;
+}
+
+.final-days-close:hover {
+    opacity: 0.7;
+    transform: rotate(90deg);
+}
+
+.final-days-close svg {
+    width: 32px;
+    height: 32px;
+    stroke: #ffffff;
+    stroke-width: 2;
+}
+
+/* Countdown Timer */
+.final-days-countdown {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.countdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.countdown-value {
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    min-width: 80px;
+    text-align: center;
+}
+
+.countdown-label {
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
+    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.countdown-separator {
+    font-size: clamp(2rem, 6vw, 4rem);
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1;
+    margin: 0 0.5rem;
+}
+
+/* Text Content */
+.final-days-text {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: textAppear 1s cubic-bezier(.2, .9, .2, 1) 0.3s forwards;
+    opacity: 0;
+}
+
+@keyframes textAppear {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.final-days-quote {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+    font-family: 'Herr Von Muellerhoff', serif;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+.final-days-title {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+    line-height: 1.2;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.final-days-subtitle {
+    font-size: clamp(0.9rem, 2vw, 1rem);
+    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+.final-days-note {
+    font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+/* Shop Button */
+.final-days-shop-btn {
+    padding: 16px 48px;
+    background: #ffffff;
+    color: #000000;
+    border: none;
+    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(.77, 0, .18, 1);
+    border-radius: 0;
+    position: relative;
+    overflow: hidden;
+    z-index: 5;
+    animation: buttonSlideUp 0.8s cubic-bezier(.2, .9, .2, 1) 0.5s forwards;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+@keyframes buttonSlideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.final-days-shop-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    transition: left 0.4s cubic-bezier(.77, 0, .18, 1);
+    z-index: -1;
+}
+
+.final-days-shop-btn:hover {
+    color: #ffffff;
+}
+
+.final-days-shop-btn:hover::before {
+    left: 0;
+}
+
+.final-days-shop-btn:active {
+    transform: scale(0.98);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .final-days-container {
+        gap: 2.5rem;
+        padding: 40px 20px;
+    }
+
+    .final-days-close {
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .final-days-close svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .countdown-separator {
+        margin: 0 0.25rem;
+    }
+
+    .final-days-text {
+        gap: 0.75rem;
+    }
+
+    .final-days-quote {
+        margin-bottom: 0.5rem;
+    }
+
+    .final-days-shop-btn {
+        padding: 14px 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .final-days-container {
+        gap: 2rem;
+        padding: 30px 16px;
+    }
+
+    .final-days-close {
+        top: 16px;
+        right: 16px;
+    }
+
+    .countdown-item {
+        gap: 0.25rem;
+    }
+
+    .final-days-quote {
+        font-size: 0.95rem;
+    }
+
+    .final-days-subtitle,
+    .final-days-note {
+        font-size: 0.8rem;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .final-days-shop-btn {
+        padding: 18px 48px;
+        min-height: 48px;
+    }
+
+    .final-days-close {
+        min-width: 48px;
+        min-height: 48px;
+    }
+}
+
+/* --- FINAL DAYS COUNTDOWN BACKGROUND (fixed in page background) --- */
+.final-days-countdown-background {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    z-index: 8;
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.final-days-countdown-background:hover {
+    opacity: 0.6;
+}
+
+.final-days-countdown-background .countdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.final-days-countdown-background .countdown-value {
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    min-width: 50px;
+    text-align: center;
+}
+
+.final-days-countdown-background .countdown-label {
+    font-size: clamp(0.5rem, 1.2vw, 0.65rem);
+    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.final-days-countdown-background .countdown-separator {
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+    color: rgba(255, 255, 255, 0.3);
+    line-height: 1;
+    margin: 0 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .final-days-countdown-background {
+        bottom: 30px;
+        gap: 0.3rem;
+    }
+
+    .final-days-countdown-background .countdown-separator {
+        margin: 0 0.1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .final-days-countdown-background {
+        bottom: 20px;
+    }
+
+    .final-days-countdown-background .countdown-value {
+        min-width: 40px;
+    }
+}
