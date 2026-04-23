@@ -485,6 +485,29 @@
             if (audioElements[soundType]) {
                 audioElements[soundType].volume = Math.max(0, Math.min(1, volume));
             }
+        },
+        setGlobalVolume: (multiplier) => {
+            // Set volume for all audio elements based on a multiplier (0-1)
+            Object.keys(audioElements).forEach(key => {
+                const audio = audioElements[key];
+                if (audio) {
+                    // Multiply the default volume by the multiplier
+                    let defaultVolume = 0.15;
+                    if (key === 'mapHover') defaultVolume = 0.15;
+                    else if (key === 'mapClick') defaultVolume = 0.35;
+                    else if (key === 'dragEnd') defaultVolume = 0.12;
+                    else if (key.startsWith('asmr')) defaultVolume = 0.45;
+                    
+                    audio.volume = defaultVolume * Math.max(0, Math.min(1, multiplier));
+                }
+            });
+        }
+    };
+    
+    // Expose setUIAudioVolume to window for external control
+    window.setUIAudioVolume = (multiplier) => {
+        if (typeof window.UISounds !== 'undefined' && window.UISounds.setGlobalVolume) {
+            window.UISounds.setGlobalVolume(multiplier);
         }
     };
 

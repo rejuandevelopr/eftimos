@@ -317,9 +317,9 @@ body:not(.preloader-active) nav.blending-item .logo {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     background: transparent;
-    color: #ffffff !important;
-    mix-blend-mode: difference;
-    border: 1px solid rgba(0, 0, 0, 0.3);
+    color: #000000 !important;
+    mix-blend-mode: normal;
+    border: 1px solid rgba(0, 0, 0, 0.5);
     border-radius: 0 !important;
     position: absolute;
     bottom: 0;
@@ -328,12 +328,12 @@ body:not(.preloader-active) nav.blending-item .logo {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 10;
+    z-index: 21;
     cursor: pointer;
     transition: all 0.4s ease;
     opacity: 0;
     overflow: hidden;
-    transform: translateY(24px) scale(0.96);
+    transform: scale(0.96);
     pointer-events: none;
 }
 
@@ -383,7 +383,7 @@ body:not(.preloader-active) nav.blending-item .logo {
 
 .preloader-enter-btn.show {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3005,6 +3005,7 @@ body.visual-effects-disabled .volume-slider {
     padding: 40px 20px;
     transition: opacity 0.6s cubic-bezier(.77, 0, .18, 1), display 0s 0.6s;
     will-change: opacity;
+    overflow: hidden;
 }
 
 .final-days-popup[style*="display: none"] {
@@ -3068,49 +3069,7 @@ body.visual-effects-disabled .volume-slider {
     stroke-width: 2;
 }
 
-/* Countdown Timer */
-.final-days-countdown {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.countdown-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.countdown-value {
-    font-size: clamp(2.5rem, 8vw, 5rem);
-    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
-    font-weight: 700;
-    color: #ffffff;
-    line-height: 1;
-    letter-spacing: 0.02em;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    min-width: 80px;
-    text-align: center;
-}
-
-.countdown-label {
-    font-size: clamp(0.75rem, 2vw, 0.875rem);
-    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.7);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.countdown-separator {
-    font-size: clamp(2rem, 6vw, 4rem);
-    color: rgba(255, 255, 255, 0.5);
-    line-height: 1;
-    margin: 0 0.5rem;
-}
+/* --- LARGE COUNTDOWN (always visible, only one version) --- */
 
 /* Text Content */
 .final-days-text {
@@ -3135,11 +3094,12 @@ body.visual-effects-disabled .volume-slider {
 
 .final-days-quote {
     font-size: clamp(1rem, 2.5vw, 1.25rem);
-    font-family: 'Herr Von Muellerhoff', serif;
-    font-weight: 400;
+    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+    font-weight: 700;
     color: rgba(255, 255, 255, 0.8);
     letter-spacing: 0.05em;
     margin: 0;
+    text-transform: uppercase;
 }
 
 .final-days-title {
@@ -3305,43 +3265,99 @@ body.visual-effects-disabled .volume-slider {
     }
 }
 
-/* --- FINAL DAYS COUNTDOWN BACKGROUND (fixed in page background) --- */
-.final-days-countdown-background {
+
+
+.countdown-large,
+.countdown-large-fullscreen {
     position: fixed;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    z-index: 8;
-    opacity: 0.4;
-    transition: opacity 0.3s ease;
     pointer-events: none;
+    z-index: 7;
+    padding: 20px;
+    opacity: 0.25;
+    transition: z-index 0s linear, opacity 0.6s cubic-bezier(.77, 0, .18, 1);
 }
 
-.final-days-countdown-background:hover {
-    opacity: 0.6;
+/* When popup is active, bring countdown to foreground */
+.countdown-large-fullscreen.popup-active {
+    z-index: 39999;
+    opacity: 1;
 }
 
-.final-days-countdown-background .countdown-item {
+.countdown-large-content {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.2rem;
+    justify-content: center;
+    gap: 0;
+    width: 100%;
+    height: 100%;
+    flex-wrap: wrap;
 }
 
-.final-days-countdown-background .countdown-value {
-    font-size: clamp(1.2rem, 3vw, 2rem);
+.countdown-large-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.countdown-large-value {
     font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.15);
     line-height: 1;
-    letter-spacing: 0.02em;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    min-width: 50px;
+    letter-spacing: -0.05em;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     text-align: center;
+    /* Desktop: based on viewport width for horizontal layout */
+    font-size: clamp(8rem, 20vw, 28rem);
+}
+
+.countdown-large-separator {
+    font-family: 'Helvetica Neue Condensed Bold', 'Helvetica', sans-serif;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.15);
+    line-height: 1;
+    letter-spacing: -0.05em;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    margin: 0 0.5vw;
+    /* Desktop: based on viewport width */
+    font-size: clamp(6rem, 15vw, 20rem);
+}
+
+/* Mobile: 2-row layout */
+@media (max-width: 900px) {
+    .countdown-large-content {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .countdown-large-value {
+        /* Mobile: based on viewport height for 2 rows */
+        font-size: clamp(5rem, 18vh, 15rem);
+    }
+
+    .countdown-large-separator {
+        /* Mobile: based on viewport height */
+        font-size: clamp(4rem, 12vh, 10rem);
+        margin: 0.5vh 0;
+    }
+}
+
+/* Mobile small devices */
+@media (max-width: 480px) {
+    .countdown-large-value {
+        font-size: clamp(4rem, 16vh, 12rem);
+    }
+
+    .countdown-large-separator {
+        font-size: clamp(3rem, 10vh, 8rem);
+        margin: 0.3vh 0;
+    }
 }
 
 .final-days-countdown-background .countdown-label {

@@ -130,29 +130,6 @@
                 </svg>
             </button>
             
-            <!-- Countdown Timer -->
-            <div class="final-days-countdown">
-                <div class="countdown-item">
-                    <span class="countdown-value" id="countdownDays">0</span>
-                    <span class="countdown-label">DAYS</span>
-                </div>
-                <span class="countdown-separator">:</span>
-                <div class="countdown-item">
-                    <span class="countdown-value" id="countdownHours">0</span>
-                    <span class="countdown-label">HOURS</span>
-                </div>
-                <span class="countdown-separator">:</span>
-                <div class="countdown-item">
-                    <span class="countdown-value" id="countdownMinutes">0</span>
-                    <span class="countdown-label">MINUTES</span>
-                </div>
-                <span class="countdown-separator">:</span>
-                <div class="countdown-item">
-                    <span class="countdown-value" id="countdownSeconds">0</span>
-                    <span class="countdown-label">SECONDS</span>
-                </div>
-            </div>
-            
             <!-- Text Content -->
             <div class="final-days-text">
                 <p class="final-days-quote">Sometimes you have to let things go.</p>
@@ -166,26 +143,24 @@
         </div>
     </div>
 
-    <!-- FINAL DAYS COUNTDOWN BACKGROUND (shown from start) -->
-    <div id="finalDaysCountdownBackground" class="final-days-countdown-background">
-        <div class="countdown-item">
-            <span class="countdown-value" id="countdownDaysBg">0</span>
-            <span class="countdown-label">DAYS</span>
-        </div>
-        <span class="countdown-separator">:</span>
-        <div class="countdown-item">
-            <span class="countdown-value" id="countdownHoursBg">0</span>
-            <span class="countdown-label">HOURS</span>
-        </div>
-        <span class="countdown-separator">:</span>
-        <div class="countdown-item">
-            <span class="countdown-value" id="countdownMinutesBg">0</span>
-            <span class="countdown-label">MINUTES</span>
-        </div>
-        <span class="countdown-separator">:</span>
-        <div class="countdown-item">
-            <span class="countdown-value" id="countdownSecondsBg">0</span>
-            <span class="countdown-label">SECONDS</span>
+    <!-- LARGE COUNTDOWN (always visible, changes z-index based on popup state) -->
+    <div id="countdownLarge" class="countdown-large countdown-large-fullscreen">
+        <div class="countdown-large-content">
+            <div class="countdown-large-item">
+                <span class="countdown-large-value" id="countdownLargeDays">00</span>
+            </div>
+            <span class="countdown-large-separator">:</span>
+            <div class="countdown-large-item">
+                <span class="countdown-large-value" id="countdownLargeHours">00</span>
+            </div>
+            <span class="countdown-large-separator">:</span>
+            <div class="countdown-large-item">
+                <span class="countdown-large-value" id="countdownLargeMinutes">00</span>
+            </div>
+            <span class="countdown-large-separator">:</span>
+            <div class="countdown-large-item">
+                <span class="countdown-large-value" id="countdownLargeSeconds">00</span>
+            </div>
         </div>
     </div>
     

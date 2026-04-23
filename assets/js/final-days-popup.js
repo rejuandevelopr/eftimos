@@ -4,28 +4,26 @@
     'use strict';
 
     // Configuration
-    const DEADLINE = new Date('2026-04-24T21:00:00+02:00'); // 21:00 España (UTC+2 en abril)
+    const DEADLINE = new Date('2026-04-30T21:00:00+02:00'); // 21:00 España (UTC+2 en abril)
     const COUNTDOWN_UPDATE_INTERVAL = 1000; // Update every second
 
     // DOM Elements
     const popup = document.getElementById('finalDaysPopup');
     const closeBtn = document.getElementById('finalDaysClose');
     const shopBtn = document.getElementById('finalDaysShopBtn');
-    const countdownBackground = document.getElementById('finalDaysCountdownBackground');
     
-    // Popup countdown elements
-    const countdownDays = document.getElementById('countdownDays');
-    const countdownHours = document.getElementById('countdownHours');
-    const countdownMinutes = document.getElementById('countdownMinutes');
-    const countdownSeconds = document.getElementById('countdownSeconds');
-    
-    // Background countdown elements
-    const countdownDaysBg = document.getElementById('countdownDaysBg');
-    const countdownHoursBg = document.getElementById('countdownHoursBg');
-    const countdownMinutesBg = document.getElementById('countdownMinutesBg');
-    const countdownSecondsBg = document.getElementById('countdownSecondsBg');
+    // Large countdown display (always visible, single element)
+    const countdownLarge = document.getElementById('countdownLarge');
+    const countdownLargeDays = document.getElementById('countdownLargeDays');
+    const countdownLargeHours = document.getElementById('countdownLargeHours');
+    const countdownLargeMinutes = document.getElementById('countdownLargeMinutes');
+    const countdownLargeSeconds = document.getElementById('countdownLargeSeconds');
 
-    if (!popup || !countdownBackground) return; // Exit if elements not found
+    // Verify critical elements exist
+    if (!popup || !countdownLarge) {
+        console.warn('[Final Days] Critical elements missing:', { popup: !!popup, countdownLarge: !!countdownLarge });
+        return;
+    }
 
     let countdownInterval = null;
 
@@ -34,24 +32,23 @@
         return new Date() >= DEADLINE;
     }
 
-    // Update both countdown displays
+    // Update all countdown displays
     function updateCountdown() {
         const now = new Date();
         const diff = DEADLINE - now;
 
         if (diff <= 0) {
             // Deadline reached - hide countdown
-            countdownBackground.style.display = 'none';
-            popup.style.display = 'none';
+            if (countdownLarge) {
+                countdownLarge.style.display = 'none';
+            }
+            if (popup) popup.style.display = 'none';
+            
+            // Set all to 00
             const zeroPadded = '00';
-            countdownDays.textContent = zeroPadded;
-            countdownHours.textContent = zeroPadded;
-            countdownMinutes.textContent = zeroPadded;
-            countdownSeconds.textContent = zeroPadded;
-            countdownDaysBg.textContent = zeroPadded;
-            countdownHoursBg.textContent = zeroPadded;
-            countdownMinutesBg.textContent = zeroPadded;
-            countdownSecondsBg.textContent = zeroPadded;
+            [countdownLargeDays, countdownLargeHours, countdownLargeMinutes, countdownLargeSeconds].forEach(el => {
+                if (el) el.textContent = zeroPadded;
+            });
             return;
         }
 
@@ -65,16 +62,11 @@
         const minutesStr = String(minutes).padStart(2, '0');
         const secondsStr = String(seconds).padStart(2, '0');
 
-        // Update both displays
-        countdownDays.textContent = daysStr;
-        countdownHours.textContent = hoursStr;
-        countdownMinutes.textContent = minutesStr;
-        countdownSeconds.textContent = secondsStr;
-        
-        countdownDaysBg.textContent = daysStr;
-        countdownHoursBg.textContent = hoursStr;
-        countdownMinutesBg.textContent = minutesStr;
-        countdownSecondsBg.textContent = secondsStr;
+        // Update large countdown (single version)
+        if (countdownLargeDays) countdownLargeDays.textContent = daysStr;
+        if (countdownLargeHours) countdownLargeHours.textContent = hoursStr;
+        if (countdownLargeMinutes) countdownLargeMinutes.textContent = minutesStr;
+        if (countdownLargeSeconds) countdownLargeSeconds.textContent = secondsStr;
     }
 
     // Show popup function
@@ -87,14 +79,24 @@
         // Update countdown immediately
         updateCountdown();
 
-        // Show popup with animation
-        popup.style.display = 'flex';
-        popup.style.opacity = '0';
-        
-        // Trigger reflow to enable CSS transitions
-        void popup.offsetWidth;
-        
-        popup.style.opacity = '1';
+        // Bring countdown to foreground
+        if (countdownLarge) {
+            countdownLarge.classList.add('popup-active');
+        }
+
+        // Reduce background audio volume when popup appears
+        reduceBackgroundAudioVolume();
+
+        // Show main popup with animation
+        if (popup) {
+            popup.style.display = 'flex';
+            popup.style.opacity = '0';
+            
+            // Trigger reflow to enable CSS transitions
+            void popup.offsetWidth;
+            
+            popup.style.opacity = '1';
+        }
 
         // Setup event listeners
         setupEventListeners();
@@ -124,20 +126,64 @@
         document.addEventListener('keydown', handleEscape);
 
         // Click outside to close (on the dark overlay)
-        popup.addEventListener('click', function(e) {
-            if (e.target === popup) {
-                closePopup();
-            }
-        });
+        if (popup) {
+            popup.addEventListener('click', function(e) {
+                if (e.target === popup) {
+                    closePopup();
+                }
+            });
+        }
     }
 
     // Close popup function
     function closePopup() {
-        popup.style.opacity = '0';
+        if (popup) {
+            popup.style.opacity = '0';
+        }
+        
+        // Remove popup-active class to restore countdown to background
+        if (countdownLarge) {
+            countdownLarge.classList.remove('popup-active');
+        }
         
         setTimeout(() => {
-            popup.style.display = 'none';
+            if (popup) popup.style.display = 'none';
+            
+            // Restore background audio volume
+            restoreBackgroundAudioVolume();
         }, 600); // Match CSS transition duration
+    }
+
+    // Reduce background audio volume
+    function reduceBackgroundAudioVolume() {
+        // Find all audio elements on the page
+        const audioElements = document.querySelectorAll('audio');
+        audioElements.forEach(audio => {
+            if (!audio.dataset.originalVolume) {
+                audio.dataset.originalVolume = audio.volume;
+            }
+            // Reduce volume significantly (to 10% of original)
+            audio.volume = (audio.dataset.originalVolume || 0.5) * 0.1;
+        });
+        
+        // Also reduce global UI sounds volume if available
+        if (typeof window.setUIAudioVolume === 'function') {
+            window.setUIAudioVolume(0.05);
+        }
+    }
+
+    // Restore background audio volume
+    function restoreBackgroundAudioVolume() {
+        // Restore all audio elements to original volume
+        const audioElements = document.querySelectorAll('audio');
+        audioElements.forEach(audio => {
+            audio.volume = audio.dataset.originalVolume || 0.5;
+        });
+        
+        // Restore global UI sounds volume if available
+        if (typeof window.setUIAudioVolume === 'function') {
+            window.setUIAudioVolume(0.15);
+        }
     }
 
     // Hook into preloader ENTER button
@@ -165,9 +211,15 @@
     function initialize() {
         // DO NOT SHOW if deadline has already passed
         if (isDeadlineReached()) {
-            countdownBackground.style.display = 'none';
-            popup.style.display = 'none';
+            if (countdownLarge) countdownLarge.style.display = 'none';
+            if (popup) popup.style.display = 'none';
             return;
+        }
+
+        // Ensure countdown is visible at start (not in popup-active mode)
+        if (countdownLarge) {
+            countdownLarge.classList.remove('popup-active');
+            countdownLarge.style.display = 'flex';
         }
 
         // Update countdown immediately
